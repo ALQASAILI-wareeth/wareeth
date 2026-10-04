@@ -21,8 +21,6 @@
   --ink:#131A31; --muted:#5B6582; --gold:#9A7228; --gold-hi:#C9A253; --pos:#1E7A4A; --neg:#B13A2B; --btn:#FFFFFF; --btn-ink:#131A31;
   --font:"IBM Plex Sans Arabic", system-ui, "Segoe UI", Tahoma, sans-serif;
   box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
@@ -49,7 +47,11 @@ header.bar h1{margin:0;text-align:center;font-size:18px;font-weight:600;white-sp
 .iconbtn{background:none;border:0;color:#fff;width:44px;height:44px;display:grid;place-items:center;cursor:pointer;border-radius:10px}
 .iconbtn svg{width:24px;height:24px}
 
-main{max-width:640px;margin:0 auto;padding:16px 16px 120px}
+main{max-width:640px;margin:0 auto;padding:16px 16px 14px}
+html,body{height:100%;overflow:hidden}
+#scroller{position:fixed;left:0;right:0;top:0;bottom:var(--navh,0px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+body.sub #scroller{top:var(--hdrh,54px)}
+#scroller.lock{overflow:hidden}
 
 /* banner */
 .banner{position:relative;overflow:hidden;border-radius:18px;background:linear-gradient(135deg,#0F1E4A 0%,#1A2F6E 55%,#0E1A40 100%);color:#fff;display:flex;align-items:center;gap:16px;padding:22px 18px;margin:4px 0 22px}
@@ -119,7 +121,7 @@ textarea{min-height:70px;resize:vertical}
 .split{margin-top:10px}
 /* ===== تصميم رسمي فاخر ===== */
 .home .banner.lux{
-  margin:calc(-1 * (16px + env(safe-area-inset-top,0px) / var(--fs,1))) -16px 18px;
+  margin:-16px -16px 18px;
   padding:calc(env(safe-area-inset-top,0px) / var(--fs,1) + 18px) 24px 20px!important;
   border-radius:0 0 30px 30px;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;
   background:radial-gradient(ellipse 120% 90% at 50% 0%,#24407F 0%,#132559 45%,#0B1636 100%);
@@ -161,8 +163,8 @@ header.bar{border-bottom:1px solid rgba(214,178,102,.5);box-shadow:0 8px 22px rg
 header.bar::before,.pat::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
   background:repeating-linear-gradient(45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px),repeating-linear-gradient(-45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px)}
 header.bar>*{position:relative}
-body.sub main{padding-top:calc(68px / var(--fs,1))}
-.stick{position:sticky;top:calc((54px + env(safe-area-inset-top,0px)) / var(--fs,1));z-index:6;margin:-14px -16px 14px;padding:12px 16px 10px;
+body.sub main{padding-top:14px}
+.stick{position:sticky;top:0;z-index:6;margin:-14px -16px 14px;padding:12px 16px 10px;
   background:var(--bg);border-bottom:1px solid rgba(214,178,102,.18);box-shadow:0 10px 16px -12px rgba(3,8,24,.6)}
 .stick>*:last-child{margin-bottom:0!important}
 #app{touch-action:pan-y}
@@ -174,7 +176,7 @@ header.bar h1{font-family:"Amiri","IBM Plex Sans Arabic",serif;font-size:21px;le
 .sumrow b{font-size:15px;font-weight:700}
 .primary{box-shadow:0 8px 20px rgba(201,158,78,.25)}
 
-html.lock,html.lock body{overflow:hidden;height:100%;overscroll-behavior:none}
+
 .home{display:flex;flex-direction:column}
 .home .banner{margin:0 0 16px;padding:24px 20px;flex:1 1 auto;min-height:150px;max-height:250px;gap:20px}
 .home .banner .mark{gap:8px;padding-inline-end:20px}
@@ -289,7 +291,7 @@ td{padding:7px 4px;border-bottom:1px solid var(--line)} td.r{text-align:left}
 .hero .big{font-size:min(36px,calc(9.5vw / var(--fs,1)));white-space:nowrap}
 .total-line .v{font-size:min(28px,calc(8vw / var(--fs,1)))}
 .pair .mbtn,.mbtn{min-width:0}
-html,body{overflow-x:clip}
+
 .row,.mbtn{flex-wrap:wrap;row-gap:4px}
 .row>span:first-child{min-width:0}
 .row .a,.mbtn .v{margin-inline-start:auto}
@@ -317,7 +319,7 @@ nav.tabs button[aria-current="true"]{color:#E3C27A;font-weight:600}
   <h1 id="hTitle">الرئيسي</h1>
   <span id="hLeft"></span>
 </header>
-<main id="app"></main>
+<div id="scroller"><main id="app"></main></div>
 <nav class="tabs" aria-label="التنقل">
   <button data-tab="home" aria-current="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg>الرئيسي</button>
   <button data-tab="me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6"/></svg>حسابي</button>
@@ -449,6 +451,10 @@ function normTx(t){
   }
   return broken;
 }
+const scroller=document.getElementById('scroller');
+function scrollTop0(){if(scroller)scroller.scrollTop=0;}
+function syncBars(){const hd=document.querySelector('header.bar'),nv=document.querySelector('nav.tabs'),r=document.documentElement.style;
+  r.setProperty('--hdrh',(hd.hidden?0:hd.offsetHeight)+'px');r.setProperty('--navh',(nv.hidden?0:nv.offsetHeight)+'px');}
 const store={
   mode:'login',canWrite:false,role:null,loadedAt:0,
   async init(){
@@ -511,11 +517,11 @@ function go(v,p={}){
   if(idx>=0){state.stack=state.stack.slice(0,idx+1);}          // الصفحة مفتوحة قبل: ارجع لها بدل ما تنفتح مرة ثانية
   else if(['tx','heir','month'].includes(v)&&cur().v===v){state.stack[state.stack.length-1]=nxt;} // نفس النوع: استبدال
   else{state.stack.push(nxt);if(state.stack.length>4)state.stack.splice(1,state.stack.length-4);} // أقصى عمق 4
-  render();window.scrollTo(0,0);
+  render();scrollTop0();
 }
-function homeOfTab(){state.stack=[state.stack[0]];state.form=null;render();window.scrollTo(0,0);}
-function back(){if(state.stack.length>1){state.stack.pop();state.form=null;render();window.scrollTo(0,0);}}
-function tab(v){state.stack=[{v}];state.form=null;render();window.scrollTo(0,0);}
+function homeOfTab(){state.stack=[state.stack[0]];state.form=null;render();scrollTop0();}
+function back(){if(state.stack.length>1){state.stack.pop();state.form=null;render();scrollTop0();}}
+function tab(v){state.stack=[{v}];state.form=null;render();scrollTop0();}
 
 const I={
   back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
@@ -796,7 +802,7 @@ V.settings=()=>({title:'الإعدادات',html:`
   <h3 class="sec">التنقل والتعديل</h3>
   <div class="card">
     <button class="toggle" role="switch" aria-checked="${prefs.swipe}" data-pref="swipe"><span>التنقل بالسحب
-      <small>في الأقسام الرئيسية: من اليمين لليسار للقسم اللي بعده، ومن اليسار لليمين للي قبله. وفي الصفحات الداخلية أي سحب يرجعك.</small></span><span class="sw"></span></button>
+      <small>اسحب لليمين للقسم اللي بعده (باتجاه العقارات)، ولليسار للي قبله (باتجاه الرئيسي). وفي الصفحات الداخلية أي سحب يرجعك.</small></span><span class="sw"></span></button>
     ${adminView()?`<hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
     <button class="toggle" role="switch" aria-checked="${prefs.notify}" data-pref="notify"><span>رسالة واتساب جاهزة بعد كل حركة
       <small>تطلع لك رسالة جاهزة ترسلها بالواتساب أو الرسائل. إذا الإيميل التلقائي شغّال ووصل، ما تطلع.</small></span><span class="sw"></span></button>`:''}
@@ -954,7 +960,7 @@ async function save(btn){
   if(old&&old.src)t.src=old.src;
   btn.disabled=true;
   try{await store.put(t);scheduleSync();toast(old?'تم حفظ التعديل':'تم الحفظ');state.form=null;state.stack.pop();
-    if(!old){state.stack.push({v:'tx',id:t.id});} render();window.scrollTo(0,0);
+    if(!old){state.stack.push({v:'tx',id:t.id});} render();scrollTop0();
     {const list=state.txs.filter(x=>x.id!==t.id).concat([t]);afterChange(old?'edit':'new',t,list);}}
   catch(x){err.textContent=x&&x.code==='quota_exceeded'?'امتلأت مساحة الحفظ.':'تعذّر الحفظ. حاول مرة ثانية.';btn.disabled=false;}
 }
@@ -972,7 +978,7 @@ function render(){
   const t=gate?{v:store.mode}:cur();const out=(V[t.v]||V.home)(t);
   document.querySelector('nav.tabs').hidden=gate;
   document.getElementById('hTitle').textContent=out.title;
-  const noBar=gate||(t.v==='home'&&state.stack.length===1);document.querySelector('header.bar').hidden=noBar;document.body.classList.toggle('sub',!noBar);
+  const noBar=gate||(t.v==='home'&&state.stack.length===1);document.querySelector('header.bar').hidden=noBar;document.body.classList.toggle('sub',!noBar);syncBars();
   document.getElementById('hRight').innerHTML=state.stack.length>1?`<button class="iconbtn" data-act="back" aria-label="رجوع">${I.back}</button>`:'';
   document.getElementById('hLeft').innerHTML=(state.stack.length>2&&t.v!=='form'?`<button class="iconbtn" data-act="top" aria-label="رجوع للبداية">${I.home}</button>`:'')+(t.v==='settings'||t.v==='form'?'':`<button class="iconbtn" data-act="settings" aria-label="الإعدادات">${I.gear}</button>`);
   document.getElementById('app').innerHTML=out.html;
@@ -987,14 +993,14 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('button,[data-go]');if(!b)return;
   const d=b.dataset;
   if(d.tab){tab(d.tab);return;}
-  if(d.me!==undefined){setMe(d.me);render();window.scrollTo(0,0);const sel=document.querySelector('.chip[aria-pressed="true"]');if(sel)sel.scrollIntoView({inline:'center',block:'nearest'});return;}
+  if(d.me!==undefined){setMe(d.me);render();scrollTop0();const sel=document.querySelector('.chip[aria-pressed="true"]');if(sel)sel.scrollIntoView({inline:'center',block:'nearest'});return;}
   if(d.act==='back'){back();return;}
   if(d.act==='top'){homeOfTab();return;}
   if(d.go){if(d.go==='acct'&&d.k){prefs.lastAcct=d.k;savePrefs();}go(d.go,d.go==='moves'?{f:d.k||'all'}:{k:d.k,type:d.type,id:d.id});return;}
   if(d.new){if(!canEditNow())return;state.form=newForm(d.new,d.k);go('form');return;}
   if(d.swacct){const c=cur();if(c.k!==d.swacct){c.k=d.swacct;prefs.lastAcct=d.swacct;savePrefs();render();if(!reduceMotion&&appEl.animate)appEl.animate([{opacity:.4},{opacity:1}],{duration:160});}return;}
   if(d.act==='rc-all'){cur().all=!cur().all;render();return;}
-  if(d.mv){const [k,v]=d.mv.split(':');cur()[k]=v;render();window.scrollTo(0,0);return;}
+  if(d.mv){const [k,v]=d.mv.split(':');cur()[k]=v;render();scrollTop0();return;}
   if(d.act==='mv-export'){
     const c=cur(),f=c.f||'all',ty=c.t||'all';
     const list=state.txs.filter(t=>(f==='all'||t.acct===f)&&(ty==='all'||(ty==='dep'?t.kind==='dep':t.kind!=='dep'))).sort(byDate);
@@ -1176,37 +1182,35 @@ const sheet={meta:null};function scheduleSync(){}function sheetCard(){return ''}
 
 /* ===== تثبيت الصفحة الرئيسية بدون تمرير ===== */
 function layoutHome(){
-  const root=document.documentElement,h=document.querySelector('.home');
-  const nav=document.querySelector('nav.tabs'),fs=prefs.fs||1;
-  const navTop=nav.hidden?innerHeight:nav.getBoundingClientRect().top;
+  const h=document.querySelector('.home'),fs=prefs.fs||1;
+  syncBars();scroller.classList.remove('lock');
   if(h){
-    const avail=(navTop-appEl.getBoundingClientRect().top)/fs-16-10;
     h.style.height='';
+    const avail=scroller.clientHeight/fs-16-14-1;
     const fits=h.getBoundingClientRect().height/fs<=avail+1;
-    root.classList.toggle('lock',fits);
-    if(fits){window.scrollTo(0,0);h.style.height=Math.floor(avail)+'px';}
+    scroller.classList.toggle('lock',fits);
+    if(fits){scrollTop0();h.style.height=Math.floor(avail)+'px';}
     return;
   }
   // باقي الصفحات: تثبت إذا محتواها كله داخل الشاشة (ما عدا الصفحات اللي فيها كتابة)
   const v=(store.mode==='api')?cur().v:store.mode;
-  if(['form','settings','login','offline','loading'].includes(v)){root.classList.remove('lock');return;}
-  root.classList.remove('lock');
-  const last=appEl.lastElementChild;
-  if(!last)return;
-  const fits=last.getBoundingClientRect().bottom+window.scrollY<=navTop-6;
-  root.classList.toggle('lock',fits);
-  if(fits)window.scrollTo(0,0);
+  if(['form','settings','login','offline','loading'].includes(v))return;
+  const last=appEl.lastElementChild;if(!last)return;
+  const bottom=last.getBoundingClientRect().bottom-scroller.getBoundingClientRect().top+scroller.scrollTop;
+  const fits=bottom<=scroller.clientHeight-4;
+  scroller.classList.toggle('lock',fits);
+  if(fits)scrollTop0();
 }
 window.addEventListener('resize',()=>{clearTimeout(layoutHome.t);layoutHome.t=setTimeout(layoutHome,120);});
 
 /* ===== التنقل بالسحب (يتبع الإصبع، ويكفي سحب قصير أو سريع) ===== */
 const TABS=['home','me','props'];
 const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-// من اليمين لليسار = الصفحة اللي بعدها، ومن اليسار لليمين = اللي قبلها. وفي الصفحات الداخلية أي سحب يرجعك.
+// السحب لليمين = القسم اللي بعده (باتجاه العقارات)، والسحب لليسار = اللي قبله (باتجاه الرئيسي). وفي الصفحات الداخلية أي سحب يرجعك.
 function swipeTarget(dx){
   if(isForm()||store.mode!=='api')return null;
   if(state.stack.length>1)return 'back';
-  const i=TABS.indexOf(state.stack[0].v),j=dx<0?i+1:i-1;
+  const i=TABS.indexOf(state.stack[0].v),j=dx>0?i+1:i-1;
   return j>=0&&j<TABS.length?TABS[j]:null;
 }
 let sw=null;
