@@ -42,7 +42,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;display:inline-block;font-size:calc(1em * var(--ns,1))}
 
-header.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--navy);color:#fff;display:grid;grid-template-columns:92px 1fr 92px;align-items:center;height:50px;padding:0 6px}
+header.bar{position:fixed;top:0;left:0;right:0;z-index:20;color:#fff;display:grid;grid-template-columns:92px 1fr 92px;grid-template-rows:54px;align-items:center;padding:env(safe-area-inset-top,0px) 6px 0;overflow:hidden}
 #hRight,#hLeft{display:flex;align-items:center}
 #hLeft{justify-content:flex-end}
 header.bar h1{margin:0;text-align:center;font-size:18px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -127,7 +127,7 @@ textarea{min-height:70px;resize:vertical}
   max-height:none;min-height:0}
 .home .banner.lux::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
   background:repeating-linear-gradient(45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px),repeating-linear-gradient(-45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px);
-  -webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000 30%,transparent 80%);mask-image:radial-gradient(ellipse at 50% 30%,#000 30%,transparent 80%)}
+  -webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .home .banner.lux::after{display:none}
 .home .banner.lux>*:not(.bgear){position:relative}
 .home .banner.lux .bgear{position:absolute}
@@ -156,7 +156,16 @@ textarea{min-height:70px;resize:vertical}
 .mbtn .l{gap:14px}
 .mbtn.gold{background:linear-gradient(180deg,#EED39A,#C99E4E)!important;color:#1A1405!important;border-color:transparent!important}
 .mbtn.gold svg{color:#1A1405!important}
-header.bar{border-bottom:1px solid rgba(214,178,102,.35)}
+header.bar{border-bottom:1px solid rgba(214,178,102,.5);box-shadow:0 8px 22px rgba(3,8,24,.35);
+  background:radial-gradient(ellipse 120% 160% at 50% 0%,#24407F 0%,#132559 50%,#0B1636 100%)}
+header.bar::before,.pat::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+  background:repeating-linear-gradient(45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px),repeating-linear-gradient(-45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px)}
+header.bar>*{position:relative}
+body.sub main{padding-top:calc(68px / var(--fs,1))}
+.stick{position:sticky;top:calc((54px + env(safe-area-inset-top,0px)) / var(--fs,1));z-index:6;margin:-14px -16px 14px;padding:12px 16px 10px;
+  background:var(--bg);border-bottom:1px solid rgba(214,178,102,.18);box-shadow:0 10px 16px -12px rgba(3,8,24,.6)}
+.stick>*:last-child{margin-bottom:0!important}
+#app{touch-action:pan-y}
 header.bar h1{font-family:"Amiri","IBM Plex Sans Arabic",serif;font-size:21px;letter-spacing:.01em}
 .seg3{grid-template-columns:repeat(3,1fr)!important;margin-bottom:8px}
 .sumrow{display:grid;grid-template-columns:.7fr 1fr 1fr;gap:8px;margin:6px 0 12px}
@@ -220,11 +229,11 @@ html.lock,html.lock body{overflow:hidden;height:100%;overscroll-behavior:none}
 .gmark span{font-family:Georgia,"Times New Roman",serif;letter-spacing:.36em;font-size:13px;color:var(--gold)}
 .gate .k{text-align:start}
 nav.tabs[hidden]{display:none}
-.chips{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 10px;margin:-4px -2px 10px;scrollbar-width:none;position:sticky;top:calc(50px + env(safe-area-inset-top,0px));z-index:3;background:var(--bg)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 10px;margin:-4px -2px 10px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:8px 16px;cursor:pointer;font-weight:500;font-size:15px}
 .chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--gold);font-weight:700}
-.acct-sw{margin:0 0 16px;position:sticky;top:calc(50px + env(safe-area-inset-top,0px));z-index:3;background:var(--bg);padding:6px 0}
+.acct-sw{margin:0}
 .seg button[aria-pressed="true"]{background:var(--navy);border-color:var(--gold);color:#fff;font-weight:600}
 .primary{width:100%;margin-top:18px;background:linear-gradient(180deg,var(--gold-hi),var(--gold));color:#141414;border:0;border-radius:14px;padding:14px;font-weight:700;font-size:17px;cursor:pointer}
 .primary:disabled{opacity:.6}
@@ -280,7 +289,7 @@ td{padding:7px 4px;border-bottom:1px solid var(--line)} td.r{text-align:left}
 .hero .big{font-size:min(36px,calc(9.5vw / var(--fs,1)));white-space:nowrap}
 .total-line .v{font-size:min(28px,calc(8vw / var(--fs,1)))}
 .pair .mbtn,.mbtn{min-width:0}
-html,body{overflow-x:hidden}
+html,body{overflow-x:clip}
 .row,.mbtn{flex-wrap:wrap;row-gap:4px}
 .row>span:first-child{min-width:0}
 .row .a,.mbtn .v{margin-inline-start:auto}
@@ -408,6 +417,38 @@ function apiErr(e){
   if(c==='bad_response')return 'الخادم ما رد بشكل صحيح.'+(e.detail?' ('+e.detail+')':'');
   return 'صار خطأ. حاول مرة ثانية.';
 }
+/* تنظيف القيم اللي ترجع من الشيت: التواريخ بساعة من خانة وحدة، وأرقام تحولت لتواريخ */
+function normDate(v){
+  const s=String(v||'').trim();
+  const m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{1,2}))?/);
+  if(m)return `${m[1]}-${pad(m[2])}-${pad(m[3])}T${pad(m[4]||0)}:${pad(m[5]||0)}`;
+  const d=new Date(s);
+  if(s&&!isNaN(d))return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return s;
+}
+/* أرقام مثل 8096.5 أو 228.12 يقرأها Google Sheets كتاريخ (سنة.شهر) — هنا نرجّعها لقيمتها الصحيحة */
+const KNOWN_FIX={"g-fx-04":{amount:228.12},"g-fx-25":{amount:367.7},"g-fx-34":{amount:356.6},"g-fx-44":{amount:692.08},"g-fx-48":{amount:346.4},"g-h-06":{alloc:{rashed:8096.5,mohamed:8096.5}}};
+const badNum=v=>!isFinite(+v)||+v<0||+v>1e10;
+function normTx(t){
+  const raw=String(t.date||'').trim();
+  if(!/^\d{4}-\d{1,2}-\d{1,2}([T ]\d{1,2}:\d{2})?$/.test(raw)&&+t.createdAt>1e11){
+    // التاريخ وصل بصيغة غير واضحة: نعتمد على وقت الإنشاء المحفوظ معه
+    const d=new Date(+t.createdAt);t.date=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());
+  } else t.date=normDate(raw);
+  let broken=false;const fx=KNOWN_FIX[t.id]||{};
+  if(badNum(t.amount)&&fx.amount!=null){t.amount=fx.amount;broken=true;}
+  if(t.kind==='dist'&&t.alloc){
+    const bad=Object.keys(t.alloc).filter(h=>badNum(t.alloc[h])||+t.alloc[h]>+t.amount);
+    if(bad.length){
+      bad.forEach(h=>{if(fx.alloc&&fx.alloc[h]!=null)t.alloc[h]=fx.alloc[h];});
+      const still=bad.filter(h=>badNum(t.alloc[h])||+t.alloc[h]>+t.amount);
+      if(still.length){const ok=Object.keys(t.alloc).filter(h=>!still.includes(h)).reduce((a,h)=>a+(+t.alloc[h]||0),0);
+        const each=r2((+t.amount-ok)/still.length);still.forEach(h=>t.alloc[h]=each);}
+      broken=true;
+    }
+  }
+  return broken;
+}
 const store={
   mode:'login',canWrite:false,role:null,loadedAt:0,
   async init(){
@@ -417,9 +458,12 @@ const store={
   },
   async refresh(first){
     const j=await api('list');
-    state.txs=j.txs||[];this.role=j.role;this.canWrite=j.role==='admin';this.mode='api';this.loadedAt=Date.now();
+    state.txs=(j.txs||[]);
+    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.mode='api';this.loadedAt=Date.now();
     if(j.cfg)notif.cfg=j.cfg;
     if(!isForm())render();
+    // إصلاح تلقائي: أرقام قرأها الشيت كتواريخ، يرجّعها أرقام مرة وحدة
+    if(this.canWrite&&broken.length&&!this.repaired){this.repaired=true;for(const t of broken){try{await api('put',{tx:t});}catch(e){}}}
   },
   async put(t){await api('put',{tx:t});const i=state.txs.findIndex(x=>x.id===t.id);if(i>=0)state.txs[i]=t;else state.txs.push(t);},
   async del(id){await api('del',{id});state.txs=state.txs.filter(x=>x.id!==id);}
@@ -518,9 +562,9 @@ V.moves=(p)=>{
   let tin=0,tout=0;list.forEach(t=>{if(t.kind==='dep')tin+=+t.amount||0;else if(!t.hist)tout+=+t.amount||0;});
   const seg=(key,opts,cur)=>`<div class="seg seg3">${opts.map(([k,l])=>`<button data-mv="${key}:${k}" aria-pressed="${k===cur}">${l}</button>`).join('')}</div>`;
   return {title:'سجل الحركات',html:`
-  ${seg('f',[['all','الحسابين'],['bld','البناية'],['farm','المزارع']],f)}
+  <div class="stick">${seg('f',[['all','الحسابين'],['bld','البناية'],['farm','المزارع']],f)}
   ${seg('t',[['all','الكل'],['dep','إيداعات'],['out','مصروفات']],ty)}
-  <div class="sumrow"><div><span>العدد</span><b class="num">${list.length}</b></div><div><span>داخل</span><b class="num in">${fmt(tin)}</b></div><div><span>خارج</span><b class="num out">${fmt(tout)}</b></div></div>
+  <div class="sumrow"><div><span>العدد</span><b class="num">${list.length}</b></div><div><span>داخل</span><b class="num in">${fmt(tin)}</b></div><div><span>خارج</span><b class="num out">${fmt(tout)}</b></div></div></div>
   ${list.length?`<div class="rows">${list.map(txRow).join('')}</div>`:'<p class="empty">ما فيه حركات.</p>'}
   ${list.length?`<div class="actions"><button class="ghost" data-act="mv-export">تصدير القائمة</button></div>`:''}`};
 };
@@ -532,7 +576,7 @@ function statusText(){
 }
 function acctSwitch(k){
   const b=calc().bal;
-  return `<div class="seg acct-sw" role="tablist" aria-label="اختيار الحساب">${['bld','farm'].map(x=>`<button role="tab" data-swacct="${x}" aria-pressed="${x===k}" aria-selected="${x===k}">${ACCTS[x].short}<small class="num" style="display:block;font-size:12px;font-weight:400;opacity:.8">${fmt(b[x])}</small></button>`).join('')}</div>`;
+  return `<div class="stick"><div class="seg acct-sw" role="tablist" aria-label="اختيار الحساب">${['bld','farm'].map(x=>`<button role="tab" data-swacct="${x}" aria-pressed="${x===k}" aria-selected="${x===k}">${ACCTS[x].short}<small class="num" style="display:block;font-size:12px;font-weight:400;opacity:.8">${fmt(b[x])}</small></button>`).join('')}</div></div>`;
 }
 function splitBar(r){
   const tot=Math.max(0,r.bal.bld)+Math.max(0,r.bal.farm);
@@ -659,7 +703,7 @@ V.me=()=>{
   if(!id||!H[id]) return {title:'حسابي',html:`<p class="note" style="margin-top:0">اختر اسمك عشان يفتح لك حسابك مباشرة كل مرة. الاختيار ينحفظ على هذا الجهاز.</p>
     <div class="rows">${HEIRS.map(h=>`<button class="row" data-me="${h.id}"><span>${esc(h.full)}</span>${I.chev}</button>`).join('')}</div>`};
   const o=V.heir({id});
-  const chips=`<div class="chips noswipe" role="tablist" aria-label="اختيار الوريث">${HEIRS.map(h=>`<button class="chip" role="tab" data-me="${h.id}" aria-pressed="${h.id===id}" aria-selected="${h.id===id}">${h.n}</button>`).join('')}</div>`;
+  const chips=`<div class="stick"><div class="chips noswipe" role="tablist" aria-label="اختيار الوريث">${HEIRS.map(h=>`<button class="chip" role="tab" data-me="${h.id}" aria-pressed="${h.id===id}" aria-selected="${h.id===id}">${h.n}</button>`).join('')}</div></div>`;
   return {title:'حسابي – '+H[id].n,html:chips+o.html};
 };
 
@@ -703,11 +747,11 @@ V.reports=(p)=>{
   const hmax=Math.max(1,...Object.values(heirs));
   const any=m.some(x=>x.n);
   return {title:'التقارير الشهرية',html:`
-  <div class="grid2" style="margin-bottom:14px">
+  <div class="stick"><div class="grid2" style="margin-bottom:0">
     <div><label class="k" for="rAcct" style="margin-top:0">الحساب</label><select id="rAcct">
       <option value="all"${acct==='all'?' selected':''}>الحسابين</option><option value="bld"${acct==='bld'?' selected':''}>البناية</option><option value="farm"${acct==='farm'?' selected':''}>المزارع</option></select></div>
     <div><label class="k" for="rYear" style="margin-top:0">السنة</label><select id="rYear">${years.map(y=>`<option${y===year?' selected':''}>${y}</option>`).join('')}</select></div>
-  </div>
+  </div></div>
   <div class="grid2" style="margin-bottom:12px">
     <div class="rc"><div class="k">الإيداعات</div><div class="v num in" style="font-size:19px">${fmt(tot.dep)}</div></div>
     <div class="rc"><div class="k">المصروفات</div><div class="v num out" style="font-size:19px">${fmt(tot.exp)}</div></div>
@@ -752,7 +796,7 @@ V.settings=()=>({title:'الإعدادات',html:`
   <h3 class="sec">التنقل والتعديل</h3>
   <div class="card">
     <button class="toggle" role="switch" aria-checked="${prefs.swipe}" data-pref="swipe"><span>التنقل بالسحب
-      <small>اسحب لليسار للرجوع للصفحة السابقة. وفي الصفحات الرئيسية اسحب يمين أو يسار للتنقل بين الأقسام.</small></span><span class="sw"></span></button>
+      <small>في الأقسام الرئيسية: من اليمين لليسار للقسم اللي بعده، ومن اليسار لليمين للي قبله. وفي الصفحات الداخلية أي سحب يرجعك.</small></span><span class="sw"></span></button>
     ${adminView()?`<hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
     <button class="toggle" role="switch" aria-checked="${prefs.notify}" data-pref="notify"><span>رسالة واتساب جاهزة بعد كل حركة
       <small>تطلع لك رسالة جاهزة ترسلها بالواتساب أو الرسائل. إذا الإيميل التلقائي شغّال ووصل، ما تطلع.</small></span><span class="sw"></span></button>`:''}
@@ -928,7 +972,7 @@ function render(){
   const t=gate?{v:store.mode}:cur();const out=(V[t.v]||V.home)(t);
   document.querySelector('nav.tabs').hidden=gate;
   document.getElementById('hTitle').textContent=out.title;
-  document.querySelector('header.bar').hidden=gate||(t.v==='home'&&state.stack.length===1);
+  const noBar=gate||(t.v==='home'&&state.stack.length===1);document.querySelector('header.bar').hidden=noBar;document.body.classList.toggle('sub',!noBar);
   document.getElementById('hRight').innerHTML=state.stack.length>1?`<button class="iconbtn" data-act="back" aria-label="رجوع">${I.back}</button>`:'';
   document.getElementById('hLeft').innerHTML=(state.stack.length>2&&t.v!=='form'?`<button class="iconbtn" data-act="top" aria-label="رجوع للبداية">${I.home}</button>`:'')+(t.v==='settings'||t.v==='form'?'':`<button class="iconbtn" data-act="settings" aria-label="الإعدادات">${I.gear}</button>`);
   document.getElementById('app').innerHTML=out.html;
@@ -1155,40 +1199,49 @@ function layoutHome(){
 }
 window.addEventListener('resize',()=>{clearTimeout(layoutHome.t);layoutHome.t=setTimeout(layoutHome,120);});
 
-/* ===== التنقل بالسحب ===== */
+/* ===== التنقل بالسحب (يتبع الإصبع، ويكفي سحب قصير أو سريع) ===== */
 const TABS=['home','me','props'];
 const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+// من اليمين لليسار = الصفحة اللي بعدها، ومن اليسار لليمين = اللي قبلها. وفي الصفحات الداخلية أي سحب يرجعك.
 function swipeTarget(dx){
-  if(isForm())return null;
-  if(state.stack.length>1)return dx<0?'back':null;
-  const i=TABS.indexOf(state.stack[0].v),j=dx>0?i+1:i-1;
+  if(isForm()||store.mode!=='api')return null;
+  if(state.stack.length>1)return 'back';
+  const i=TABS.indexOf(state.stack[0].v),j=dx<0?i+1:i-1;
   return j>=0&&j<TABS.length?TABS[j]:null;
 }
 let sw=null;
 const appEl=document.getElementById('app');
-function resetDrag(anim){appEl.style.transition=anim&&!reduceMotion?'transform .18s ease, opacity .18s ease':'none';appEl.style.transform='';appEl.style.opacity='';}
+function setX(x,o){appEl.style.transform=x?`translate3d(${x.toFixed(1)}px,0,0)`:'';appEl.style.opacity=o==null?'':String(o);}
 document.addEventListener('touchstart',e=>{
   sw=null;
   if(!prefs.swipe||e.touches.length!==1)return;
-  if(e.target.closest('input,select,textarea,.table-wrap,.noswipe,header,nav'))return;
-  const p=e.touches[0];if(p.clientX<22||p.clientX>innerWidth-22)return;
-  sw={x:p.clientX,y:p.clientY,dir:0};
+  if(e.target.closest('input,select,textarea,.table-wrap,.noswipe,header,nav,.modal-bg'))return;
+  const p=e.touches[0];if(p.clientX<10||p.clientX>innerWidth-10)return;
+  sw={x:p.clientX,y:p.clientY,dir:0,t:Date.now(),lx:p.clientX,lt:Date.now(),v:0};
+  appEl.style.transition='none';
 },{passive:true});
 document.addEventListener('touchmove',e=>{
-  if(!sw)return;const p=e.touches[0],dx=p.clientX-sw.x,dy=p.clientY-sw.y;
-  if(!sw.dir){if(Math.abs(dx)>12&&Math.abs(dx)>Math.abs(dy)*1.4)sw.dir=1;else if(Math.abs(dy)>12){sw=null;return;}else return;}
-  if(!swipeTarget(dx)||reduceMotion)return;
-  appEl.style.transition='none';appEl.style.transform=`translateX(${(dx*0.35).toFixed(1)}px)`;appEl.style.opacity=String(1-Math.min(Math.abs(dx)/700,.3));
+  if(!sw)return;const p=e.touches[0],dx=p.clientX-sw.x,dy=p.clientY-sw.y,now=Date.now();
+  if(!sw.dir){if(Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)*1.15)sw.dir=1;else if(Math.abs(dy)>10){sw=null;return;}else return;}
+  const dt=Math.max(1,now-sw.lt);sw.v=(p.clientX-sw.lx)/dt;sw.lx=p.clientX;sw.lt=now;
+  if(reduceMotion)return;
+  const has=!!swipeTarget(dx);
+  setX(has?dx*0.9:dx*0.18,has?1-Math.min(Math.abs(dx)/(innerWidth*1.6),.35):null);
 },{passive:true});
 document.addEventListener('touchend',e=>{
   if(!sw)return;const s=sw;sw=null;const p=e.changedTouches[0],dx=p.clientX-s.x,dy=p.clientY-s.y;
-  const tg=s.dir===1&&Math.abs(dx)>=70&&Math.abs(dx)>Math.abs(dy)*1.4?swipeTarget(dx):null;
-  if(!tg){resetDrag(true);return;}
-  resetDrag(false);
-  if(tg==='back')back();else tab(tg);
-  if(!reduceMotion&&appEl.animate)appEl.animate([{transform:`translateX(${dx>0?-40:40}px)`,opacity:0},{transform:'none',opacity:1}],{duration:200,easing:'ease-out'});
+  const fast=Math.abs(s.v)>0.35&&Math.abs(dx)>24;
+  const tg=s.dir===1&&(Math.abs(dx)>=50||fast)&&Math.abs(dx)>Math.abs(dy)?swipeTarget(dx):null;
+  const W=innerWidth;
+  if(!tg){appEl.style.transition=reduceMotion?'none':'transform .22s cubic-bezier(.2,.8,.2,1), opacity .22s';setX(0,null);return;}
+  const dir=dx<0?-1:1;
+  const go=()=>{appEl.style.transition='none';setX(0,null);if(tg==='back')back();else tab(tg);
+    if(!reduceMotion&&appEl.animate)appEl.animate([{transform:`translate3d(${(-dir*W*0.35).toFixed(0)}px,0,0)`,opacity:0},{transform:'translate3d(0,0,0)',opacity:1}],{duration:240,easing:'cubic-bezier(.2,.8,.2,1)'});};
+  if(reduceMotion){go();return;}
+  appEl.style.transition='transform .14s ease-in, opacity .14s ease-in';setX(dir*W*0.6,0);
+  setTimeout(go,140);
 });
-document.addEventListener('touchcancel',()=>{if(sw){sw=null;resetDrag(true);}});
+document.addEventListener('touchcancel',()=>{if(sw){sw=null;appEl.style.transition='transform .2s';setX(0,null);}});
 
 applyPrefs();
 store.init();
