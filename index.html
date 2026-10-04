@@ -984,6 +984,7 @@ document.addEventListener('input',e=>{
   else if(e.target.dataset.al!==undefined)updSum();
 });
 document.addEventListener('toggle',e=>{
+  setTimeout(layoutHome,0);
   const d=e.target;if(!(d.matches&&d.matches('details[data-acc]'))||!d.open)return;
   document.querySelectorAll('details[data-acc][open]').forEach(x=>{if(x!==d)x.open=false;});
 },true);
@@ -1168,13 +1169,25 @@ function updSheetUI(){const p=document.getElementById('sheetPill');if(p){const w
 /* ===== تثبيت الصفحة الرئيسية بدون تمرير ===== */
 function layoutHome(){
   const root=document.documentElement,h=document.querySelector('.home');
-  if(!h){root.classList.remove('lock');return;}
   const nav=document.querySelector('nav.tabs'),fs=prefs.fs||1;
-  const avail=(nav.getBoundingClientRect().top-appEl.getBoundingClientRect().top)/fs-16-10;
-  h.style.height='';
-  const fits=h.getBoundingClientRect().height/fs<=avail+1;
+  const navTop=nav.hidden?innerHeight:nav.getBoundingClientRect().top;
+  if(h){
+    const avail=(navTop-appEl.getBoundingClientRect().top)/fs-16-10;
+    h.style.height='';
+    const fits=h.getBoundingClientRect().height/fs<=avail+1;
+    root.classList.toggle('lock',fits);
+    if(fits){window.scrollTo(0,0);h.style.height=Math.floor(avail)+'px';}
+    return;
+  }
+  // باقي الصفحات: تثبت إذا محتواها كله داخل الشاشة (ما عدا الصفحات اللي فيها كتابة)
+  const v=(store.mode==='api')?cur().v:store.mode;
+  if(['form','settings','login','offline','loading'].includes(v)){root.classList.remove('lock');return;}
+  root.classList.remove('lock');
+  const last=appEl.lastElementChild;
+  if(!last)return;
+  const fits=last.getBoundingClientRect().bottom+window.scrollY<=navTop-6;
   root.classList.toggle('lock',fits);
-  if(fits){window.scrollTo(0,0);h.style.height=Math.floor(avail)+'px';}
+  if(fits)window.scrollTo(0,0);
 }
 window.addEventListener('resize',()=>{clearTimeout(layoutHome.t);layoutHome.t=setTimeout(layoutHome,120);});
 
