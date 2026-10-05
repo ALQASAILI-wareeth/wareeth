@@ -164,6 +164,14 @@ header.bar::before,.pat::before{content:"";position:absolute;inset:0;pointer-eve
   background:repeating-linear-gradient(45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px),repeating-linear-gradient(-45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px)}
 header.bar>*{position:relative}
 body.sub main{padding-top:14px}
+.reqbar{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 12px;padding:12px 14px;border-radius:14px;cursor:pointer;
+  background:linear-gradient(90deg,rgba(214,178,102,.18),rgba(214,178,102,.05));border:1px solid rgba(214,178,102,.55);color:var(--ink);font-weight:600;text-align:start}
+.reqbar span:nth-child(2){flex:1}.reqbar b{background:var(--gold);color:#1A1405;border-radius:20px;padding:1px 10px;font-size:14px}
+.dotp{width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px rgba(214,178,102,.2)}
+.reqc .reqh{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:8px}
+.reqc .reqh .m{font-size:12px;color:var(--muted)}
+.reql{font-size:14px;line-height:1.8;color:var(--ink)}
+.reqc .actions .mbtn{flex:1;justify-content:center;padding:10px}
 .stick{position:sticky;top:0;z-index:6;margin:-14px -16px 14px;padding:12px 16px 10px;
   background:var(--bg);border-bottom:1px solid rgba(214,178,102,.18);box-shadow:0 10px 16px -12px rgba(3,8,24,.6)}
 .stick>*:last-child{margin-bottom:0!important}
@@ -304,7 +312,7 @@ td{padding:7px 4px;border-bottom:1px solid var(--line)} td.r{text-align:left}
 .nbtn.wa{background:#1FA855}.nbtn.sms{background:#2F5BD3}
 .nbtn svg{width:20px;height:20px}
 .btn-danger{flex:1;background:var(--neg);color:#fff;border:0;border-radius:12px;padding:12px;font-weight:700;cursor:pointer}
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--navy);display:grid;grid-template-columns:repeat(3,1fr);padding-bottom:env(safe-area-inset-bottom,0px);border-top:1px solid rgba(214,178,102,.25)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--navy);display:grid;grid-template-columns:repeat(2,1fr);padding-bottom:env(safe-area-inset-bottom,0px);border-top:1px solid rgba(214,178,102,.25)}
 nav.tabs button{background:none;border:0;color:#9AA4C4;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px;cursor:pointer}
 nav.tabs svg{width:24px;height:24px}
 nav.tabs button[aria-current="true"]{color:#E3C27A;font-weight:600}
@@ -322,8 +330,7 @@ nav.tabs button[aria-current="true"]{color:#E3C27A;font-weight:600}
 <div id="scroller"><main id="app"></main></div>
 <nav class="tabs" aria-label="التنقل">
   <button data-tab="home" aria-current="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg>الرئيسي</button>
-  <button data-tab="me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6"/></svg>حسابي</button>
-  <button data-tab="props"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>العقارات</button>
+    <button data-tab="props"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>العقارات</button>
 </nav>
 <div class="toast" id="toast"></div>
 
@@ -389,7 +396,7 @@ const HAS_CLAUDE=false;
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
-const DEFAULT_API='https://script.google.com/macros/s/AKfycbwe_fnP_7kJ9frDqgkymSm4FpCyrcYzTtDrpyc5OLDqAr7kdQ-05LqxAW8QBkj98qWG/exec';
+const DEFAULT_API='https://script.google.com/macros/s/AKfycbyMNBhN5CKfFHipjkpbN26zlVXw7MQp05LO8zmnPriSEBXbnVkdQKQsaSgHL09attxl/exec';
 // الرابط الافتراضي يغلب دايماً، إلا إذا غيّره المستخدم بنفسه من شاشة الدخول
 if(!auth.custom)auth.url=DEFAULT_API;
 (function(){const m=location.hash.match(/api=([^&]+)/);if(m){auth.url=decodeURIComponent(m[1]);try{localStorage.setItem(AUTH,JSON.stringify(auth))}catch(e){}history.replaceState(null,'',location.pathname+location.search);}})();
@@ -465,14 +472,18 @@ const store={
   async refresh(first){
     const j=await api('list');
     state.txs=(j.txs||[]);
-    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.mode='api';this.loadedAt=Date.now();
+    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';state.reqs=j.reqs||[];this.agent=j.agent||'الوكيل';this.mode='api';this.loadedAt=Date.now();
     if(j.cfg)notif.cfg=j.cfg;
     if(!isForm())render();
     // إصلاح تلقائي: أرقام قرأها الشيت كتواريخ، يرجّعها أرقام مرة وحدة
     if(this.canWrite&&broken.length&&!this.repaired){this.repaired=true;for(const t of broken){try{await api('put',{tx:t});}catch(e){}}}
   },
-  async put(t){await api('put',{tx:t});const i=state.txs.findIndex(x=>x.id===t.id);if(i>=0)state.txs[i]=t;else state.txs.push(t);},
-  async del(id){await api('del',{id});state.txs=state.txs.filter(x=>x.id!==id);}
+  async put(t){
+    if(this.isAgent){const j=await api('propose',{op:'put',tx:t});state.reqs.push({rid:j.id,op:'put',id:t.id,tx:t,by:this.agent,at:Date.now()});return 'req';}
+    await api('put',{tx:t});const i=state.txs.findIndex(x=>x.id===t.id);if(i>=0)state.txs[i]=t;else state.txs.push(t);},
+  async del(id){
+    if(this.isAgent){const j=await api('propose',{op:'del',id});state.reqs.push({rid:j.id,op:'del',id,tx:null,by:this.agent,at:Date.now()});return 'req';}
+    await api('del',{id});state.txs=state.txs.filter(x=>x.id!==id);}
 };
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&Date.now()-store.loadedAt>20000)store.refresh().catch(()=>{});});
 setInterval(()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&!isForm())store.refresh().catch(()=>{});},120000);
@@ -485,7 +496,8 @@ const prefs=Object.assign({fs:1,ns:1,swipe:true,lock:false,notify:true},(()=>{tr
 function applyPrefs(){const a=document.getElementById('app');if(a)a.style.zoom=prefs.fs;document.documentElement.style.setProperty('--ns',prefs.ns);document.documentElement.style.setProperty('--fs',prefs.fs);}
 function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify(prefs))}catch(e){}applyPrefs();}
 const adminView=()=>store.canWrite;
-const canEditNow=()=>store.canWrite;
+const canEditNow=()=>store.canWrite||store.isAgent;
+state.reqs=[];
 
 /* ===== الحسابات ===== */
 function calc(list){
@@ -554,6 +566,7 @@ V.home=()=>{
     <div class="big"><span class="num">${fmt(r.total)}</span> <small>د.إ</small></div>
     <div class="upd">${r.last?'آخر تحديث: '+esc(new Date(r.last).toLocaleString('ar-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'numeric',minute:'2-digit'})):(store.mode==='nodb'?'سجّل دخولك في Claude عشان تظهر البيانات.':'ابدأ بإضافة أول إيداع من حساب البناية أو المزارع.')}</div>
     ${splitBar(r)}</div>
+  ${(store.canWrite||store.isAgent)&&state.reqs.length?`<button class="reqbar" data-go="reqs"><span class="dotp"></span><span>${store.canWrite?'طلبات بانتظار اعتمادك':'طلباتك بانتظار اعتماد المدير'}</span><b class="num">${state.reqs.length}</b>${I.chev}</button>`:''}
   <div class="tiles">
     <button class="tile" data-go="acct" data-k="${prefs.lastAcct==='farm'?'farm':'bld'}"><span class="ic">${I.wallet}</span><span>الحسابات</span><small>${adminView()?'إيداع وخصم':'الأرصدة'}</small></button>
     <button class="tile" data-go="moves"><span class="ic">${I.list}</span><span>آخر الحركات</span><small>${recent[0]?esc(KIND[recent[0].kind])+' · '+esc(dShort(recent[0].date)):'لا يوجد'}</small></button>
@@ -574,7 +587,22 @@ V.moves=(p)=>{
   ${list.length?`<div class="rows">${list.map(txRow).join('')}</div>`:'<p class="empty">ما فيه حركات.</p>'}
   ${list.length?`<div class="actions"><button class="ghost" data-act="mv-export">تصدير القائمة</button></div>`:''}`};
 };
+V.reqs=()=>{
+  const list=state.reqs.slice().sort((a,b)=>(b.at||0)-(a.at||0)),admin=store.canWrite;
+  const card=r=>{
+    const old=state.txs.find(x=>x.id===r.id),t=r.op==='del'?old:r.tx;
+    const label=r.op==='del'?'حذف حركة':old?'تعديل حركة':'إضافة '+(t?KIND[t.kind]:'');
+    const lines=t?txLines(t):['الحركة غير موجودة'];
+    const was=r.op!=='del'&&old&&+old.amount!==+(t&&t.amount)?`<div class="m" style="color:var(--muted);font-size:13px">المبلغ قبل التعديل: <span class="num">${fmt(old.amount)}</span></div>`:'';
+    return `<div class="card reqc"><div class="reqh"><b>${esc(label)}</b><span class="m">${esc(r.by||'')} · ${esc(r.at?new Date(r.at).toLocaleString('ar-u-nu-latn',{day:'numeric',month:'long',hour:'numeric',minute:'2-digit'}):'')}</span></div>
+      <div class="reql">${lines.map(l=>`<div>${esc(l)}</div>`).join('')}</div>${was}
+      <div class="actions">${admin?`<button class="mbtn gold" data-act="req-ok" data-id="${esc(r.rid)}"><span class="l">اعتماد</span></button><button class="ghost" data-act="req-no" data-id="${esc(r.rid)}">رفض</button>`
+        :`<button class="ghost" data-act="req-cancel" data-id="${esc(r.rid)}">إلغاء الطلب</button>`}</div></div>`;
+  };
+  return {title:'بانتظار الاعتماد',html:list.length?list.map(card).join(''):`<p class="empty">${admin?'ما فيه طلبات تنتظر اعتمادك.':'ما عندك طلبات معلّقة.'}</p>`};
+};
 function statusText(){
+  if(store.mode==='api'&&store.isAgent) return 'دخلت كوكيل: أي حركة تضيفها أو تعدّلها تنتظر اعتماد المدير.';
   if(store.mode==='api') return adminView()?'أنت مدير التطبيق: تقدر تضيف وتعدّل. الورثة اللي تشاركهم يشوفون فقط.':'عرض فقط. التعديل لمدير التطبيق.';
   if(store.mode==='nodb') return 'سجّل دخولك في Claude عشان تظهر البيانات.';
   if(store.mode==='off') return 'انقطع الاتصال. أعد فتح الصفحة.';
@@ -646,6 +674,7 @@ V.total=()=>{
           ${rcs.length?`<div class="rclist">${rcs.map((x,i)=>({x,i})).reverse().map(({x,i})=>`<div class="rcl"><span class="o">${ord(i)}</span><span class="d">${esc(dShort(x.t.date))}</span><b class="num">${fmt(x.amt)}</b></div>`).join('')}</div>`:'<p class="m" style="color:var(--muted);font-size:13px;margin:8px 0">ما استلم أي مبلغ بعد.</p>'}
           <div class="kv" style="margin-top:8px"><span>نصيبه الحالي من البناية</span><b class="num">${fmt(a)}</b></div>
           <div class="kv"><span>نصيبه الحالي من المزارع</span><b class="num">${fmt(c)}</b></div>
+          <button class="linkbtn" data-go="heir" data-id="${h.id}" style="margin-top:6px">الكشف الكامل والتصدير ←</button>
         </div></details>`}).join('')}
     <div class="row sum"><span>المجموع</span><span>${money(r.total)}</span></div></div>
   <p class="note">اضغط على أي اسم يطلع لك كم مرة استلم وتواريخ كل استلام ومبلغه. "إجمالي التوزيع" هو كل اللي انصرف للورثة من الحسابين، والمبالغ جنب الأسماء هي نصيب كل وريث من الرصيد المتبقي الآن.</p>`};
@@ -802,7 +831,7 @@ V.settings=()=>({title:'الإعدادات',html:`
   <h3 class="sec">التنقل والتعديل</h3>
   <div class="card">
     <button class="toggle" role="switch" aria-checked="${prefs.swipe}" data-pref="swipe"><span>التنقل بالسحب
-      <small>اسحب لليمين للقسم اللي بعده (باتجاه العقارات)، ولليسار للي قبله (باتجاه الرئيسي). وفي الصفحات الداخلية أي سحب يرجعك.</small></span><span class="sw"></span></button>
+      <small>اسحب لليمين للعقارات، ولليسار للرئيسي. وفي الصفحات الداخلية أي سحب يرجعك.</small></span><span class="sw"></span></button>
     ${adminView()?`<hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
     <button class="toggle" role="switch" aria-checked="${prefs.notify}" data-pref="notify"><span>رسالة واتساب جاهزة بعد كل حركة
       <small>تطلع لك رسالة جاهزة ترسلها بالواتساب أو الرسائل. إذا الإيميل التلقائي شغّال ووصل، ما تطلع.</small></span><span class="sw"></span></button>`:''}
@@ -814,7 +843,7 @@ V.settings=()=>({title:'الإعدادات',html:`
   ${adminView()&&sheet.meta?'<h3 class="sec">الربط مع Google Sheets</h3>'+sheetCard()+'<p class="m" style="font-size:13px;color:var(--muted)">بعد كل حركة تضيفها أو تعدّلها أو تحذفها، ينشئ التطبيق نسخة محدّثة من سجل الحركات في مجلد "وريث – سجل الحركات" في Google Drive، ويحذف النسخة القديمة.</p>':''}
   <h3 class="sec">الحساب</h3>
   <div class="card">
-    <div class="kv"><span>نوع الدخول</span><b>${store.canWrite?'مدير (إضافة وتعديل)':'عرض فقط'}</b></div>
+    <div class="kv"><span>نوع الدخول</span><b>${store.canWrite?'مدير (إضافة وتعديل واعتماد)':store.isAgent?'وكيل (إدخال بانتظار الاعتماد)':'عرض فقط'}</b></div>
     <div class="actions"><button class="ghost" data-act="refresh">تحديث البيانات</button>${store.canWrite?'<button class="ghost" data-act="share-link">نسخ رابط الورثة</button>':''}</div>
     <div class="actions" style="margin-top:8px"><button class="ghost danger" data-act="logout">تسجيل خروج</button></div>
     ${store.canWrite?'<p class="m" style="font-size:13px;color:var(--muted);margin:10px 0 0">رابط الورثة يفتح التطبيق وفيه رابط الخادم جاهز، فما يحتاجون إلا رقم العرض السري.</p>':''}
@@ -959,7 +988,9 @@ async function save(btn){
   if(old&&old.hist)t.hist=true;
   if(old&&old.src)t.src=old.src;
   btn.disabled=true;
-  try{await store.put(t);scheduleSync();toast(old?'تم حفظ التعديل':'تم الحفظ');state.form=null;state.stack.pop();
+  try{const res=await store.put(t);
+    if(res==='req'){toast('انرسل الطلب لاعتماد المدير');state.form=null;state.stack.pop();go('reqs');return;}
+    scheduleSync();toast(old?'تم حفظ التعديل':'تم الحفظ');state.form=null;state.stack.pop();
     if(!old){state.stack.push({v:'tx',id:t.id});} render();scrollTop0();
     {const list=state.txs.filter(x=>x.id!==t.id).concat([t]);afterChange(old?'edit':'new',t,list);}}
   catch(x){err.textContent=x&&x.code==='quota_exceeded'?'امتلأت مساحة الحفظ.':'تعذّر الحفظ. حاول مرة ثانية.';btn.disabled=false;}
@@ -1013,6 +1044,22 @@ document.addEventListener('click',async e=>{
   if(d.act==='rm-receipt'){readForm();state.form.receipt=null;render();return;}
   if(d.act==='save'){save(b);return;}
   if(d.act==='settings'){go('settings');return;}
+  if(d.act==='req-ok'||d.act==='req-no'||d.act==='req-cancel'){
+    const r=state.reqs.find(x=>x.rid===d.id);if(!r)return;
+    if(d.act!=='req-ok'&&!(await ask(d.act==='req-no'?'رفض الطلب؟':'إلغاء الطلب؟','الحركة ما راح تنضاف للحساب.',d.act==='req-no'?'رفض':'إلغاء الطلب')))return;
+    b.disabled=true;
+    try{
+      if(d.act==='req-ok'){
+        const old=state.txs.find(x=>x.id===r.id);
+        await api('approve',{rid:r.rid});await store.refresh();
+        const t=r.op==='del'?old:r.tx;
+        if(t)afterChange(r.op==='del'?'del':old?'edit':'new',t,state.txs);
+        toast('تم الاعتماد');
+      }else{await api(d.act==='req-no'?'reject':'cancel',{rid:r.rid});state.reqs=state.reqs.filter(x=>x.rid!==r.rid);toast(d.act==='req-no'?'تم رفض الطلب':'تم إلغاء الطلب');}
+      render();
+    }catch(e){toast(apiErr(e));b.disabled=false;}
+    return;
+  }
   if(d.act==='login'){
     const u=document.getElementById('lUrl'),p=document.getElementById('lPin');
     if(u){const v=u.value.trim();if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(v)){document.getElementById('lErr').textContent='الصق رابط النشر اللي يبدأ بـ https://script.google.com';return;}auth.url=v;auth.custom=true;}
@@ -1049,7 +1096,7 @@ document.addEventListener('click',async e=>{
   if(d.act==='del'){
     const t=state.txs.find(x=>x.id===d.id);if(!t)return;
     if(!(await ask('حذف هذه الحركة؟',`${KIND[t.kind]} بمبلغ ${fmt(t.amount)} د.إ بتاريخ ${dShort(t.date)}. ما تقدر ترجعها بعد الحذف.`,'حذف')))return;
-    try{await store.del(d.id);scheduleSync();if(t&&t.receipt&&t.receipt.id&&assetsApi)assetsApi.delete(t.receipt.id).catch(()=>{});toast('تم الحذف');back();
+    try{const res=await store.del(d.id);if(res==='req'){toast('انرسل طلب الحذف لاعتماد المدير');back();return;}scheduleSync();if(t&&t.receipt&&t.receipt.id&&assetsApi)assetsApi.delete(t.receipt.id).catch(()=>{});toast('تم الحذف');back();
       afterChange('del',t,state.txs.filter(x=>x.id!==t.id));}
     catch(x){toast('تعذّر الحذف');}
     return;
@@ -1204,7 +1251,7 @@ function layoutHome(){
 window.addEventListener('resize',()=>{clearTimeout(layoutHome.t);layoutHome.t=setTimeout(layoutHome,120);});
 
 /* ===== التنقل بالسحب (يتبع الإصبع، ويكفي سحب قصير أو سريع) ===== */
-const TABS=['home','me','props'];
+const TABS=['home','props'];
 const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 // السحب لليمين = القسم اللي بعده (باتجاه العقارات)، والسحب لليسار = اللي قبله (باتجاه الرئيسي). وفي الصفحات الداخلية أي سحب يرجعك.
 function swipeTarget(dx){
