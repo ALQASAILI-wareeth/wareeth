@@ -131,7 +131,7 @@ textarea{min-height:70px;resize:vertical}
   background:repeating-linear-gradient(45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px),repeating-linear-gradient(-45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px);
   -webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .home .banner.lux::after{display:none}
-.home .banner.lux>*:not(.bgear){position:relative}
+.home .banner.lux>*:not(.bgear):not(.bref){position:relative}
 .home .banner.lux .bgear{position:absolute}
 .home .banner.lux .mark{border:0;padding:0;gap:6px}
 .home .banner.lux .mark svg{width:80px;height:73px;filter:drop-shadow(0 4px 14px rgba(214,178,102,.25))}
@@ -164,6 +164,22 @@ header.bar::before,.pat::before{content:"";position:absolute;inset:0;pointer-eve
   background:repeating-linear-gradient(45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px),repeating-linear-gradient(-45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px)}
 header.bar>*{position:relative}
 body.sub main{padding-top:14px}
+.bref{position:absolute;top:calc(env(safe-area-inset-top,0px) / var(--fs,1) + 6px);right:10px;left:auto;z-index:2;color:#E3C27A;width:40px;height:40px}
+.bref svg{width:22px;height:22px}
+.bref.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.home .banner.lux .bref{position:absolute}
+.reqbar.cool{background:var(--card);border-color:var(--line)}
+.reqbar.cool .dotp{background:var(--muted);box-shadow:none}.reqbar.cool b{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
+.stb{font-size:12px;font-weight:700;border-radius:20px;padding:2px 10px;white-space:nowrap}
+.stb.ok{background:rgba(116,211,156,.15);color:var(--pos);border:1px solid rgba(116,211,156,.4)}
+.stb.no{background:rgba(242,141,125,.12);color:var(--neg);border:1px solid rgba(242,141,125,.4)}
+.stb.wait{background:rgba(214,178,102,.12);color:var(--gold);border:1px solid rgba(214,178,102,.4)}
+.reqm{font-size:12px;color:var(--muted);margin:-4px 0 8px}
+.reqc.st-approved,.reqc.st-rejected{opacity:.92}
+.prog{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--navh,70px) + 14px);z-index:30;background:var(--navy);color:#E3C27A;border:1px solid rgba(214,178,102,.6);
+  padding:9px 16px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+.prog[hidden]{display:none}
 .reqbar{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 12px;padding:12px 14px;border-radius:14px;cursor:pointer;
   background:linear-gradient(90deg,rgba(214,178,102,.18),rgba(214,178,102,.05));border:1px solid rgba(214,178,102,.55);color:var(--ink);font-weight:600;text-align:start}
 .reqbar span:nth-child(2){flex:1}.reqbar b{background:var(--gold);color:#1A1405;border-radius:20px;padding:1px 10px;font-size:14px}
@@ -333,6 +349,7 @@ nav.tabs button[aria-current="true"]{color:#E3C27A;font-weight:600}
     <button data-tab="props"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>العقارات</button>
 </nav>
 <div class="toast" id="toast"></div>
+<div class="prog" id="prog" hidden></div>
 
 <script>
 /* ===== بيانات ثابتة من المستندات ===== */
@@ -407,10 +424,14 @@ async function api(action,payload){
   const url=auth.url+'?action='+encodeURIComponent(action)+'&pin='+encodeURIComponent(auth.pin||'')+'&q='+encodeURIComponent(q);
   let res,text;
   try{
-    res=url.length<7500?await fetch(url,{method:'GET',cache:'no-store'})
-      :await fetch(auth.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:q});
-    text=await res.text();
-  }catch(e){throw {error:'network'};}
+    const ac=typeof AbortController!=='undefined'?new AbortController():null;
+    const tm=setTimeout(()=>ac&&ac.abort(),30000);
+    try{
+      res=url.length<7500?await fetch(url,{method:'GET',cache:'no-store',signal:ac&&ac.signal})
+        :await fetch(auth.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:q,signal:ac&&ac.signal});
+      text=await res.text();
+    }finally{clearTimeout(tm);}
+  }catch(e){throw {error:e&&e.name==='AbortError'?'timeout':'network'};}
   let j;
   try{j=JSON.parse(text);}catch(e){throw {error:'bad_response',detail:(res.status+' '+String(text||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()).slice(0,140)};}
   if(!j.ok)throw j;
@@ -420,7 +441,13 @@ function apiErr(e){
   const c=e&&e.error;
   if(c==='pin')return 'الرقم السري غلط.';
   if(c==='locked')return 'محاولات كثيرة غلط. حاول بعد ساعة.';
-  if(c==='forbidden')return 'هذا الرقم السري للعرض فقط.';
+  if(c==='forbidden')return 'ما عندك صلاحية لهذي العملية.';
+  if(c==='busy')return 'الخادم مشغول بطلب ثاني. حاول بعد ثواني.';
+  if(c==='timeout')return 'الاتصال تأخر. تأكد من الإنترنت وحاول مرة ثانية.';
+  if(c==='owned')return 'هذي الحركة باسم '+(store.agent||'الوكيل')+'، وأي تعديل عليها يحتاج موافقته.';
+  if(c==='not_owned')return 'هذي الحركة باسمك وتقدر تعدّلها مباشرة.';
+  if(c==='not_found')return 'الطلب ما عاد موجود. حدّث البيانات.';
+  if(c==='server')return 'صار خطأ في الخادم'+(e.detail?' ('+e.detail+')':'')+'.';
   if(c==='network')return 'ما فيه اتصال بالإنترنت، أو رابط الخادم غلط.';
   if(c==='no_url')return 'رابط الخادم ناقص.';
   if(c==='bad_response')return 'الخادم ما رد بشكل صحيح.'+(e.detail?' ('+e.detail+')':'');
@@ -462,6 +489,23 @@ const scroller=document.getElementById('scroller');
 function scrollTop0(){if(scroller)scroller.scrollTop=0;}
 function syncBars(){const hd=document.querySelector('header.bar'),nv=document.querySelector('nav.tabs'),r=document.documentElement.style;
   r.setProperty('--hdrh',(hd.hidden?0:hd.offsetHeight)+'px');r.setProperty('--navh',(nv.hidden?0:nv.offsetHeight)+'px');}
+/* ===== نقل حركات 2025 (قبل الرصيد الافتتاحي) من شيت Glide — مرة وحدة ===== */
+const Y25=[{"id":"y25-fd-01","date":"2025-02-23T07:23","acct":"farm","kind":"dep","amount":2400,"from":"ناصر مبارك","note":"بيع رودس عدد 12,ولف 41","hist":true,"createdAt":1740280980000,"updatedAt":1740280980000},{"id":"y25-fd-02","date":"2025-02-23T07:23","acct":"farm","kind":"dep","amount":2400,"from":"راشد مبارك","note":"بيع رودس عدد 12,ولف 41","hist":true,"createdAt":1740280980000,"updatedAt":1740280980000},{"id":"y25-fd-03","date":"2025-02-23T16:18","acct":"farm","kind":"dep","amount":24051,"from":"الفوعة","note":"بيع 285 كرتون تمر من مزرعه 8","hist":true,"createdAt":1740313080000,"updatedAt":1740313080000},{"id":"y25-fd-04","date":"2025-02-23T16:18","acct":"farm","kind":"dep","amount":38865.58,"from":"الفوعة","note":"بيع 232كرتون تمر من مزرعه41","hist":true,"createdAt":1740313080000,"updatedAt":1740313080000},{"id":"y25-fd-05","date":"2025-02-23T19:23","acct":"farm","kind":"dep","amount":2400,"from":"بيع رودس","note":"12 وألف على راشد مبارك 41","hist":true,"createdAt":1740324180000,"updatedAt":1740324180000},{"id":"y25-fd-06","date":"2025-02-23T19:23","acct":"farm","kind":"dep","amount":2400,"from":"بيع رودس","note":"12 وألف على ناصر مبارك 41","hist":true,"createdAt":1740324180000,"updatedAt":1740324180000},{"id":"y25-fd-07","date":"2025-04-25T21:25","acct":"farm","kind":"dep","amount":5980.39,"from":"حكومي","note":"الدعم الشهري41","hist":true,"createdAt":1745601900000,"updatedAt":1745601900000},{"id":"y25-fd-08","date":"2025-04-25T21:26","acct":"farm","kind":"dep","amount":5980.39,"from":"حكومي","note":"الدعم الشهري","hist":true,"createdAt":1745601960000,"updatedAt":1745601960000},{"id":"y25-fd-09","date":"2025-05-21T14:43","acct":"farm","kind":"dep","amount":17941.17,"from":"حكومي","note":"الدعم الشهري ثلاثة شهور أثر رجعي 41","hist":true,"createdAt":1747824180000,"updatedAt":1747824180000},{"id":"y25-fd-10","date":"2025-05-21T14:44","acct":"farm","kind":"dep","amount":17941.17,"from":"حكومي","note":"الدعم الشهري ثلاثة شهور أثر رجعي","hist":true,"createdAt":1747824240000,"updatedAt":1747824240000},{"id":"y25-fd-11","date":"2025-05-22T18:29","acct":"farm","kind":"dep","amount":2400,"from":"بيع رودس","note":"12 وألف على ناصر مبارك 41","hist":true,"createdAt":1747924140000,"updatedAt":1747924140000},{"id":"y25-fd-12","date":"2025-05-27T16:46","acct":"farm","kind":"dep","amount":5980.39,"from":"حكومي","note":"الدعم الشهري 41","hist":true,"createdAt":1748349960000,"updatedAt":1748349960000},{"id":"y25-fd-13","date":"2025-05-27T16:46","acct":"farm","kind":"dep","amount":5980.39,"from":"حكومي","note":"الدعم الشهري","hist":true,"createdAt":1748349960000,"updatedAt":1748349960000},{"id":"y25-fd-14","date":"2025-07-02T08:33","acct":"farm","kind":"dep","amount":5980.39,"from":"حكومي","note":"الدعم الشهري","hist":true,"createdAt":1751430780000,"updatedAt":1751430780000},{"id":"y25-fd-15","date":"2025-07-02T08:33","acct":"farm","kind":"dep","amount":5980.39,"from":"حكومي","note":"الدعم الشهري 41","hist":true,"createdAt":1751430780000,"updatedAt":1751430780000},{"id":"y25-fd-16","date":"2025-07-26T01:36","acct":"farm","kind":"dep","amount":5980.39,"from":"حكومي","note":"الدعم الشهري","hist":true,"createdAt":1753479360000,"updatedAt":1753479360000},{"id":"y25-fd-17","date":"2025-07-26T01:36","acct":"farm","kind":"dep","amount":5980.39,"from":"حكومي","note":"الدعم الشهري 41","hist":true,"createdAt":1753479360000,"updatedAt":1753479360000},{"id":"y25-fd-18","date":"2025-08-28T15:28","acct":"farm","kind":"dep","amount":5130.04,"from":"الفوعة","note":"بيع 76 كرتون تمر من مزرعه41","hist":true,"createdAt":1756380480000,"updatedAt":1756380480000},{"id":"y25-fd-19","date":"2025-08-28T15:30","acct":"farm","kind":"dep","amount":5980.39,"from":"حكومي","note":"الدعم الشهري","hist":true,"createdAt":1756380600000,"updatedAt":1756380600000},{"id":"y25-fd-20","date":"2025-08-28T15:30","acct":"farm","kind":"dep","amount":5980.39,"from":"حكومي","note":"الدعم الشهري41","hist":true,"createdAt":1756380600000,"updatedAt":1756380600000},{"id":"y25-fd-21","date":"2025-09-09T14:25","acct":"farm","kind":"dep","amount":8443.4,"from":"الفوعة","note":"بيع 94 كرتون تمر من مزرعه41","hist":true,"createdAt":1757413500000,"updatedAt":1757413500000},{"id":"y25-fd-22","date":"2025-10-25T18:48","acct":"farm","kind":"dep","amount":62916.75,"from":"الفوعة","note":"فواتير سنة 2024","hist":true,"createdAt":1761403680000,"updatedAt":1761403680000},{"id":"y25-fx-01","date":"2025-02-04T17:40","acct":"farm","kind":"exp","amount":2200,"from":"رواتب عمال","note":"عمال مزرعة 41","hist":true,"createdAt":1738676400000,"updatedAt":1738676400000},{"id":"y25-fx-02","date":"2025-02-04T17:43","acct":"farm","kind":"exp","amount":365.67,"from":"فاتورة كهرباء","note":"كهرباء مزرعة 41","hist":true,"createdAt":1738676580000,"updatedAt":1738676580000},{"id":"y25-fx-03","date":"2025-02-04T17:43","acct":"farm","kind":"exp","amount":494.19,"from":"فاتورة كهرباء","note":"فاتورة مزرعة ليوا 12","hist":true,"createdAt":1738676580000,"updatedAt":1738676580000},{"id":"y25-fx-04","date":"2025-02-04T17:46","acct":"farm","kind":"exp","amount":1200,"from":"رواتب عمال","note":"رواتب عمال ليوا","hist":true,"createdAt":1738676760000,"updatedAt":1738676760000},{"id":"y25-fx-05","date":"2025-02-04T17:46","acct":"farm","kind":"exp","amount":13.14,"from":"فاتورة كهرباء","note":"فاتورة كهرباء بيت قريمده ليوا","hist":true,"createdAt":1738676760000,"updatedAt":1738676760000},{"id":"y25-fx-06","date":"2025-02-24T14:07","acct":"farm","kind":"exp","amount":3569.03,"from":"اخراج الزكاة","note":"زكاة التمر","hist":true,"createdAt":1740391620000,"updatedAt":1740391620000},{"id":"y25-fx-07","date":"2025-02-24T14:07","acct":"farm","kind":"exp","amount":206,"from":"رسوم حكومية","note":"استخراج مخطط ارض البحر","hist":true,"createdAt":1740391620000,"updatedAt":1740391620000},{"id":"y25-fx-08","date":"2025-02-24T14:07","acct":"farm","kind":"exp","amount":2000,"from":"اغراض بناء","note":"بناء غرفة الكهرباء لعزبة البحر","hist":true,"createdAt":1740391620000,"updatedAt":1740391620000},{"id":"y25-fx-09","date":"2025-02-24T14:07","acct":"farm","kind":"exp","amount":650,"from":"للايدي العامله","note":"عمال البناء لغرفة الكهربه لعزبة البحر","hist":true,"createdAt":1740391620000,"updatedAt":1740391620000},{"id":"y25-fx-10","date":"2025-02-25T20:41","acct":"farm","kind":"exp","amount":860,"from":"رسوم حكومية","note":"تجديد ضمان يوسف مدة واحد سنة 41","hist":true,"createdAt":1740501660000,"updatedAt":1740501660000},{"id":"y25-fx-11","date":"2025-02-26T12:22","acct":"farm","kind":"exp","amount":1908,"from":"شراء مواد","note":"سياج حديدي لارض البحر","hist":true,"createdAt":1740558120000,"updatedAt":1740558120000},{"id":"y25-fx-12","date":"2025-02-28T12:51","acct":"farm","kind":"exp","amount":2200,"from":"رواتب عمال","note":"عمال مزرعة 41","hist":true,"createdAt":1740732660000,"updatedAt":1740732660000},{"id":"y25-fx-13","date":"2025-03-06T15:18","acct":"farm","kind":"exp","amount":372.33,"from":"فاتورة كهرباء","note":"كهرباء مزرعة 41","hist":true,"createdAt":1741259880000,"updatedAt":1741259880000},{"id":"y25-fx-14","date":"2025-03-25T19:55","acct":"farm","kind":"exp","amount":2200,"from":"رواتب عمال","note":"عمال مزرعة 41","hist":true,"createdAt":1742918100000,"updatedAt":1742918100000},{"id":"y25-fx-15","date":"2025-04-08T11:47","acct":"farm","kind":"exp","amount":430.5,"from":"فاتورة كهرباء","note":"فاتورة مزرعة ليوا 12","hist":true,"createdAt":1744098420000,"updatedAt":1744098420000},{"id":"y25-fx-16","date":"2025-04-08T11:48","acct":"farm","kind":"exp","amount":387.88,"from":"فاتورة كهرباء","note":"كهرباء مزرعة 41","hist":true,"createdAt":1744098480000,"updatedAt":1744098480000},{"id":"y25-fx-17","date":"2025-05-01T07:05","acct":"farm","kind":"exp","amount":26.04,"from":"فاتورة كهرباء","note":"فاتورة كهرباء بيت قريمده ليوا","hist":true,"createdAt":1746068700000,"updatedAt":1746068700000},{"id":"y25-fx-18","date":"2025-05-01T10:26","acct":"farm","kind":"exp","amount":2200,"from":"رواتب عمال","note":"عمال مزرعة 41","hist":true,"createdAt":1746080760000,"updatedAt":1746080760000},{"id":"y25-fx-19","date":"2025-05-01T10:27","acct":"farm","kind":"exp","amount":1200,"from":"رواتب عمال","note":"رواتب عمال ليوا","hist":true,"createdAt":1746080820000,"updatedAt":1746080820000},{"id":"y25-fx-20","date":"2025-05-27T18:32","acct":"farm","kind":"exp","amount":47.11,"from":"فاتورة كهرباء","note":"فاتورة كهرباء بيت قريمده ليوا","hist":true,"createdAt":1748356320000,"updatedAt":1748356320000},{"id":"y25-fx-21","date":"2025-05-31T21:39","acct":"farm","kind":"exp","amount":3785,"from":"شراء مواد","note":"المواد الزراعية بالإضافة إلى شراء غطاس الجديد 41","hist":true,"createdAt":1748713140000,"updatedAt":1748713140000},{"id":"y25-fx-22","date":"2025-05-31T21:39","acct":"farm","kind":"exp","amount":500,"from":"صيانة","note":"كهربائي تركيب الغطاس 41","hist":true,"createdAt":1748713140000,"updatedAt":1748713140000},{"id":"y25-fx-23","date":"2025-06-04T15:45","acct":"farm","kind":"exp","amount":478.36,"from":"فاتورة كهرباء","note":"كهرباء مزرعة 41","hist":true,"createdAt":1749037500000,"updatedAt":1749037500000},{"id":"y25-fx-24","date":"2025-06-04T15:46","acct":"farm","kind":"exp","amount":679.83,"from":"فاتورة كهرباء","note":"فاتورة مزرعة ليوا 12","hist":true,"createdAt":1749037560000,"updatedAt":1749037560000},{"id":"y25-fx-25","date":"2025-07-02T08:34","acct":"farm","kind":"exp","amount":1800,"from":"صيانة","note":"تنظيف البير مزرعه41","hist":true,"createdAt":1751430840000,"updatedAt":1751430840000},{"id":"y25-fx-26","date":"2025-07-02T08:35","acct":"farm","kind":"exp","amount":1200,"from":"رواتب عمال","note":"رواتب عمال ليوا","hist":true,"createdAt":1751430900000,"updatedAt":1751430900000},{"id":"y25-fx-27","date":"2025-07-02T08:35","acct":"farm","kind":"exp","amount":2200,"from":"رواتب عمال","note":"عمال مزرعة 41","hist":true,"createdAt":1751430900000,"updatedAt":1751430900000},{"id":"y25-fx-28","date":"2025-07-04T23:32","acct":"farm","kind":"exp","amount":652.52,"from":"فاتورة كهرباء","note":"فاتورة مزرعة ليوا 12","hist":true,"createdAt":1751657520000,"updatedAt":1751657520000},{"id":"y25-fx-29","date":"2025-07-04T23:32","acct":"farm","kind":"exp","amount":463.1,"from":"فاتورة كهرباء","note":"كهرباء مزرعة 41","hist":true,"createdAt":1751657520000,"updatedAt":1751657520000},{"id":"y25-fx-30","date":"2025-07-18T18:58","acct":"farm","kind":"exp","amount":800,"from":"رسوم حكومية","note":"تجديد جواز يوسف وجلال 41","hist":true,"createdAt":1752850680000,"updatedAt":1752850680000},{"id":"y25-fx-31","date":"2025-07-24T22:31","acct":"farm","kind":"exp","amount":125.27,"from":"فاتورة كهرباء","note":"فاتورة كهرباء بيت قريمده ليوا","hist":true,"createdAt":1753381860000,"updatedAt":1753381860000},{"id":"y25-fx-32","date":"2025-08-09T23:23","acct":"farm","kind":"exp","amount":2200,"from":"رواتب عمال","note":"عمال مزرعة 41","hist":true,"createdAt":1754767380000,"updatedAt":1754767380000},{"id":"y25-fx-33","date":"2025-08-09T23:24","acct":"farm","kind":"exp","amount":1200,"from":"رواتب عمال","note":"رواتب عمال ليوا","hist":true,"createdAt":1754767440000,"updatedAt":1754767440000},{"id":"y25-fx-34","date":"2025-08-28T11:54","acct":"farm","kind":"exp","amount":4567,"from":"اغراض بناء","note":"بناء غرفة كهرباء مزرعة قريمده ترميم غرفة مزرعة صري ليوا","hist":true,"createdAt":1756367640000,"updatedAt":1756367640000},{"id":"y25-fx-35","date":"2025-08-28T11:56","acct":"farm","kind":"exp","amount":499.91,"from":"فاتورة كهرباء","note":"كهرباء مزرعة 41","hist":true,"createdAt":1756367760000,"updatedAt":1756367760000},{"id":"y25-fx-36","date":"2025-08-28T12:15","acct":"farm","kind":"exp","amount":672.8,"from":"فاتورة كهرباء","note":"فاتورة مزرعة ليوا 12","hist":true,"createdAt":1756368900000,"updatedAt":1756368900000},{"id":"y25-fx-37","date":"2025-08-28T13:28","acct":"farm","kind":"exp","amount":2200,"from":"رواتب عمال","note":"عمال مزرعة 41","hist":true,"createdAt":1756373280000,"updatedAt":1756373280000},{"id":"y25-fx-38","date":"2025-08-28T13:29","acct":"farm","kind":"exp","amount":1200,"from":"رواتب عمال","note":"رواتب عمال ليوا","hist":true,"createdAt":1756373340000,"updatedAt":1756373340000},{"id":"y25-fx-39","date":"2025-09-10T16:08","acct":"farm","kind":"exp","amount":690.42,"from":"فاتورة كهرباء","note":"فاتورة مزرعة ليوا 12","hist":true,"createdAt":1757506080000,"updatedAt":1757506080000},{"id":"y25-fx-40","date":"2025-09-10T16:09","acct":"farm","kind":"exp","amount":516.68,"from":"فاتورة كهرباء","note":"كهرباء مزرعة 41","hist":true,"createdAt":1757506140000,"updatedAt":1757506140000},{"id":"y25-fx-41","date":"2025-10-09T06:15","acct":"farm","kind":"exp","amount":2200,"from":"رواتب عمال","note":"عمال مزرعة 41","hist":true,"createdAt":1759976100000,"updatedAt":1759976100000},{"id":"y25-fx-42","date":"2025-10-09T06:16","acct":"farm","kind":"exp","amount":1200,"from":"رواتب عمال","note":"رواتب عمال ليوا","hist":true,"createdAt":1759976160000,"updatedAt":1759976160000},{"id":"y25-fx-43","date":"2025-10-09T06:16","acct":"farm","kind":"exp","amount":550,"from":"رواتب عمال","note":"راتب عامل ليوا مشترك مع الورثة","hist":true,"createdAt":1759976160000,"updatedAt":1759976160000},{"id":"y25-fx-44","date":"2025-10-09T06:17","acct":"farm","kind":"exp","amount":486.82,"from":"فاتورة كهرباء","note":"كهرباء مزرعة 41","hist":true,"createdAt":1759976220000,"updatedAt":1759976220000},{"id":"y25-fx-45","date":"2025-10-25T18:48","acct":"farm","kind":"exp","amount":6000,"from":"بدل بيعة","note":"بيعة التمر لحساب علي مبارك","hist":true,"createdAt":1761403680000,"updatedAt":1761403680000},{"id":"y25-bd-01","date":"2025-02-04T17:50","acct":"bld","kind":"dep","amount":29021,"from":"حكومي","note":"البنك التجاري العقاري","hist":true,"createdAt":1738677000000,"updatedAt":1738677000000},{"id":"y25-bd-02","date":"2025-03-14T02:59","acct":"bld","kind":"dep","amount":29810,"from":"حكومي","note":"البنك التجاري العقاري","hist":true,"createdAt":1741906740000,"updatedAt":1741906740000},{"id":"y25-bd-03","date":"2025-03-29T12:10","acct":"bld","kind":"dep","amount":2000,"from":"شخصي","note":"الخياط","hist":true,"createdAt":1743235800000,"updatedAt":1743235800000},{"id":"y25-bd-04","date":"2025-04-09T23:43","acct":"bld","kind":"dep","amount":19974,"from":"حكومي","note":"البنك التجاري العقاري","hist":true,"createdAt":1744227780000,"updatedAt":1744227780000},{"id":"y25-bd-05","date":"2025-04-25T21:22","acct":"bld","kind":"dep","amount":39044.79,"from":"حكومي","note":"البنك التجاري العقاري","hist":true,"createdAt":1745601720000,"updatedAt":1745601720000},{"id":"y25-bd-06","date":"2025-05-29T16:20","acct":"bld","kind":"dep","amount":18281,"from":"حكومي","note":"البنك التجاري العقاري","hist":true,"createdAt":1748521200000,"updatedAt":1748521200000},{"id":"y25-bd-07","date":"2025-07-02T08:17","acct":"bld","kind":"dep","amount":17517,"from":"حكومي","note":"البنك التجاري العقاري","hist":true,"createdAt":1751429820000,"updatedAt":1751429820000},{"id":"y25-bd-08","date":"2025-07-26T01:39","acct":"bld","kind":"dep","amount":33158.39,"from":"حكومي","note":"البنك التجاري العقاري","hist":true,"createdAt":1753479540000,"updatedAt":1753479540000},{"id":"y25-bd-09","date":"2025-08-28T15:27","acct":"bld","kind":"dep","amount":26124.75,"from":"حكومي","note":"البنك التجاري العقاري","hist":true,"createdAt":1756380420000,"updatedAt":1756380420000}];
+async function importY25(){
+  if(!store.canWrite||importY25.run)return;
+  const have=new Set(state.txs.map(t=>t.id)),todo=Y25.filter(t=>!have.has(t.id));
+  if(!todo.length)return;
+  importY25.run=true;const p=document.getElementById('prog');let done=0,fail=0;
+  for(const t of todo){
+    p.hidden=false;p.textContent='جاري نقل حركات 2025 من Glide: '+(done+fail+1)+' من '+todo.length;
+    let ok=false;
+    for(let k=0;k<3&&!ok;k++){try{await api('put',{tx:t});ok=true;}catch(e){await new Promise(r=>setTimeout(r,1500*(k+1)));}}
+    if(ok){done++;state.txs.push(Object.assign({},t));}else fail++;
+  }
+  p.hidden=true;importY25.run=false;
+  toast(fail?'انتقلت '+done+' حركة، و'+fail+' تعذّرت وبتنتقل المرة الجاية':'تم نقل '+done+' حركة من سنة 2025');
+  try{await store.refresh();}catch(e){}
+}
 const store={
   mode:'login',canWrite:false,role:null,loadedAt:0,
   async init(){
@@ -476,13 +520,18 @@ const store={
     if(j.cfg)notif.cfg=j.cfg;
     if(!isForm())render();
     // إصلاح تلقائي: أرقام قرأها الشيت كتواريخ، يرجّعها أرقام مرة وحدة
+    if(this.canWrite)setTimeout(importY25,600);
     if(this.canWrite&&broken.length&&!this.repaired){this.repaired=true;for(const t of broken){try{await api('put',{tx:t});}catch(e){}}}
   },
   async put(t){
-    if(this.isAgent){const j=await api('propose',{op:'put',tx:t});state.reqs.push({rid:j.id,op:'put',id:t.id,tx:t,by:this.agent,at:Date.now()});return 'req';}
-    await api('put',{tx:t});const i=state.txs.findIndex(x=>x.id===t.id);if(i>=0)state.txs[i]=t;else state.txs.push(t);},
+    const old=state.txs.find(x=>x.id===t.id);
+    if(this.isAgent){await api('propose',{op:'put',tx:t});return 'req';}
+    if(old&&old.owner==='agent'){await api('propose',{op:'put',tx:t});return 'req2';}
+    await api('put',{tx:t});const i=state.txs.findIndex(x=>x.id===t.id);if(i>=0)state.txs[i]=Object.assign({},t,{owner:old&&old.owner});else state.txs.push(t);},
   async del(id){
-    if(this.isAgent){const j=await api('propose',{op:'del',id});state.reqs.push({rid:j.id,op:'del',id,tx:null,by:this.agent,at:Date.now()});return 'req';}
+    const old=state.txs.find(x=>x.id===id);
+    if(this.isAgent){await api('propose',{op:'del',id});return 'req';}
+    if(old&&old.owner==='agent'){await api('propose',{op:'del',id});return 'req2';}
     await api('del',{id});state.txs=state.txs.filter(x=>x.id!==id);}
 };
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&Date.now()-store.loadedAt>20000)store.refresh().catch(()=>{});});
@@ -496,6 +545,7 @@ const prefs=Object.assign({fs:1,ns:1,swipe:true,lock:false,notify:true},(()=>{tr
 function applyPrefs(){const a=document.getElementById('app');if(a)a.style.zoom=prefs.fs;document.documentElement.style.setProperty('--ns',prefs.ns);document.documentElement.style.setProperty('--fs',prefs.fs);}
 function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify(prefs))}catch(e){}applyPrefs();}
 const adminView=()=>store.canWrite;
+const needsOk=t=>store.isAgent||(store.canWrite&&t&&t.owner==='agent');
 const canEditNow=()=>store.canWrite||store.isAgent;
 state.reqs=[];
 
@@ -548,6 +598,7 @@ const I={
   wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7a2 2 0 0 1 2-2h11v4"/><path d="M4 7v11a2 2 0 0 0 2 2h14V9H6a2 2 0 0 1-2-2z"/><circle cx="16" cy="14.5" r="1.3" fill="currentColor"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg>',
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg>',
+  refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.35-5.65"/><path d="M20 4v5h-5"/></svg>',
   chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--muted)"><path d="M15 6l-6 6 6 6"/></svg>'
 };
 const markSvg='<svg viewBox="110 40 414 380" aria-hidden="true"><defs><linearGradient id="wg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6E0A6"/><stop offset=".55" stop-color="#D9B76E"/><stop offset="1" stop-color="#B08A44"/></linearGradient><linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EDD290"/><stop offset="1" stop-color="#B8913F"/></linearGradient></defs><g fill="url(#wg1)"><polygon points="128,48 164,72 164,352 128,384"/><polygon points="506,48 470,72 470,352 506,384"/><polygon points="200,114 236,136 236,382 200,412"/><polygon points="434,114 398,136 398,382 434,412"/></g><g fill="none" stroke-linejoin="miter" stroke-miterlimit="10"><polyline points="146,372 317,226 488,372" stroke="url(#wg2)" stroke-width="36"/><polyline points="218,402 317,316 416,402" stroke="url(#wg2)" stroke-width="34"/></g></svg>';
@@ -559,6 +610,7 @@ V.home=()=>{
   const recent=state.txs.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,1);
   return {title:'الرئيسي',html:`<div class="home">
   <div class="banner lux"><button class="iconbtn bgear" data-act="settings" aria-label="الإعدادات">${I.gear}</button>
+    <button class="iconbtn bref" data-act="refresh" aria-label="تحديث البيانات">${I.refresh}</button>
     <div class="mark">${markSvg}<span>WAREETH</span></div>
     <div class="orn" aria-hidden="true"><i></i><b>◆</b><i></i></div>
     <h2>أهلاً بكم في تطبيق وريث</h2><p>ورثة مبارك علي القصيلي</p></div>
@@ -566,7 +618,7 @@ V.home=()=>{
     <div class="big"><span class="num">${fmt(r.total)}</span> <small>د.إ</small></div>
     <div class="upd">${r.last?'آخر تحديث: '+esc(new Date(r.last).toLocaleString('ar-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'numeric',minute:'2-digit'})):(store.mode==='nodb'?'سجّل دخولك في Claude عشان تظهر البيانات.':'ابدأ بإضافة أول إيداع من حساب البناية أو المزارع.')}</div>
     ${splitBar(r)}</div>
-  ${(store.canWrite||store.isAgent)&&state.reqs.length?`<button class="reqbar" data-go="reqs"><span class="dotp"></span><span>${store.canWrite?'طلبات بانتظار اعتمادك':'طلباتك بانتظار اعتماد المدير'}</span><b class="num">${state.reqs.length}</b>${I.chev}</button>`:''}
+  ${(()=>{const q=reqSummary();return q?`<button class="reqbar${q.hot?'':' cool'}" data-go="reqs"><span class="dotp"></span><span>${esc(q.text)}</span><b class="num">${q.n}</b>${I.chev}</button>`:''})()}
   <div class="tiles">
     <button class="tile" data-go="acct" data-k="${prefs.lastAcct==='farm'?'farm':'bld'}"><span class="ic">${I.wallet}</span><span>الحسابات</span><small>${adminView()?'إيداع وخصم':'الأرصدة'}</small></button>
     <button class="tile" data-go="moves"><span class="ic">${I.list}</span><span>آخر الحركات</span><small>${recent[0]?esc(KIND[recent[0].kind])+' · '+esc(dShort(recent[0].date)):'لا يوجد'}</small></button>
@@ -588,19 +640,40 @@ V.moves=(p)=>{
   ${list.length?`<div class="actions"><button class="ghost" data-act="mv-export">تصدير القائمة</button></div>`:''}`};
 };
 V.reqs=()=>{
-  const list=state.reqs.slice().sort((a,b)=>(b.at||0)-(a.at||0)),admin=store.canWrite;
-  const card=r=>{
+  const me=store.canWrite?'admin':'agent',other=store.canWrite?(store.agent||'الوكيل'):'المدير';
+  const toMe=state.reqs.filter(r=>r.by!==me&&r.status==='pending').sort((a,b)=>(b.at||0)-(a.at||0));
+  const mine=state.reqs.filter(r=>r.by===me).sort((a,b)=>(b.at||0)-(a.at||0));
+  const when=ms=>ms?new Date(ms).toLocaleString('ar-u-nu-latn',{day:'numeric',month:'long',hour:'numeric',minute:'2-digit'}):'';
+  const card=(r,forMe)=>{
     const old=state.txs.find(x=>x.id===r.id),t=r.op==='del'?old:r.tx;
-    const label=r.op==='del'?'حذف حركة':old?'تعديل حركة':'إضافة '+(t?KIND[t.kind]:'');
-    const lines=t?txLines(t):['الحركة غير موجودة'];
-    const was=r.op!=='del'&&old&&+old.amount!==+(t&&t.amount)?`<div class="m" style="color:var(--muted);font-size:13px">المبلغ قبل التعديل: <span class="num">${fmt(old.amount)}</span></div>`:'';
-    return `<div class="card reqc"><div class="reqh"><b>${esc(label)}</b><span class="m">${esc(r.by||'')} · ${esc(r.at?new Date(r.at).toLocaleString('ar-u-nu-latn',{day:'numeric',month:'long',hour:'numeric',minute:'2-digit'}):'')}</span></div>
+    const isEdit=r.op!=='del'&&r.tx&&(r.status==='pending'?!!old:(+r.tx.createdAt||0)<(+r.at||0)-60000);
+    const label=r.op==='del'?'حذف حركة':isEdit?'تعديل حركة':'إضافة '+(t?KIND[t.kind]:'');
+    const lines=t?txLines(t):['الحركة ما عادت موجودة'];
+    const was=r.op!=='del'&&r.status==='pending'&&old&&+old.amount!==+(t&&t.amount)?`<div class="m" style="color:var(--muted);font-size:13px">المبلغ الحالي قبل التعديل: <span class="num">${fmt(old.amount)}</span></div>`:'';
+    const st=r.status==='approved'?`<span class="stb ok">✓ معتمد</span>`:r.status==='rejected'?`<span class="stb no">✕ مرفوض</span>`:`<span class="stb wait">بانتظار ${forMe?'قرارك':other}</span>`;
+    const btns=forMe?`<button class="mbtn gold" data-act="req-ok" data-id="${esc(r.rid)}"><span class="l">${store.canWrite?'اعتماد':'موافقة'}</span></button><button class="ghost" data-act="req-no" data-id="${esc(r.rid)}">رفض</button>`
+      :`<button class="ghost" data-act="req-dismiss" data-id="${esc(r.rid)}">${r.status==='pending'?'إلغاء الطلب':'إزالة من القائمة'}</button>`;
+    return `<div class="card reqc st-${esc(r.status)}"><div class="reqh"><b>${esc(label)}</b>${st}</div>
+      <div class="m reqm">${esc(r.byName||'')} · ${esc(when(r.at))}${r.decidedAt?' · القرار: '+esc(when(r.decidedAt)):''}</div>
       <div class="reql">${lines.map(l=>`<div>${esc(l)}</div>`).join('')}</div>${was}
-      <div class="actions">${admin?`<button class="mbtn gold" data-act="req-ok" data-id="${esc(r.rid)}"><span class="l">اعتماد</span></button><button class="ghost" data-act="req-no" data-id="${esc(r.rid)}">رفض</button>`
-        :`<button class="ghost" data-act="req-cancel" data-id="${esc(r.rid)}">إلغاء الطلب</button>`}</div></div>`;
+      <div class="actions">${btns}</div></div>`;
   };
-  return {title:'بانتظار الاعتماد',html:list.length?list.map(card).join(''):`<p class="empty">${admin?'ما فيه طلبات تنتظر اعتمادك.':'ما عندك طلبات معلّقة.'}</p>`};
+  let h='';
+  if(toMe.length)h+=`<h3 class="sec">${store.canWrite?'بانتظار اعتمادك':'بانتظار موافقتك'} (${toMe.length})</h3>`+toMe.map(r=>card(r,true)).join('');
+  if(mine.length)h+=`<h3 class="sec">طلباتك</h3>`+mine.map(r=>card(r,false)).join('');
+  if(!h)h='<p class="empty">ما فيه طلبات.</p>';
+  return {title:'الطلبات',html:h};
 };
+function reqSummary(){
+  if(!(store.canWrite||store.isAgent))return null;
+  const me=store.canWrite?'admin':'agent';
+  const act=state.reqs.filter(r=>r.by!==me&&r.status==='pending').length;
+  const mine=state.reqs.filter(r=>r.by===me);
+  if(act)return {hot:true,text:store.canWrite?'طلبات بانتظار اعتمادك':'طلبات بانتظار موافقتك',n:act};
+  if(!mine.length)return null;
+  const ok=mine.filter(r=>r.status==='approved').length,no=mine.filter(r=>r.status==='rejected').length,w=mine.length-ok-no;
+  return {hot:false,text:'طلباتك: '+[w?w+' بالانتظار':'',ok?ok+' معتمد':'',no?no+' مرفوض':''].filter(Boolean).join(' · '),n:mine.length};
+}
 function statusText(){
   if(store.mode==='api'&&store.isAgent) return 'دخلت كوكيل: أي حركة تضيفها أو تعدّلها تنتظر اعتماد المدير.';
   if(store.mode==='api') return adminView()?'أنت مدير التطبيق: تقدر تضيف وتعدّل. الورثة اللي تشاركهم يشوفون فقط.':'عرض فقط. التعديل لمدير التطبيق.';
@@ -622,7 +695,7 @@ function splitBar(r){
     </div></div>`;
 }
 function txRow(t){
-  const k=ACCTS[t.acct]?ACCTS[t.acct].short:'';
+  const k=(ACCTS[t.acct]?ACCTS[t.acct].short:'')+(t.hist&&t.acct!=='old'?' · سابق':'');
   const sign=t.kind==='dep'?'+':'−', cls=t.kind==='dep'?'in':'out';
   let who=t.kind==='dist'?Object.keys(t.alloc||{}).filter(h=>+t.alloc[h]>0).length+' ورثة':(t.from||'');
   if(t.kind==='dep'&&t.prop&&P[t.prop]&&t.acct==='farm') who=(who?who+' · ':'')+P[t.prop].name;
@@ -722,8 +795,10 @@ V.tx=({id})=>{
   ${allocRows}
   ${t.note?`<div class="field"><div class="k">ملحوظة</div><div class="v" style="font-size:16px;font-weight:400">${esc(t.note)}</div></div>`:''}
   ${rcpt}
-  ${t.hist?'<p class="note">توزيع سابق منقول من تطبيق Glide. مبلغه محسوب ضمن الرصيد الافتتاحي، فما يأثر على الرصيد الحالي.</p>':''}
-  ${canEditNow()?`<div class="actions"><button class="ghost" data-act="edit" data-id="${esc(t.id)}">تعديل</button><button class="ghost danger" data-act="del" data-id="${esc(t.id)}">حذف</button></div>`:''}
+  ${t.hist?`<p class="note">${t.kind==='dist'?'توزيع سابق':'حركة سابقة (قبل نوفمبر 2025)'} منقولة من تطبيق Glide. محسوبة ضمن الرصيد الافتتاحي، فما تأثر على الرصيد الحالي، لكنها تظهر في السجل والتقارير.</p>`:''}
+  ${t.owner==='agent'?`<p class="note">🔒 هذي الحركة باسم ${esc(store.agent||'الوكيل')}${store.canWrite?'، وأي تعديل أو حذف منك ينرسل له طلب ويحتاج موافقته.':'.'}</p>`:''}
+  ${state.reqs.some(r=>r.id===t.id&&r.status==='pending')?'<p class="note">⏳ عليها طلب معلّق بانتظار القرار.</p>':''}
+  ${canEditNow()?`<div class="actions"><button class="ghost" data-act="edit" data-id="${esc(t.id)}">${needsOk(t)?'طلب تعديل':'تعديل'}</button><button class="ghost danger" data-act="del" data-id="${esc(t.id)}">${needsOk(t)?'طلب حذف':'حذف'}</button></div>`:''}
   ${adminView()?`<div class="actions" style="margin-top:10px"><button class="ghost" data-act="notify" data-id="${esc(t.id)}">إشعار الورثة بهذي الحركة</button></div>`:''}`};
 };
 V.props=()=>({title:'العقارات',html:PROPS.map(p=>`<div class="card prop">
@@ -747,6 +822,7 @@ function monthData(acct,year){
   const m=Array.from({length:12},()=>({dep:0,exp:0,dist:0,n:0}));
   const heirs=Object.fromEntries(HEIRS.map(h=>[h.id,0]));
   state.txs.forEach(t=>{
+    if(t.from==='رصيد افتتاحي')return; // الرصيد الافتتاحي مو إيداع فعلي
     if(acct!=='all'&&t.acct!==acct)return;
     if(!(t.date||'').startsWith(year))return;
     const i=+(t.date.slice(5,7))-1;if(!(i>=0&&i<12))return;
@@ -864,15 +940,16 @@ function expCats(){
   BASE_CATS.forEach(c=>{const k=normCat(c);if(!cnt.has(k))cnt.set(k,{label:c,n:0});});
   return [...cnt.values()].sort((a,b)=>b.n-a.n).map(x=>x.label);
 }
-function catSelect(f){
-  const cats=expCats();
+const DEP_FROM={bld:['خاص','حكومي','شركة إيفرستون'],farm:['حكومي','خاص','الفوعة']};
+function catSelect(f,cats,label,first,ph){
+  cats=cats||expCats();label=label||'الجهة أو البند';first=first||'اختر البند';ph=ph||'اكتب اسم البند';
   const inList=f.from&&cats.some(c=>normCat(c)===normCat(f.from));
   const other=f.other||(f.from&&!inList);
-  return `<label class="k" for="fCat">الجهة أو البند</label>
-  <select id="fCat"><option value=""${!f.from&&!other?' selected':''}>اختر البند</option>
+  return `<label class="k" for="fCat">${label}</label>
+  <select id="fCat"><option value=""${!f.from&&!other?' selected':''}>${first}</option>
     ${cats.map(c=>`<option value="${esc(c)}"${!other&&inList&&normCat(c)===normCat(f.from)?' selected':''}>${esc(c)}</option>`).join('')}
-    <option value="__other"${other?' selected':''}>أخرى (اكتب بند جديد)…</option></select>
-  ${other?`<input id="fFrom" style="margin-top:8px" placeholder="اكتب اسم البند" value="${esc(f.from)}">`:''}`;
+    <option value="__other"${other?' selected':''}>أخرى…</option></select>
+  ${other?`<input id="fFrom" style="margin-top:8px" placeholder="${ph}" value="${esc(f.from)}">`:''}`;
 }
 
 V.loading=()=>({title:'وريث',html:`<div class="gate"><div class="gmark">${markSvg}<span>WAREETH</span></div><p class="m" style="color:var(--muted)">جاري التحميل…</p></div>`});
@@ -910,7 +987,7 @@ V.form=()=>{
   let body='';
   if(f.kind==='dep'){
     body=`<label class="k" for="fAmt">المبلغ (د.إ)</label><input id="fAmt" inputmode="decimal" placeholder="0.00" value="${esc(f.amount)}">
-    <label class="k" for="fFrom">من</label><input id="fFrom" placeholder="مثال: إيجار محل – شميم" value="${esc(f.from)}">
+    ${catSelect(f,DEP_FROM[f.acct]||DEP_FROM.bld,'من','اختر الجهة','')}
     ${f.acct==='farm'?`<label class="k" for="fProp">العقار</label><select id="fProp"><option value="">عام</option>${PROPS.filter(p=>p.acct==='farm').map(p=>`<option value="${p.id}"${f.prop===p.id?' selected':''}>${esc(p.name)}</option>`).join('')}</select>`:''}
     ${common}`;
   } else {
@@ -989,7 +1066,7 @@ async function save(btn){
   if(old&&old.src)t.src=old.src;
   btn.disabled=true;
   try{const res=await store.put(t);
-    if(res==='req'){toast('انرسل الطلب لاعتماد المدير');state.form=null;state.stack.pop();go('reqs');return;}
+    if(res==='req'||res==='req2'){toast(res==='req'?'انرسل الطلب لاعتماد المدير':'انرسل الطلب لموافقة '+(store.agent||'الوكيل'));state.form=null;state.stack.pop();store.refresh().catch(()=>{});go('reqs');return;}
     scheduleSync();toast(old?'تم حفظ التعديل':'تم الحفظ');state.form=null;state.stack.pop();
     if(!old){state.stack.push({v:'tx',id:t.id});} render();scrollTop0();
     {const list=state.txs.filter(x=>x.id!==t.id).concat([t]);afterChange(old?'edit':'new',t,list);}}
@@ -1044,35 +1121,33 @@ document.addEventListener('click',async e=>{
   if(d.act==='rm-receipt'){readForm();state.form.receipt=null;render();return;}
   if(d.act==='save'){save(b);return;}
   if(d.act==='settings'){go('settings');return;}
-  if(d.act==='req-ok'||d.act==='req-no'||d.act==='req-cancel'){
-    const r=state.reqs.find(x=>x.rid===d.id);if(!r)return;
-    if(d.act!=='req-ok'&&!(await ask(d.act==='req-no'?'رفض الطلب؟':'إلغاء الطلب؟','الحركة ما راح تنضاف للحساب.',d.act==='req-no'?'رفض':'إلغاء الطلب')))return;
-    b.disabled=true;
+  if(d.act==='req-ok'||d.act==='req-no'||d.act==='req-dismiss'){
+    const r=state.reqs.find(x=>x.rid===d.id);if(!r){store.refresh().then(render).catch(()=>{});return;}
+    if(d.act==='req-no'&&!(await ask('رفض الطلب؟','الحركة ما راح تتغير، والطلب يظهر لصاحبه إنه مرفوض.','رفض')))return;
+    if(d.act==='req-dismiss'&&r.status==='pending'&&!(await ask('إلغاء الطلب؟','الطلب ينشال وما يوصل للاعتماد.','إلغاء الطلب')))return;
+    const card=b.closest('.reqc');if(card)card.querySelectorAll('button').forEach(x=>x.disabled=true);
+    const lbl=b.innerHTML;b.innerHTML='<span class="l">جاري…</span>';
+    const old=state.txs.find(x=>x.id===r.id);
     try{
-      if(d.act==='req-ok'){
-        const old=state.txs.find(x=>x.id===r.id);
-        await api('approve',{rid:r.rid});await store.refresh();
+      const res=await api(d.act==='req-ok'?'approve':d.act==='req-no'?'reject':'dismiss',{rid:r.rid});
+      await store.refresh();render();
+      if(d.act==='req-ok'&&!(res&&res.already)){
         const t=r.op==='del'?old:r.tx;
-        if(t)afterChange(r.op==='del'?'del':old?'edit':'new',t,state.txs);
-        toast('تم الاعتماد');
-      }else{await api(d.act==='req-no'?'reject':'cancel',{rid:r.rid});state.reqs=state.reqs.filter(x=>x.rid!==r.rid);toast(d.act==='req-no'?'تم رفض الطلب':'تم إلغاء الطلب');}
+        if(t){const action=r.op==='del'?'del':old?'edit':'new';
+          if(store.canWrite)afterChange(action,t,state.txs,true);
+          else api('notify',{subject:notifySubject(action,t),body:notifyMsg(action,t,state.txs)}).catch(()=>{});}
+      }
+      toast(d.act==='req-ok'?(res&&res.already?'الطلب كان معتمد من قبل':store.isAgent?'تمت الموافقة':'تم الاعتماد'):d.act==='req-no'?'تم رفض الطلب':'تمت الإزالة');
+    }catch(e){
+      toast(apiErr(e));
+      try{await store.refresh();}catch(x){}
       render();
-    }catch(e){toast(apiErr(e));b.disabled=false;}
+    }
     return;
   }
-  if(d.act==='login'){
-    const u=document.getElementById('lUrl'),p=document.getElementById('lPin');
-    if(u){const v=u.value.trim();if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(v)){document.getElementById('lErr').textContent='الصق رابط النشر اللي يبدأ بـ https://script.google.com';return;}auth.url=v;auth.custom=true;}
-    auth.pin=(p.value||'').trim();if(!auth.pin){document.getElementById('lErr').textContent='اكتب الرقم السري.';return;}
-    b.disabled=true;state.loginErr='';saveAuth();
-    try{store.mode='loading';render();await store.refresh(true);state.stack=[{v:'home'}];render();toast(store.canWrite?'أهلاً، دخلت كمدير':'أهلاً بك');}
-    catch(e){auth.pin='';saveAuth();store.mode='login';state.loginErr=apiErr(e);render();}
-    return;
-  }
-  if(d.act==='retry'){store.init();return;}
-  if(d.act==='reset-url'){auth.url='';auth.custom=true;saveAuth();render();return;}
-  if(d.act==='logout'){auth.pin='';saveAuth();store.mode='login';store.canWrite=false;state.txs=[];state.loginErr='';state.stack=[{v:'home'}];render();return;}
-  if(d.act==='refresh'){try{await store.refresh();toast('تم تحديث البيانات');}catch(e){toast(apiErr(e));}return;}
+  if(d.act==='refresh'){if(b.classList.contains('spin'))return;b.classList.add('spin');
+    try{await store.refresh();render();toast('تم تحديث البيانات');}catch(e){toast(apiErr(e));}
+    finally{const x=document.querySelector('.bref');if(x)x.classList.remove('spin');b.classList.remove('spin');}return;}
   if(d.act==='share-link'){
     const link=location.origin+location.pathname+'#api='+encodeURIComponent(auth.url);
     try{await navigator.clipboard.writeText(link);toast('تم نسخ رابط الورثة');}catch(x){prompt('انسخ الرابط:',link);}
@@ -1096,7 +1171,7 @@ document.addEventListener('click',async e=>{
   if(d.act==='del'){
     const t=state.txs.find(x=>x.id===d.id);if(!t)return;
     if(!(await ask('حذف هذه الحركة؟',`${KIND[t.kind]} بمبلغ ${fmt(t.amount)} د.إ بتاريخ ${dShort(t.date)}. ما تقدر ترجعها بعد الحذف.`,'حذف')))return;
-    try{const res=await store.del(d.id);if(res==='req'){toast('انرسل طلب الحذف لاعتماد المدير');back();return;}scheduleSync();if(t&&t.receipt&&t.receipt.id&&assetsApi)assetsApi.delete(t.receipt.id).catch(()=>{});toast('تم الحذف');back();
+    try{const res=await store.del(d.id);if(res==='req'||res==='req2'){toast(res==='req'?'انرسل طلب الحذف لاعتماد المدير':'انرسل طلب الحذف لموافقة '+(store.agent||'الوكيل'));back();store.refresh().then(render).catch(()=>{});return;}scheduleSync();if(t&&t.receipt&&t.receipt.id&&assetsApi)assetsApi.delete(t.receipt.id).catch(()=>{});toast('تم الحذف');back();
       afterChange('del',t,state.txs.filter(x=>x.id!==t.id));}
     catch(x){toast('تعذّر الحذف');}
     return;
@@ -1204,13 +1279,13 @@ function notifySubject(action,t){
   const base=t.kind==='dep'?`إيداع ${fmt(t.amount)} د.إ في ${A.name}`:t.kind==='exp'?`مصروف ${fmt(t.amount)} د.إ من ${A.name}`:`توزيع ${fmt(t.amount)} د.إ على الورثة`;
   return 'وريث: '+(action==='edit'?'تعديل – ':action==='del'?'حذف – ':'')+base;
 }
-async function afterChange(action,t,list){
+async function afterChange(action,t,list,quiet){
   const text=notifyMsg(action,t,list),cfg=notif.cfg;
   if(cfg&&cfg.auto&&Array.isArray(cfg.emails)&&cfg.emails.length){
     try{const j=await api('notify',{subject:notifySubject(action,t),body:text});if(j.sent){toast('وصل الإشعار للورثة بالإيميل');return;}}
     catch(e){toast('ما انرسل الإيميل: '+apiErr(e));}
   }
-  if(prefs.notify)setTimeout(()=>openNotify(text),350);
+  if(prefs.notify&&!quiet)setTimeout(()=>openNotify(text),350);
 }
 function emailCard(){
   const c=notif.cfg||{},list=(c.emails||[]).join('\n');
