@@ -350,6 +350,9 @@ nav.tabs button[aria-current="true"]{color:#E3C27A;font-weight:600}
 .loadbox{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:22px;color:var(--muted)}
 .gate .gmark svg{animation:breathe 2.4s ease-in-out infinite}
 @keyframes breathe{0%,100%{filter:drop-shadow(0 0 0 rgba(214,178,102,0));transform:scale(1)}50%{filter:drop-shadow(0 6px 18px rgba(214,178,102,.35));transform:scale(1.03)}}
+.sumrow small.mav{display:block;font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap}
+.sumrow small.mav .num{font-size:11px;display:inline-block}
+.sumrow small.mav span{display:inline}
 .sumnote{font-size:12px;color:var(--muted);margin:-4px 2px 0;line-height:1.6}
 .sumnote b{color:var(--ink);font-weight:700}
 .pdfic{width:58px;height:70px;margin:14px auto 4px;border-radius:8px;background:linear-gradient(180deg,#C9473A,#9E3127);color:#fff;font-weight:800;display:grid;place-items:center;letter-spacing:.06em;box-shadow:0 8px 18px rgba(158,49,39,.3)}
@@ -492,6 +495,7 @@ function apiErr(e){
   if(c==='timeout')return 'الاتصال تأخر. تأكد من الإنترنت وحاول مرة ثانية.';
   if(c==='owned')return 'هذي الحركة باسم '+(store.agent||'الوكيل')+'، وأي تعديل عليها يحتاج موافقته.';
   if(c==='not_owned')return 'هذي الحركة باسمك وتقدر تعدّلها مباشرة.';
+  if(c==='closed')return 'هذي الفترة مقفولة (لين '+dShort(lockOf())+')، فما تنعدّل حركاتها إلا إذا المدير فتح السنة.';
   if(c==='not_found')return 'الطلب ما عاد موجود. حدّث البيانات.';
   if(c==='server')return 'صار خطأ في الخادم'+(e.detail?' ('+e.detail+')':'')+'.';
   if(c==='network')return 'ما فيه اتصال بالإنترنت، أو رابط الخادم غلط.';
@@ -571,7 +575,7 @@ const store={
   async refresh(first){
     const j=await api('list');
     state.txs=(j.txs||[]);
-    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'}));this.ver=+j.v||1;this.agent=j.agent||'الوكيل';this.mode='api';this.loadedAt=Date.now();
+    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'}));this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';this.agent=j.agent||'الوكيل';this.mode='api';this.loadedAt=Date.now();
     if(j.cfg)notif.cfg=j.cfg;
     if(!isForm())render();
     // إصلاح تلقائي: أرقام قرأها الشيت كتواريخ، يرجّعها أرقام مرة وحدة
@@ -655,6 +659,7 @@ const I={
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg>',
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg>',
   refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.35-5.65"/><path d="M20 4v5h-5"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
   chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--muted)"><path d="M15 6l-6 6 6 6"/></svg>'
 };
 const markSvg='<svg viewBox="110 40 414 380" aria-hidden="true"><defs><linearGradient id="wg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6E0A6"/><stop offset=".55" stop-color="#D9B76E"/><stop offset="1" stop-color="#B08A44"/></linearGradient><linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EDD290"/><stop offset="1" stop-color="#B8913F"/></linearGradient></defs><g fill="url(#wg1)"><polygon points="128,48 164,72 164,352 128,384"/><polygon points="506,48 470,72 470,352 506,384"/><polygon points="200,114 236,136 236,382 200,412"/><polygon points="434,114 398,136 398,382 434,412"/></g><g fill="none" stroke-linejoin="miter" stroke-miterlimit="10"><polyline points="146,372 317,226 488,372" stroke="url(#wg2)" stroke-width="36"/><polyline points="218,402 317,316 416,402" stroke="url(#wg2)" stroke-width="34"/></g></svg>';
@@ -670,11 +675,11 @@ V.home=()=>{
     <div class="mark">${markSvg}<span>WAREETH</span></div>
     <div class="orn" aria-hidden="true"><i></i><b>◆</b><i></i></div>
     <h2>أهلاً بكم في تطبيق وريث</h2><p>ورثة مبارك علي القصيلي</p></div>
-  <div class="hero"><div class="lbl">رصيد الحساب</div>
+  <div class="hero"><div class="lbl">الرصيد المتاح الآن</div>
     <div class="big"><span class="num">${fmt(r.total)}</span> <small>د.إ</small></div>
     <div class="upd">${r.last?'آخر تحديث: '+esc(new Date(r.last).toLocaleString('ar-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'numeric',minute:'2-digit'})):(store.mode==='nodb'?'سجّل دخولك في Claude عشان تظهر البيانات.':'ابدأ بإضافة أول إيداع من حساب البناية أو المزارع.')}</div>
     ${splitBar(r)}</div>
-  ${store.canWrite&&store.ver<3?`<div class="note warnbox">⚠️ الخادم شغّال على نسخة قديمة، فحالة الطلبات وحماية حركات ${esc(store.agent||'الوكيل')} ما تشتغل. انسخ آخر كود Code.gs وانشر <b>إصدار جديد</b> على نفس عملية النشر.</div>`:''}
+  ${store.canWrite&&store.ver<4?`<div class="note warnbox">⚠️ الخادم شغّال على نسخة قديمة، فالإقفال السنوي ما يشتغل${store.ver<3?'، ولا حالة الطلبات وحماية حركات '+esc(store.agent||'الوكيل'):''}. حدّث كود الخادم وانشر <b>إصدار جديد</b> على نفس عملية النشر.</div>`:''}
   ${(()=>{const q=reqSummary();return q?`<button class="reqbar${q.hot?'':' cool'}" data-go="reqs"><span class="dotp"></span><span>${esc(q.text)}</span><b class="num">${q.n}</b>${I.chev}</button>`:''})()}
   <div class="tiles">
     <button class="tile" data-go="acct" data-k="${prefs.lastAcct==='farm'?'farm':'bld'}"><span class="ic">${I.wallet}</span><span>الحسابات</span><small>${adminView()?'إيداع وخصم':'الأرصدة'}</small></button>
@@ -687,13 +692,13 @@ V.moves=(p)=>{
   const f=p.f||'all',ty=p.t||'all';
   const list=state.txs.filter(t=>(f==='all'||t.acct===f)&&(ty==='all'||(ty==='dep'?t.kind==='dep':t.kind!=='dep')))
     .sort((a,b)=>byDate(b,a));
-  const sm=moveSums(list),tin=sm.tin,tout=sm.tout;
+  const sm=moveSums(list),tin=sm.tin,tout=sm.tout,mav=monthlyAvg(list);
   const seg=(key,opts,cur)=>`<div class="seg seg3">${opts.map(([k,l])=>`<button data-mv="${key}:${k}" aria-pressed="${k===cur}">${l}</button>`).join('')}</div>`;
   return {title:'سجل الحركات',html:`
   <div class="stick">${seg('f',[['all','الحسابين'],['bld','البناية'],['farm','المزارع']],f)}
   ${seg('t',[['all','الكل'],['dep','إيداعات'],['out','مصروفات']],ty)}
-  <div class="sumrow"><div><span>العدد</span><b class="num">${list.length}</b></div><div><span>داخل</span><b class="num in">${fmt(tin)}</b></div><div><span>خارج</span><b class="num out">${fmt(tout)}</b></div></div>
-  ${ty==='all'||sm.nh?`<div class="sumnote">${ty==='all'?`الصافي <b class="num">${fmt(tin-tout)}</b>${f==='all'?' = الرصيد الحالي':' = رصيد '+ACCTS[f].short}`:''}${sm.nh?`${ty==='all'?'<br>':''}الحركات السابقة (${sm.nh}) ما تنحسب، لأنها داخلة في الرصيد الافتتاحي`:''}</div>`:''}</div>
+  <div class="sumrow"><div><span>العدد</span><b class="num">${list.length}</b></div><div><span>داخل</span><b class="num in">${fmt(tin)}</b>${mav&&ty!=='out'?`<small class="mav">≈ <span class="num">${fmt(mav.tin)}</span> شهرياً</small>`:''}</div><div><span>خارج</span><b class="num out">${fmt(tout)}</b>${mav&&ty!=='dep'?`<small class="mav">≈ <span class="num">${fmt(mav.tout)}</span> شهرياً</small>`:''}</div></div>
+  ${ty==='all'||sm.nh?`<div class="sumnote">${ty==='all'?`الصافي <b class="num">${fmt(tin-tout)}</b>${f==='all'?' = الرصيد الحالي':' = رصيد '+ACCTS[f].short}`:''}${sm.nh?`${ty==='all'?'<br>':''}الحركات السابقة (${sm.nh}) ما تنحسب، لأنها داخلة في الرصيد الافتتاحي`:''}${mav?`<br>المعدّل الشهري على ${mav.n} ${mav.n>2&&mav.n<11?'أشهر':'شهر'}، بدون الرصيد الافتتاحي`:''}</div>`:''}</div>
   ${list.length?`<div class="rows">${list.map(txRow).join('')}</div>`:'<p class="empty">ما فيه حركات.</p>'}
   ${list.length?`<div class="actions"><button class="ghost" data-act="mv-export">تصدير القائمة PDF</button></div>`:''}`};
 };
@@ -706,6 +711,14 @@ V.reqs=()=>{
   const mine=state.reqs.filter(r=>r.by===me).sort((a,b)=>(b.at||0)-(a.at||0));
   const when=ms=>ms?new Date(ms).toLocaleString('ar-u-nu-latn',{day:'numeric',month:'long',hour:'numeric',minute:'2-digit'}):'';
   const card=(r,forMe)=>{
+    if(r.op==='close'){const c=r.tx||{},a=c.accts||{};
+      const st=r.status==='approved'?`<span class="stb ok">✓ معتمد</span>`:r.status==='rejected'?`<span class="stb no">✕ مرفوض</span>`:`<span class="stb wait">بانتظار ${forMe?'قرارك':other}</span>`;
+      const ln=k=>{const x=a[k]||{};return `<div>${ACCTS[k].short}: <span class="num">${fmt(x.close)}</span>${x.bank!==''&&x.bank!=null?` · البنك <span class="num">${fmt(x.bank)}</span> · ${Math.abs(+x.diff||0)<1?'✓ مطابق':'فرق <span class="num">'+fmt(x.diff)+'</span>'}`:' · رصيد البنك ما انكتب'}</div>`;};
+      return `<div class="card reqc st-${esc(r.status)}"><div class="reqh"><b>إقفال سنة ${esc(c.year)}${c.trial?' (تجريبي)':''}</b>${st}</div>
+        <div class="m reqm">${esc(r.byName||'')} · ${esc(when(r.at))} · حتى ${esc(dShort(c.date))}</div>
+        <div class="reql">${ln('bld')}${ln('farm')}<div>الإجمالي: <b class="num">${fmt(c.total)}</b></div>${c.pending?`<div style="color:var(--neg)">⚠️ كان فيه ${c.pending} طلبات حركات معلّقة وقت الإعداد</div>`:''}${c.note?`<div>ملحوظة: ${esc(c.note)}</div>`:''}</div>
+        <div class="actions"><button class="ghost" data-act="close-pdf-req" data-id="${esc(r.rid)}">معاينة PDF</button></div>
+        <div class="actions">${forMe?`<button class="mbtn gold" data-act="req-ok" data-id="${esc(r.rid)}"><span class="l">اعتماد الإقفال</span></button><button class="ghost" data-act="req-no" data-id="${esc(r.rid)}">رفض</button>`:`<button class="ghost" data-act="req-dismiss" data-id="${esc(r.rid)}">${r.status==='pending'?'إلغاء الطلب':'إزالة من القائمة'}</button>`}</div></div>`;}
     const old=state.txs.find(x=>x.id===r.id),t=r.op==='del'?old:r.tx;
     const isEdit=r.op!=='del'&&r.tx&&(r.status==='pending'?!!old:(+r.tx.createdAt||0)<(+r.at||0)-60000);
     const label=r.op==='del'?'حذف حركة':isEdit?'تعديل حركة':'إضافة '+(t?KIND[t.kind]:'');
@@ -774,6 +787,8 @@ V.acct=({k})=>{
   </div>`:''}
   <div class="menu" style="margin-top:22px">
     <button class="mbtn" data-go="moves" data-k="${k}"><span class="l"><span class="ic">${I.list}</span><span>سجل حركات ${A.short}<small class="msub">الإيداعات والمصروفات والتوزيعات</small></span></span>${I.chev}</button>
+    ${canEditNow()?`<button class="mbtn" data-go="bank" data-k="${k}"><span class="l"><span class="ic">${I.rep}</span><span>مطابقة كشف البنك<small class="msub">ارفع الكشف PDF أو صورة ويقارنه بالتطبيق</small></span></span>${I.chev}</button>`:''}
+    <button class="mbtn" data-go="close"><span class="l"><span class="ic">${I.lock}</span><span>الإقفال السنوي<small class="msub">${canEditNow()?'إقفال السنة واعتمادها':'الإقفالات المعتمدة'}${lockOf()?' · مقفول لين '+esc(dShort(lockOf())):''}</small></span></span>${I.chev}</button>
   </div>`};
 };
 V.report=({k,type})=>{
@@ -859,7 +874,8 @@ V.tx=({id})=>{
   ${t.hist?`<p class="note">${t.kind==='dist'?'توزيع سابق':'حركة سابقة (قبل نوفمبر 2025)'} منقولة من تطبيق Glide. محسوبة ضمن الرصيد الافتتاحي، فما تأثر على الرصيد الحالي، لكنها تظهر في السجل والتقارير.</p>`:''}
   ${t.owner==='agent'?`<p class="note">🔒 هذي الحركة باسم ${esc(store.agent||'الوكيل')}${store.canWrite?'، وأي تعديل أو حذف منك ينرسل له طلب ويحتاج موافقته.':'.'}</p>`:''}
   ${state.reqs.some(r=>r.id===t.id&&r.status==='pending')?'<p class="note">⏳ عليها طلب معلّق بانتظار القرار.</p>':''}
-  ${canEditNow()?`<div class="actions"><button class="ghost" data-act="edit" data-id="${esc(t.id)}">${needsOk(t)?'طلب تعديل':'تعديل'}</button><button class="ghost danger" data-act="del" data-id="${esc(t.id)}">${needsOk(t)?'طلب حذف':'حذف'}</button></div>`:''}
+  ${txLocked(t)?`<p class="note">🔒 هذي الحركة داخل فترة مقفولة (لين ${esc(dShort(lockOf()))})، فما تنعدّل ولا تنحذف إلا إذا المدير فتح السنة من الإقفال السنوي.</p>`:''}
+  ${canEditNow()&&!txLocked(t)?`<div class="actions"><button class="ghost" data-act="edit" data-id="${esc(t.id)}">${needsOk(t)?'طلب تعديل':'تعديل'}</button><button class="ghost danger" data-act="del" data-id="${esc(t.id)}">${needsOk(t)?'طلب حذف':'حذف'}</button></div>`:''}
   ${adminView()?`<div class="actions" style="margin-top:10px"><button class="ghost" data-act="notify" data-id="${esc(t.id)}">إشعار الورثة بهذي الحركة</button></div>`:''}`};
 };
 V.props=()=>({title:'العقارات',html:PROPS.map(p=>`<div class="card prop">
@@ -918,12 +934,17 @@ V.reports=(p)=>{
   const tot=m.reduce((a,x)=>({dep:a.dep+x.dep,exp:a.exp+x.exp,dist:a.dist+x.dist}),{dep:0,exp:0,dist:0});
   const hmax=Math.max(1,...Object.values(heirs));
   const any=m.some(x=>x.n);
+  const ks=acct==='all'?['bld','farm']:[acct];const ysum=ks.map(k=>yearSummary(k,year,year===String(new Date().getFullYear())?todayStr():year+'-12-31'));
+  const yOpen=r2(ysum.reduce((a,x)=>a+x.open,0)),yClose=r2(ysum.reduce((a,x)=>a+x.close,0));
+  const cl=(store.closings||[]).filter(c=>c.year===year&&c.status==='approved'&&!c.trial)[0];
   return {title:'التقارير الشهرية',html:`
   <div class="stick"><div class="grid2" style="margin-bottom:0">
     <div><label class="k" for="rAcct" style="margin-top:0">الحساب</label><select id="rAcct">
       <option value="all"${acct==='all'?' selected':''}>الحسابين</option><option value="bld"${acct==='bld'?' selected':''}>البناية</option><option value="farm"${acct==='farm'?' selected':''}>المزارع</option></select></div>
     <div><label class="k" for="rYear" style="margin-top:0">السنة</label><select id="rYear">${years.map(y=>`<option${y===year?' selected':''}>${y}</option>`).join('')}</select></div>
   </div></div>
+  <div class="card" style="padding:10px 14px"><div class="kv"><span>رصيد أول السنة</span><b class="num">${fmt(yOpen)}</b></div>
+    <div class="kv"><span>${year===String(new Date().getFullYear())?'الرصيد الحالي':'رصيد آخر السنة'}${cl?' · 🔒 مقفولة':''}</span><b class="num">${fmt(yClose)}</b></div></div>
   <div class="grid2" style="margin-bottom:12px">
     <div class="rc"><div class="k">الإيداعات</div><div class="v num in" style="font-size:19px">${fmt(tot.dep)}</div></div>
     <div class="rc"><div class="k">المصروفات</div><div class="v num out" style="font-size:19px">${fmt(tot.exp)}</div></div>
@@ -938,7 +959,8 @@ V.reports=(p)=>{
   ${tot.dist>0?`<h3 class="sec">المستلم لكل وريث في ${year}</h3><div class="card">${HEIRS.map(h=>`<div style="display:grid;grid-template-columns:58px 1fr auto;gap:10px;align-items:center;margin:7px 0;font-size:14px">
       <span>${h.n}</span><span style="height:10px;background:var(--card2);border-radius:5px;overflow:hidden;border:1px solid var(--line)"><span style="display:block;height:100%;width:${(heirs[h.id]/hmax*100).toFixed(1)}%;background:var(--gold)"></span></span>
       <span class="num" style="font-size:13px">${fmt(heirs[h.id])}</span></div>`).join('')}</div>`:''}
-  ${downloadsApi?`<div class="actions"><button class="ghost" data-act="rep-export" data-k="${acct}" data-id="${year}">تصدير تقرير ${year} PDF</button></div>`:''}`
+  ${downloadsApi?`<div class="actions"><button class="ghost" data-act="rep-export" data-k="${acct}" data-id="${year}">تصدير تقرير ${year} PDF</button></div>`:''}
+  <div class="actions"><button class="ghost" data-go="close">الإقفال السنوي</button></div>`
   :`<p class="empty">ما فيه حركات في ${year}${acct!=='all'?' في '+ACCTS[acct].short:''}.</p>`}`};
 };
 V.month=({k,id})=>{
@@ -1115,6 +1137,7 @@ async function save(btn){
     kind:f.kind==='dep'?'dep':f.out,date:f.date,note:(f.note||'').trim().slice(0,500),
     createdAt:old?(old.createdAt||Date.now()):Date.now(),updatedAt:Date.now()};
   if(!f.date){err.textContent='اختر التاريخ.';return;}
+  if(isLocked(f.date)||(old&&txLocked(old))){err.textContent='هذا التاريخ داخل فترة مقفولة (لين '+dShort(lockOf())+'). اختر تاريخ بعده.';return;}
   if(t.kind==='dist'){
     const alloc={};HEIRS.forEach(h=>{const v=parseAmt(f.alloc[h.id]);if(f.inc[h.id]&&v>0)alloc[h.id]=r2(v);});
     if(!Object.keys(alloc).length){err.textContent='حدد وريثاً واحداً على الأقل واكتب مبلغه.';return;}
@@ -1135,6 +1158,270 @@ async function save(btn){
     if(!old){state.stack.push({v:'tx',id:t.id});} render();scrollTop0();
     {const list=state.txs.filter(x=>x.id!==t.id).concat([t]);afterChange(old?'edit':'new',t,list);}}
   catch(x){err.textContent=x&&x.code==='quota_exceeded'?'امتلأت مساحة الحفظ.':'تعذّر الحفظ. حاول مرة ثانية.';btn.disabled=false;}
+}
+
+/* ===== الإقفال السنوي ومطابقة كشف البنك ===== */
+const lockOf=()=>store.lock||'';
+const isLocked=d=>!!lockOf()&&String(d||'').slice(0,10)<=lockOf();
+const txLocked=t=>!!(t&&isLocked(t.date));
+const todayStr=()=>nowLocal().slice(0,10);
+const dayDiff=(a,b)=>Math.round((new Date(String(a).slice(0,10)+'T00:00')-new Date(String(b).slice(0,10)+'T00:00'))/864e5);
+/* رصيد حساب لين تاريخ (شامل) أو قبله (strict) — الحركات السابقة ما تنحسب لأنها داخلة في الرصيد الافتتاحي */
+function balAt(acct,d,strict){let b=0;state.txs.forEach(t=>{if(t.hist||t.acct!==acct)return;const x=(t.date||'').slice(0,10);if(strict?x>=d:x>d)return;const a=+t.amount||0;b+=t.kind==='dep'?a:-a;});return r2(b);}
+function periodSums(acct,from,to){const s={dep:0,exp:0,dist:0,open:0,n:0};state.txs.forEach(t=>{if(t.hist||t.acct!==acct)return;const x=(t.date||'').slice(0,10);if(x<from||x>to)return;const a=+t.amount||0;s.n++;
+  if(t.kind==='dep'){if(t.from==='رصيد افتتاحي')s.open+=a;else s.dep+=a;}else if(t.kind==='exp')s.exp+=a;else if(t.kind==='dist')s.dist+=a;});return s;}
+function yearSummary(acct,year,to){
+  const from=year+'-01-01';to=to||year+'-12-31';const s=periodSums(acct,from,to);const open=r2(balAt(acct,from,true)+s.open);
+  return {open,dep:r2(s.dep),exp:r2(s.exp),dist:r2(s.dist),close:r2(open+s.dep-s.exp-s.dist),n:s.n};
+}
+/* المعدّل الشهري (بدون الرصيد الافتتاحي والحركات السابقة) */
+function monthlyAvg(list){
+  const xs=list.filter(t=>!t.hist&&t.from!=='رصيد افتتاحي');if(!xs.length)return null;
+  const ds=xs.map(t=>(t.date||'').slice(0,7)).filter(Boolean).sort();const a=ds[0],b=ds[ds.length-1];
+  const n=Math.max(1,(+b.slice(0,4)-+a.slice(0,4))*12+(+b.slice(5,7)-+a.slice(5,7))+1);
+  let tin=0,tout=0;xs.forEach(t=>{if(t.kind==='dep')tin+=+t.amount||0;else tout+=+t.amount||0;});
+  return {n,tin:r2(tin/n),tout:r2(tout/n)};
+}
+
+/* ---------- مسودة الإقفال (على هذا الجهاز) ---------- */
+const CDRAFT='wareeth-close-draft';
+const cdraft=(()=>{try{return JSON.parse(localStorage.getItem(CDRAFT)||'{}')}catch(e){return {}}})();cdraft.bank=cdraft.bank||{};
+function saveDraft(){try{localStorage.setItem(CDRAFT,JSON.stringify(cdraft))}catch(e){}}
+
+/* ---------- قراءة كشف البنك ---------- */
+const PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',PDFJS_W='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const TESS='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+function loadScript(src){if(loadScript.c[src])return loadScript.c[src];return loadScript.c[src]=new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>{delete loadScript.c[src];rej(new Error('ما قدرت أحمّل أداة القراءة. تأكد من الإنترنت.'));};document.head.appendChild(s);});}
+loadScript.c={};
+let ocrProg=()=>{};
+async function ocrLines(img,prog){
+  await loadScript(TESS);ocrProg=prog;
+  if(!ocrLines.w)ocrLines.w=Tesseract.createWorker('eng+ara',1,{logger:m=>{if(m.status==='recognizing text')ocrProg('قراءة النص '+Math.round((m.progress||0)*100)+'%');else ocrProg('تجهيز أداة القراءة…');}});
+  const w=await ocrLines.w;const {data}=await w.recognize(img);
+  return String(data.text||'').split('\n').map(s=>s.trim()).filter(Boolean);
+}
+async function pdfLines(file,prog){
+  await loadScript(PDFJS);const L=window.pdfjsLib;L.GlobalWorkerOptions.workerSrc=PDFJS_W;
+  const doc=await L.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+  let lines=[],chars=0;
+  for(let p=1;p<=doc.numPages;p++){
+    prog('قراءة الصفحة '+p+' من '+doc.numPages);
+    const pg=await doc.getPage(p),tc=await pg.getTextContent();
+    const items=tc.items.filter(i=>i.str&&i.str.trim()).map(i=>({s:i.str,x:i.transform[4],y:i.transform[5]}));
+    chars+=items.reduce((a,i)=>a+i.s.length,0);
+    items.sort((a,b)=>b.y-a.y||a.x-b.x);
+    const rows=[];let cur=null;items.forEach(i=>{if(cur&&Math.abs(cur.y-i.y)<=3)cur.items.push(i);else{cur={y:i.y,items:[i]};rows.push(cur);}});
+    rows.forEach(r=>lines.push(r.items.sort((a,b)=>a.x-b.x).map(i=>i.s.trim()).join('   ')));
+  }
+  if(chars<40){ // ملف ممسوح ضوئياً: نقرأ الصفحات كصور
+    lines=[];
+    for(let p=1;p<=doc.numPages;p++){
+      const pg=await doc.getPage(p),vp=pg.getViewport({scale:2.2}),cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+      await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+      lines=lines.concat(await ocrLines(cv,m=>prog('صفحة '+p+' من '+doc.numPages+': '+m)));
+    }
+  }
+  return lines;
+}
+const MONTH_KEY={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12,'يناير':1,'فبراير':2,'مارس':3,'أبريل':4,'ابريل':4,'مايو':5,'يونيو':6,'يوليو':7,'أغسطس':8,'اغسطس':8,'سبتمبر':9,'أكتوبر':10,'اكتوبر':10,'نوفمبر':11,'ديسمبر':12};
+const normDig=s=>String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/٫/g,'.').replace(/٬/g,',');
+function findDates(s){
+  const out=[];const add=(y,m,d,raw)=>{y=+y;m=+m;d=+d;if(y<100)y+=2000;if(y>=2000&&y<=2100&&m>=1&&m<=12&&d>=1&&d<=31)out.push({d:`${y}-${pad(m)}-${pad(d)}`,raw});};
+  let m;const re1=/(^|[^\d])(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})(?!\d)/g;while((m=re1.exec(s)))add(m[2],m[3],m[4],m[0].slice(m[1].length));
+  const re2=/(^|[^\d.,])(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})(?!\d)/g;while((m=re2.exec(s)))add(m[4],m[3],m[2],m[0].slice(m[1].length));
+  const re3=/(^|[^\d])(\d{1,2})[\s\-]*([A-Za-z]{3,9}|[ء-ي]{3,7})[\s\-,]*(\d{4}|\d{2})(?!\d)/g;
+  while((m=re3.exec(s))){const k=m[3].toLowerCase();const mo=MONTH_KEY[k.slice(0,3)]||MONTH_KEY[m[3]];if(mo)add(m[4],mo,m[2],m[0].slice(m[1].length));}
+  return out;
+}
+const RE_OPEN=/opening\s*balance|balance\s*(brought|b\/f)|previous\s*balance|beginning\s*balance|الرصيد\s*الافتتاحي|الرصيد\s*السابق|رصيد\s*سابق|رصيد\s*أول\s*المدة|الرصيد\s*المنقول/i;
+const RE_CLOSE=/closing\s*balance|ending\s*balance|balance\s*(carried|c\/f)|available\s*balance|current\s*balance|ledger\s*balance|الرصيد\s*الختامي|الرصيد\s*الحالي|الرصيد\s*المتاح|رصيد\s*آخر\s*المدة|الرصيد\s*النهائي|رصيد\s*الإقفال/i;
+const RE_CR=/\b(cr|credit|deposit|salary|inward|refund|received|transfer\s*from)\b|إيداع|ايداع|وارد|دائن|راتب|تحويل\s*من|استرداد|دعم/i;
+const RE_DR=/\b(dr|debit|withdrawal|withdraw|purchase|payment|charges?|fee|fees|transfer\s*to|outward|pos|atm)\b|سحب|خصم|مدين|رسوم|دفع|شراء|تحويل\s*إلى|تحويل\s*الى|صادر/i;
+function amountsIn(s){const out=[];const re=/(-?)(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+\.\d{2})(?!\d)\s*(CR|DR|Cr|Dr|cr|dr)?/g;let m;
+  while((m=re.exec(s))){let v=parseFloat(m[2].replace(/,/g,''));if(!isFinite(v))continue;out.push({v:r2(v),neg:!!m[1],suf:(m[3]||'').toUpperCase()});}return out;}
+function parseStatement(lines){
+  let open=null,close=null;const rows=[];
+  lines.forEach(L0=>{
+    const L=normDig(L0);
+    if(RE_OPEN.test(L)||RE_CLOSE.test(L)){
+      let s=L;findDates(L).forEach(d=>s=s.replace(d.raw,' '));const a=amountsIn(s);
+      if(a.length){const v=a[a.length-1];const val=v.neg||v.suf==='DR'?-v.v:v.v;if(RE_OPEN.test(L)&&open==null)open=val;if(RE_CLOSE.test(L))close=val;}
+      return;
+    }
+    const ds=findDates(L);if(!ds.length)return;
+    let s=L;ds.forEach(d=>s=s.replace(d.raw,' '));
+    const a=amountsIn(s);if(!a.length)return;
+    const desc=s.replace(/(-?)(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+\.\d{2})(\s*(CR|DR|Cr|Dr))?/g,' ').replace(/\s{2,}/g,' ').trim().slice(0,120);
+    rows.push({d:ds[0].d,desc,a,line:L0});
+  });
+  if(rows.length>1&&rows[0].d>rows[rows.length-1].d)rows.reverse(); // الأحدث أولاً → نرتبها من الأقدم
+  let prev=open;
+  rows.forEach(r=>{
+    const a=r.a;let bal=null,cands=a;
+    if(a.length>=2){const b=a[a.length-1];bal=b.neg||b.suf==='DR'?-b.v:b.v;cands=a.slice(0,-1);}
+    r.bal=bal;r.amount=cands[0].v;r.sign=0;
+    if(bal!=null&&prev!=null){const delta=r2(bal-prev);const c=cands.find(x=>Math.abs(x.v-Math.abs(delta))<0.011);if(c&&delta!==0){r.amount=c.v;r.sign=delta>0?1:-1;}}
+    if(!r.sign){const c=cands[0];if(c.suf==='CR')r.sign=1;else if(c.suf==='DR'||c.neg)r.sign=-1;else if(RE_CR.test(r.line)&&!RE_DR.test(r.line))r.sign=1;else if(RE_DR.test(r.line)&&!RE_CR.test(r.line))r.sign=-1;}
+    if(bal!=null){if(prev==null&&r.sign)open=r2(bal-r.sign*r.amount);prev=bal;}
+    delete r.a;
+  });
+  if(close==null){const lb=rows.filter(r=>r.bal!=null);if(lb.length)close=lb[lb.length-1].bal;}
+  const ds=rows.map(r=>r.d).sort();
+  return {rows,open,close,from:ds[0]||'',to:ds[ds.length-1]||'',lines:lines.length};
+}
+function reconcile(k,P){
+  const from=P.from,to=P.to;
+  const app=state.txs.filter(t=>!t.hist&&t.acct===k&&t.from!=='رصيد افتتاحي');
+  const used=new Set(),usedRow=new Set(),matched=[];
+  P.rows.forEach((r,i)=>{
+    if(!r.sign)return;const kinds=r.sign>0?['dep']:['exp','dist'];let best=null,bd=1e9;
+    app.forEach(t=>{if(used.has(t.id)||!kinds.includes(t.kind)||Math.abs((+t.amount||0)-r.amount)>0.011)return;const dd=Math.abs(dayDiff(t.date,r.d));if(dd<=7&&dd<bd){bd=dd;best=t;}});
+    if(best){used.add(best.id);usedRow.add(i);matched.push({r,t:best});}
+  });
+  // التوزيع ينزل في البنك تحويلات منفصلة لكل وريث
+  app.filter(t=>t.kind==='dist'&&!used.has(t.id)).forEach(t=>{
+    const parts=Object.values(t.alloc||{}).map(Number).filter(v=>v>0);const take=[];
+    for(const v of parts){const i=P.rows.findIndex((r,j)=>!usedRow.has(j)&&!take.includes(j)&&r.sign<0&&Math.abs(r.amount-v)<0.011&&Math.abs(dayDiff(t.date,r.d))<=7);if(i<0)return;take.push(i);}
+    if(take.length){take.forEach(i=>usedRow.add(i));used.add(t.id);matched.push({r:P.rows[take[0]],t,group:take.length});}
+  });
+  const ubank=P.rows.map((r,i)=>Object.assign({i},r)).filter(r=>!usedRow.has(r.i));
+  const uapp=app.filter(t=>!used.has(t.id)&&(t.date||'').slice(0,10)>=from&&(t.date||'').slice(0,10)<=to);
+  const credits=r2(P.rows.filter(r=>r.sign>0).reduce((a,r)=>a+r.amount,0)),debits=r2(P.rows.filter(r=>r.sign<0).reduce((a,r)=>a+r.amount,0));
+  return {matched,mrows:usedRow.size,ubank,uapp,appBal:to?balAt(k,to):null,credits,debits,unknown:P.rows.filter(r=>!r.sign).length};
+}
+async function readStatement(files,k){
+  const done=busy('جاري قراءة كشف البنك…','أول مرة تاخذ وقت أطول');
+  const prog=m=>{const s=document.querySelector('#busy small');if(s)s.textContent=m;};
+  try{
+    let lines=[];
+    for(const f of files){
+      if(f.type==='application/pdf'||/\.pdf$/i.test(f.name))lines=lines.concat(await pdfLines(f,prog));
+      else if((f.type||'').startsWith('image/'))lines=lines.concat(await ocrLines(f,prog));
+    }
+    const P=parseStatement(lines);
+    state.bank={acct:k,files:files.map(f=>f.name),P,err:P.rows.length?'':'ما لقيت عمليات واضحة في الملف. تقدر تكتب رصيد البنك يدوياً تحت، أو ترسل الكشف لمدير التطبيق عشان نضبط القراءة على شكل كشف بنككم.'};
+    if(P.close!=null)state.bank.close=String(P.close);
+  }catch(e){state.bank={acct:k,files:files.map(f=>f.name),err:(e&&e.message)||'ما قدرت أقرأ الملف.'};}
+  finally{done();}
+  render();
+}
+V.bank=(p)=>{
+  const k=p.k==='farm'?'farm':'bld',A=ACCTS[k],b=state.bank&&state.bank.acct===k?state.bank:null,P=b&&b.P;
+  const R=P&&P.rows.length?reconcile(k,P):null;
+  const bankBal=b&&b.close!=null&&String(b.close).trim()!==''?parseAmt(b.close):null;
+  const to=(b&&b.to)||(P&&P.to)||todayStr();
+  const appBal=balAt(k,to),diff=bankBal!=null&&isFinite(bankBal)?r2(appBal-bankBal):null;
+  const dr=cdraft.bank[k];
+  const row=r=>`<div class="row static"><span><span class="${r.sign>0?'in':r.sign<0?'out':''}">${r.sign>0?'إيداع':r.sign<0?'سحب':'؟ غير واضح'}</span><div class="m">${esc(dShort(r.d))}${r.desc?' · '+esc(r.desc):''}</div></span>
+    <span class="a" style="display:flex;gap:6px;align-items:center"><span class="num">${fmt(r.amount)}</span>${canEditNow()?(r.sign?`<button class="pill" data-bk-add="${r.i}" data-kind="${r.sign>0?'dep':'out'}">+ إضافة</button>`:`<button class="pill" data-bk-add="${r.i}" data-kind="dep">+ إيداع</button><button class="pill" data-bk-add="${r.i}" data-kind="out">+ خصم</button>`):''}</span></div>`;
+  return {title:'مطابقة كشف البنك',html:`
+  <div class="stick"><div class="seg">${['bld','farm'].map(x=>`<button data-bk-acct="${x}" aria-pressed="${x===k}">${ACCTS[x].short}</button>`).join('')}</div></div>
+  <div class="card"><label class="filebtn" style="width:100%;justify-content:center">📄 إرفاق كشف ${esc(A.short)} (PDF أو صور)<input type="file" id="bkFile" accept="application/pdf,image/*" multiple></label>
+    <p class="m" style="font-size:12px;color:var(--muted);margin:8px 0 0">الكشف يُقرأ على جهازك بس، وما ينرفع لأي مكان. الأفضل ملف PDF من البنك نفسه، والصور الواضحة تشتغل بعد بس تاخذ وقت أطول.</p>
+    ${b&&b.files?`<p class="m" style="font-size:13px;margin:8px 0 0">الملف: ${esc(b.files.join('، '))}</p>`:''}</div>
+  ${b&&b.err?`<div class="note warnbox">${esc(b.err)}</div>`:''}
+  ${R?`<h3 class="sec">ملخص الكشف</h3><div class="card">
+    <div class="kv"><span>الفترة</span><b>${esc(dShort(P.from))} إلى ${esc(dShort(P.to))}</b></div>
+    <div class="kv"><span>عدد العمليات</span><b class="num">${P.rows.length}</b></div>
+    <div class="kv"><span>إيداعات الكشف</span><b class="num in">${fmt(R.credits)}</b></div>
+    <div class="kv"><span>سحوبات الكشف</span><b class="num out">${fmt(R.debits)}</b></div>
+    ${P.open!=null?`<div class="kv"><span>رصيد أول الكشف</span><b class="num">${fmt(P.open)}</b></div>`:''}
+    <div class="kv"><span>تطابق مع التطبيق</span><b><span class="num">${R.mrows}</span> من <span class="num">${P.rows.length}</span></b></div></div>`:''}
+  <h3 class="sec">مقارنة الرصيد</h3><div class="card">
+    <div class="grid2" style="margin-bottom:6px"><div><label class="k" for="bkTo" style="margin-top:0">بتاريخ</label><input id="bkTo" type="date" value="${esc(to)}"></div>
+      <div><label class="k" for="bkClose" style="margin-top:0">رصيد البنك</label><input id="bkClose" inputmode="decimal" placeholder="من الكشف" value="${esc(b&&b.close!=null?b.close:(dr&&dr.date===to?dr.bal:''))}"></div></div>
+    <div class="kv"><span>رصيد التطبيق في ${esc(dShort(to))}</span><b class="num">${fmt(appBal)}</b></div>
+    ${diff!=null?`<div class="kv"><span>الفرق</span><b class="num ${Math.abs(diff)<1?'in':'out'}">${Math.abs(diff)<1?'✓ مطابق':fmt(diff)}</b></div>`:''}
+    ${diff!=null&&Math.abs(diff)>=1?`<p class="m" style="font-size:12px;color:var(--muted);margin:6px 0 0">${diff>0?'التطبيق أعلى من البنك: غالباً فيه سحب أو رسوم في البنك ما انسجلت في التطبيق.':'البنك أعلى من التطبيق: غالباً فيه إيداع في البنك ما انسجل في التطبيق.'}</p>`:''}
+    ${canEditNow()&&bankBal!=null?`<div class="actions"><button class="mbtn gold" data-act="bk-use"><span class="l">اعتماد هذا الرصيد في الإقفال</span></button></div>`:''}
+    ${dr?`<p class="m" style="font-size:12px;color:var(--muted);margin:8px 0 0">محفوظ للإقفال: ${fmt(dr.bal)} بتاريخ ${esc(dShort(dr.date))}</p>`:''}</div>
+  ${R&&R.ubank.length?`<h3 class="sec">في الكشف وما لقيتها في التطبيق (${R.ubank.length})</h3><div class="rows">${R.ubank.map(row).join('')}</div>`:''}
+  ${R&&R.uapp.length?`<h3 class="sec">في التطبيق وما لقيتها في الكشف (${R.uapp.length})</h3><div class="rows">${R.uapp.map(txRow).join('')}</div>`:''}
+  ${R&&!R.ubank.length&&!R.uapp.length?'<p class="note">✓ كل عمليات الكشف موجودة في التطبيق.</p>':''}`};
+};
+
+/* ---------- صفحة الإقفال ---------- */
+function cformInit(){
+  if(state.cform)return state.cform;
+  const y=String(new Date().getFullYear());
+  return state.cform={year:y,trial:true,date:todayStr(),bank:{bld:cdraft.bank.bld?String(cdraft.bank.bld.bal):'',farm:cdraft.bank.farm?String(cdraft.bank.farm.bal):''},note:''};
+}
+function readCform(){const f=cformInit(),q=id=>document.getElementById(id);
+  if(q('cYear'))f.year=q('cYear').value;if(q('cDate'))f.date=q('cDate').value;if(q('cNote'))f.note=q('cNote').value;
+  ['bld','farm'].forEach(k=>{if(q('cBank-'+k))f.bank[k]=q('cBank-'+k).value;});}
+function buildClosing(){
+  const f=cformInit(),accts={};
+  ['bld','farm'].forEach(k=>{const s=yearSummary(k,f.year,f.date);const bv=parseAmt(f.bank[k]);const has=String(f.bank[k]||'').trim()!==''&&isFinite(bv);
+    accts[k]=Object.assign(s,{bank:has?r2(bv):'',diff:has?r2(s.close-bv):'',stmt:cdraft.bank[k]||null});});
+  const heirs={};HEIRS.forEach(h=>heirs[h.id]=0);
+  state.txs.forEach(t=>{const x=(t.date||'').slice(0,10);if(t.kind==='dist'&&!t.hist&&x>=f.year+'-01-01'&&x<=f.date)HEIRS.forEach(h=>heirs[h.id]+=+((t.alloc||{})[h.id])||0);});
+  const pend=state.reqs.filter(r=>r.status==='pending'&&r.op!=='close').length;
+  return {id:'c'+Date.now().toString(36),year:f.year,date:f.date,trial:!!f.trial,accts,heirs,total:r2(accts.bld.close+accts.farm.close),note:(f.note||'').trim().slice(0,500),at:Date.now(),pending:pend};
+}
+function closingCard(c){
+  const st=c.trial?'<span class="stb wait">تجريبي</span>':c.status==='reopened'?'<span class="stb no">أعيد فتحها</span>':'<span class="stb ok">🔒 مقفولة</span>';
+  const a=c.accts||{},line=k=>{const x=a[k]||{};return `<div class="kv"><span>${ACCTS[k].short}</span><b><span class="num">${fmt(x.close)}</span>${x.bank!==''&&x.bank!=null?` <small style="color:${Math.abs(+x.diff||0)<1?'var(--pos)':'var(--neg)'};font-weight:500">${Math.abs(+x.diff||0)<1?'✓ مطابق للبنك':'فرق '+fmt(x.diff)}</small>`:''}</b></div>`;};
+  return `<div class="card"><div class="reqc"><div class="reqh"><b>إقفال سنة ${esc(c.year)}</b>${st}</div>
+    <div class="m reqm">حتى ${esc(dShort(c.date))} · أعدّه ${esc(c.byName||'')} · اعتمده ${esc(c.approvedBy||'')}</div></div>
+    ${line('bld')}${line('farm')}<div class="kv"><span>الإجمالي</span><b class="num">${fmt((+((a.bld||{}).close)||0)+(+((a.farm||{}).close)||0))}</b></div>
+    <div class="actions"><button class="ghost" data-act="close-pdf" data-id="${esc(c.id)}">حزمة الإقفال PDF</button>
+      ${store.canWrite&&c.trial?`<button class="ghost danger" data-act="close-del" data-id="${esc(c.id)}">حذف التجربة</button>`:''}
+      ${store.canWrite&&!c.trial&&c.status==='approved'&&c.date===lockOf()?`<button class="ghost danger" data-act="reopen" data-id="${esc(c.id)}">فتح السنة</button>`:''}</div></div>`;
+}
+V.close=()=>{
+  const list=(store.closings||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.approvedAt||0)-(a.approvedAt||0));
+  const hist=list.length?`<h3 class="sec">الإقفالات</h3>${list.map(closingCard).join('')}`:'';
+  if(!canEditNow())return {title:'الإقفال السنوي',html:hist||'<p class="empty">ما فيه إقفالات للحين.</p>'};
+  const f=cformInit(),c=buildClosing();
+  const old=store.ver<4?`<div class="note warnbox">⚠️ الإقفال يحتاج تحديث كود الخادم للإصدار 4. حدّثه وانشر <b>إصدار جديد</b>.</div>`:'';
+  const myPend=state.reqs.find(r=>r.op==='close'&&r.status==='pending');
+  const years=[...new Set(state.txs.filter(t=>!t.hist).map(t=>(t.date||'').slice(0,4)).concat([String(new Date().getFullYear())]))].filter(Boolean).sort().reverse();
+  const acctCard=k=>{const x=c.accts[k];return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px"><b>${ACCTS[k].name}</b><button class="linkbtn" data-go="bank" data-k="${k}">قراءة كشف البنك ←</button></div>
+    <div class="kv"><span>رصيد أول السنة</span><b class="num">${fmt(x.open)}</b></div>
+    <div class="kv"><span>الإيداعات</span><b class="num in">${fmt(x.dep)}</b></div>
+    <div class="kv"><span>المصروفات</span><b class="num out">${fmt(x.exp)}</b></div>
+    <div class="kv"><span>التوزيعات</span><b class="num" style="color:var(--gold)">${fmt(x.dist)}</b></div>
+    <div class="kv" style="border-top:1px solid var(--line);margin-top:4px;padding-top:8px"><span>رصيد الإقفال (التطبيق)</span><b class="num" style="font-size:16px">${fmt(x.close)}</b></div>
+    <label class="k" for="cBank-${k}" style="margin-top:8px">رصيد البنك في نفس التاريخ</label>
+    <input id="cBank-${k}" inputmode="decimal" placeholder="من كشف البنك" value="${esc(f.bank[k])}">
+    ${x.bank!==''?`<div class="kv" style="margin-top:6px"><span>الفرق</span><b class="num ${Math.abs(x.diff)<1?'in':'out'}">${Math.abs(x.diff)<1?'✓ مطابق':fmt(x.diff)}</b></div>`:''}</div>`;};
+  const chk=(ok,txt)=>`<div class="kv"><span>${ok?'✅':'⚠️'} ${txt}</span></div>`;
+  return {title:'الإقفال السنوي',html:`${old}
+  <p class="note" style="margin-top:0">${f.trial?'<b>إقفال تجريبي:</b> يسجّل الأرقام ويطلع حزمة الإقفال، وما يقفل أي حركة. تقدر تحذفه بعدين.':'<b>إقفال فعلي:</b> بعد الاعتماد كل الحركات لين تاريخ الإقفال تصير للعرض بس، ورصيد الإقفال يصير رصيد بداية الفترة الجديدة.'}</p>
+  ${myPend?`<div class="note">⏳ فيه إقفال بانتظار اعتماد ${store.canWrite?'منك':'المدير'}. <button class="linkbtn" data-go="reqs">فتح الطلبات</button></div>`:''}
+  <div class="card">
+    <div class="grid2"><div><label class="k" for="cYear" style="margin-top:0">السنة المالية</label><select id="cYear">${years.map(y=>`<option${y===f.year?' selected':''}>${y}</option>`).join('')}</select></div>
+      <div><label class="k" for="cDate" style="margin-top:0">تاريخ الإقفال</label><input id="cDate" type="date" value="${esc(f.date)}" min="${esc(f.year)}-01-01" max="${esc(f.year)}-12-31"></div></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
+    <button class="toggle" role="switch" aria-checked="${!!f.trial}" data-act="c-trial"><span>إقفال تجريبي<small>للتجربة والمراجعة بدون قفل الحركات</small></span><span class="sw"></span></button></div>
+  ${acctCard('bld')}${acctCard('farm')}
+  <div class="total-line"><span class="t">إجمالي رصيد الإقفال</span><span class="v">${money(c.total)}</span></div>
+  <h3 class="sec">قبل الاعتماد</h3><div class="card">
+    ${chk(!c.pending,c.pending?c.pending+' طلبات حركات معلّقة':'ما فيه طلبات حركات معلّقة')}
+    ${chk(c.accts.bld.bank!==''&&Math.abs(c.accts.bld.diff)<1,c.accts.bld.bank===''?'رصيد بنك البناية ما انكتب':Math.abs(c.accts.bld.diff)<1?'البناية مطابقة للبنك':'البناية فيها فرق مع البنك')}
+    ${chk(c.accts.farm.bank!==''&&Math.abs(c.accts.farm.diff)<1,c.accts.farm.bank===''?'رصيد بنك المزارع ما انكتب':Math.abs(c.accts.farm.diff)<1?'المزارع مطابقة للبنك':'المزارع فيها فرق مع البنك')}
+    ${lockOf()?chk(f.date>lockOf(),'آخر إقفال فعلي: '+dShort(lockOf())):''}</div>
+  <label class="k" for="cNote">ملحوظة على الإقفال</label><textarea id="cNote" placeholder="اختياري">${esc(f.note)}</textarea>
+  <div class="err" id="cErr"></div>
+  <button class="primary" data-act="close-submit"${store.ver<4||myPend?' disabled':''}>${store.canWrite?(f.trial?'اعتماد الإقفال التجريبي':'اعتماد الإقفال وقفل السنة'):'إرسال الإقفال للمدير للاعتماد'}</button>
+  <div class="actions"><button class="ghost" data-act="close-preview">معاينة حزمة الإقفال PDF</button></div>
+  ${hist}`};
+};
+function closingPdf(c){
+  const a=c.accts||{},G='#2F7A52',R='#A8473A',dif=x=>x.bank===''||x.bank==null?'—':{t:Math.abs(+x.diff)<1?'مطابق':fmt(x.diff),c:Math.abs(+x.diff)<1?G:R};
+  const rows=['bld','farm'].map(k=>{const x=a[k]||{};return [ACCTS[k].short,fmt(x.open),{t:fmt(x.dep),c:G},{t:fmt(x.exp),c:R},fmt(x.dist),{t:fmt(x.close),b:true},x.bank===''||x.bank==null?'—':fmt(x.bank),dif(x)];});
+  const sum=f=>['bld','farm'].reduce((s,k)=>s+(+((a[k]||{})[f])||0),0);
+  const tot=r2(sum('close'));
+  const heirsRows=HEIRS.map(h=>[h.full||h.n,fmt((c.heirs||{})[h.id]||0),fmt((+((a.bld||{}).close)||0)*W.bld[h.id]+(+((a.farm||{}).close)||0)*W.farm[h.id])]);
+  exportPdf({title:'حزمة إقفال سنة '+c.year+(c.trial?' (تجريبي)':''),sub:'حتى '+dShort(c.date),
+    cards:[['رصيد الإقفال',fmt(tot),'#16244F'],['البناية',fmt((a.bld||{}).close),'#B08A44'],['المزارع',fmt((a.farm||{}).close),G]],
+    sections:[{title:'ملخص الحسابين',cols:[{h:'الحساب',w:11},{h:'أول السنة',w:13,al:'l'},{h:'الإيداعات',w:13,al:'l'},{h:'المصروفات',w:13,al:'l'},{h:'التوزيعات',w:12,al:'l'},{h:'رصيد الإقفال',w:14,al:'l'},{h:'رصيد البنك',w:13,al:'l'},{h:'الفرق',w:11,al:'l'}],
+      rows,foot:['المجموع',fmt(sum('open')),fmt(sum('dep')),fmt(sum('exp')),fmt(sum('dist')),fmt(tot),'','']},
+     {title:'الورثة',cols:[{h:'الوريث',w:46},{h:'المستلم في '+c.year,w:27,al:'l'},{h:'نصيبه من رصيد الإقفال',w:27,al:'l'}],rows:heirsRows,
+      foot:['المجموع',fmt(Object.values(c.heirs||{}).reduce((s,v)=>s+v,0)),fmt(tot)]}],
+    note:(c.trial?'هذا إقفال تجريبي للمراجعة، وما يقفل الحركات. ':'بعد هذا الإقفال صارت الحركات لين '+dShort(c.date)+' للعرض فقط، ورصيد الإقفال هو رصيد بداية الفترة الجديدة. ')+
+      (c.byName?'أعدّه: '+c.byName+'. ':'')+(c.approvedBy?'اعتمده: '+c.approvedBy+(c.approvedAt?' بتاريخ '+dShort(new Date(c.approvedAt).toISOString()):'')+'. ':'')+(c.note?'ملحوظة: '+c.note:'')},
+    pdfName('إقفال '+c.year+(c.trial?' تجريبي':'')+' - '+c.date));
 }
 
 /* ===== تصدير PDF: يرسم الصفحات على canvas (الخط العربي يطلع سليم) ويجمعها في ملف PDF بدون أي مكتبة ===== */
@@ -1316,6 +1603,50 @@ document.addEventListener('click',async e=>{
     state.txs=[];state.reqs=[];state.form=null;state.loginErr='';state.stack=[{v:'home'}];notif.cfg=null;
     render();scrollTop0();toast('تم تسجيل الخروج');return;
   }
+  if(d.bkAcct){cur().k=d.bkAcct;render();return;}
+  if(d.bkAdd!==undefined){
+    const b=state.bank,row=b&&b.P&&b.P.rows[+d.bkAdd];if(!row||!canEditNow())return;
+    const k=b.acct;state.form=newForm(d.kind==='dep'?'dep':'out',k);
+    if(d.kind!=='dep')state.form.out='exp';
+    Object.assign(state.form,{amount:String(row.amount),date:row.d+'T12:00',note:((row.desc||'')+' (من كشف البنك)').trim().slice(0,300)});
+    go('form');return;
+  }
+  if(d.act==='bk-use'){
+    const b=state.bank||{},k=cur().k==='farm'?'farm':'bld',bal=parseAmt(b.close),to=b.to||(b.P&&b.P.to)||todayStr();
+    if(!isFinite(bal)){toast('اكتب رصيد البنك أول');return;}
+    const R=b.P&&b.P.rows.length?reconcile(k,b.P):null;
+    cdraft.bank[k]={bal:r2(bal),date:to,file:(b.files||[]).join('، '),from:b.P?b.P.from:'',to,matched:R?R.matched.length:0,ub:R?R.ubank.length:0,ua:R?R.uapp.length:0};saveDraft();
+    const f=cformInit();f.bank[k]=String(r2(bal));if(to.slice(0,4)===f.year)f.date=to;
+    toast('انحفظ رصيد البنك للإقفال');render();return;
+  }
+  if(d.act==='c-trial'){readCform();const f=cformInit();f.trial=!f.trial;render();return;}
+  if(d.act==='close-preview'){readCform();const c=buildClosing();c.byName=store.canWrite?'المدير':(store.agent||'الوكيل');closingPdf(c);return;}
+  if(d.act==='close-pdf'){const c=(store.closings||[]).find(x=>x.id===d.id);if(c)closingPdf(c);return;}
+  if(d.act==='close-pdf-req'){const r=state.reqs.find(x=>x.rid===d.id);if(r&&r.tx)closingPdf(Object.assign({},r.tx,{byName:r.byName}));return;}
+  if(d.act==='close-submit'){
+    readCform();const f=cformInit(),er=document.getElementById('cErr');er.textContent='';
+    if(!f.date||f.date.slice(0,4)!==f.year){er.textContent='تاريخ الإقفال لازم يكون داخل سنة '+f.year+'.';return;}
+    if(f.date>todayStr()){er.textContent='ما يصير تقفل تاريخ في المستقبل. اختر تاريخ اليوم أو قبله.';return;}
+    if(!f.trial&&lockOf()&&f.date<=lockOf()){er.textContent='هذي الفترة مقفولة من قبل لين '+dShort(lockOf())+'.';return;}
+    const c=buildClosing();
+    const warn=[];if(c.pending)warn.push(c.pending+' طلبات حركات معلّقة');['bld','farm'].forEach(k=>{const x=c.accts[k];if(x.bank==='')warn.push('رصيد بنك '+ACCTS[k].short+' ما انكتب');else if(Math.abs(x.diff)>=1)warn.push('فرق في '+ACCTS[k].short+': '+fmt(x.diff));});
+    const msg=(f.trial?'إقفال تجريبي لسنة '+f.year+' حتى '+dShort(f.date)+'، وما يقفل الحركات.':'بعد الاعتماد ما تقدر تعدّل أو تحذف أي حركة لين '+dShort(f.date)+' إلا بفتح السنة.')+(warn.length?' تنبيه: '+warn.join('، ')+'.':'');
+    if(!(await ask(store.canWrite?(f.trial?'اعتماد الإقفال التجريبي؟':'اعتماد الإقفال وقفل السنة؟'):'إرسال الإقفال للمدير؟',msg,store.canWrite?'اعتماد':'إرسال')))return;
+    const done=busy(store.canWrite?'جاري الإقفال…':'جاري إرسال الإقفال…');
+    try{
+      if(store.canWrite)await api('close',{close:c});else await api('propose',{op:'close',tx:c});
+      await store.refresh();done();render();scrollTop0();
+      toast(store.canWrite?(f.trial?'تم الإقفال التجريبي':'تم الإقفال واعتماد السنة'):'انرسل الإقفال لاعتماد المدير');
+    }catch(e){done();er.textContent=apiErr(e);}
+    return;
+  }
+  if(d.act==='close-del'||d.act==='reopen'){
+    const del=d.act==='close-del';
+    if(!(await ask(del?'حذف الإقفال التجريبي؟':'فتح السنة المقفولة؟',del?'ينحذف سجل التجربة بس، وما تتأثر أي حركة.':'الحركات ترجع قابلة للتعديل، ويبقى سجل الإقفال مكتوب عليه "أعيد فتحها".',del?'حذف':'فتح السنة')))return;
+    const done=busy('جاري…');
+    try{await api(d.act,{id:d.id});await store.refresh();done();render();toast(del?'انحذفت التجربة':'انفتحت السنة');}catch(e){done();toast(apiErr(e));}
+    return;
+  }
   if(d.act==='back'){back();return;}
   if(d.act==='top'){homeOfTab();return;}
   if(d.go){if(d.go==='acct'&&d.k){prefs.lastAcct=d.k;savePrefs();}go(d.go,d.go==='moves'?{f:d.k||'all'}:{k:d.k,type:d.type,id:d.id});return;}
@@ -1327,7 +1658,8 @@ document.addEventListener('click',async e=>{
     const c=cur(),f=c.f||'all',ty=c.t||'all';
     const list=moveList(f,ty).sort((a,b)=>byDate(b,a)),sm=moveSums(list);
     const fl=(f==='all'?'الحسابين':ACCTS[f].short)+' · '+(ty==='all'?'كل الحركات':ty==='dep'?'الإيداعات':'المصروفات والتوزيعات');
-    const cards=[['عدد الحركات',String(list.length)],['داخل',fmt(sm.tin),'#2F7A52'],['خارج',fmt(sm.tout),'#A8473A']];
+    const mav=monthlyAvg(list);
+    const cards=[['عدد الحركات',String(list.length)],['داخل'+(mav&&ty!=='out'?' (≈ '+fmt(mav.tin)+' شهرياً)':''),fmt(sm.tin),'#2F7A52'],['خارج'+(mav&&ty!=='dep'?' (≈ '+fmt(mav.tout)+' شهرياً)':''),fmt(sm.tout),'#A8473A']];
     if(ty==='all')cards.push(['الصافي',fmt(sm.tin-sm.tout),'#16244F']);
     exportPdf({title:'سجل الحركات',sub:fl,cards,sections:[{cols:TX_COLS,rows:list.map(txCells),foot:['المجموع','','','','',{t:fmt(ty==='dep'?sm.tin:ty==='out'?sm.tout:sm.tin-sm.tout)}]}],
       note:(sm.nh?'الحركات المعلّمة "سابق" قبل نوفمبر 2025 وداخلة في الرصيد الافتتاحي، فما تنحسب في المجاميع. ':'')+'المجاميع تشمل الحركات اللي تأثر على الرصيد الحالي فقط.'},
@@ -1350,13 +1682,14 @@ document.addEventListener('click',async e=>{
     try{
       const res=await api(d.act==='req-ok'?'approve':d.act==='req-no'?'reject':(store.ver<3?'cancel':'dismiss'),{rid:r.rid});
       await store.refresh();render();
-      if(d.act==='req-ok'&&!(res&&res.already)){
+      if(d.act==='req-ok'&&!(res&&res.already)&&r.op!=='close'){
         const t=r.op==='del'?old:r.tx;
         if(t){const action=r.op==='del'?'del':old?'edit':'new';
           if(store.canWrite)afterChange(action,t,state.txs,true);
           else api('notify',{subject:notifySubject(action,t),body:notifyMsg(action,t,state.txs)}).catch(()=>{});}
       }
       done();
+      if(r.op==='close'&&d.act==='req-ok'&&!(res&&res.already)){toast(r.tx&&r.tx.trial?'تم اعتماد الإقفال التجريبي':'تم الإقفال واعتماد السنة');}else
       toast(d.act==='req-ok'?(res&&res.already?'الطلب كان معتمد من قبل':store.isAgent?'تمت الموافقة':'تم الاعتماد'):d.act==='req-no'?'تم رفض الطلب':'تمت الإزالة');
     }catch(e){
       toast(apiErr(e));
@@ -1446,6 +1779,10 @@ document.addEventListener('toggle',e=>{
 },true);
 document.addEventListener('change',e=>{
   if(e.target.id==='fCat'&&state.form){readForm();if(state.form.other)state.form.from='';render();const i=document.getElementById('fFrom');if(i)i.focus();return;}
+  if(e.target.id==='bkTo'||e.target.id==='bkClose'){const k=cur().k==='farm'?'farm':'bld';if(!state.bank||state.bank.acct!==k)state.bank={acct:k};state.bank[e.target.id==='bkTo'?'to':'close']=e.target.value;render();return;}
+  if(e.target.id==='bkFile'&&e.target.files&&e.target.files.length){readStatement([...e.target.files],cur().k==='farm'?'farm':'bld');return;}
+  if(e.target.id==='cYear'){readCform();const f=cformInit();f.date=f.year===String(new Date().getFullYear())?todayStr():f.year+'-12-31';render();return;}
+  if(e.target.id==='cDate'||/^cBank-/.test(e.target.id)){readCform();render();return;}
   if(e.target.id==='rAcct'||e.target.id==='rYear'){const c=cur();c[e.target.id==='rAcct'?'acct':'year']=e.target.value;render();return;}
   if(e.target.dataset&&e.target.dataset.inc!==undefined){fillAlloc();}
   if(e.target.id==='fFile'&&e.target.files&&e.target.files[0])upload(e.target.files[0]);
