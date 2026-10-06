@@ -20,26 +20,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 :root{
-  --navy:#16213F; --bg:#F3EFE6; --bg2:#ECE6DA; --glow:rgba(176,138,68,.10); --card:#FFFCF6; --card2:#F7F2E8; --line:#E2D9C6;
-  --ink:#2A2D38; --muted:#6B6A73; --gold:#94702A; --gold-hi:#C9A253; --pos:#2F7A52; --neg:#A8473A; --btn:#FFFCF6; --btn-ink:#2A2D38;
+  --navy:#16213F; --bg:#F3EFE6; --bg2:#ECE6DA; --glow:rgba(176,138,68,.10); --card:#FFFCF6; --card2:#F7F2E8; --line:#D9CEB6;
+  --ink:#1C1F2A; --muted:#55545E; --gold:#86641F; --gold-hi:#C9A253; --pos:#2F7A52; --neg:#A8473A; --btn:#FFFCF6; --btn-ink:#2A2D38;
   --font:"IBM Plex Sans Arabic", system-ui, "Segoe UI", Tahoma, sans-serif;
   box-sizing:border-box;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#141B2D; --bg2:#10162A; --glow:rgba(120,145,195,.10); --card:#1B2338; --card2:#212A42; --line:#2C3650;
-    --ink:#E3E6EE; --muted:#9AA3BA; --gold:#D2B06A; --gold-hi:#E2C688; --pos:#7CCB9F; --neg:#E8968A; --btn:#1B2338; --btn-ink:#E3E6EE;
+    --bg:#141B2D; --bg2:#10162A; --glow:rgba(120,145,195,.10); --card:#1B2338; --card2:#212A42; --line:#36426A;
+    --ink:#F2F4F9; --muted:#B6BED3; --gold:#DDBB72; --gold-hi:#EBCF8F; --pos:#86D9AA; --neg:#F2A094; --btn:#1B2338; --btn-ink:#E3E6EE;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#141B2D; --bg2:#10162A; --glow:rgba(120,145,195,.10); --card:#1B2338; --card2:#212A42; --line:#2C3650;
-  --ink:#E3E6EE; --muted:#9AA3BA; --gold:#D2B06A; --gold-hi:#E2C688; --pos:#7CCB9F; --neg:#E8968A; --btn:#1B2338; --btn-ink:#E3E6EE;
+  --bg:#141B2D; --bg2:#10162A; --glow:rgba(120,145,195,.10); --card:#1B2338; --card2:#212A42; --line:#36426A;
+  --ink:#F2F4F9; --muted:#B6BED3; --gold:#DDBB72; --gold-hi:#EBCF8F; --pos:#86D9AA; --neg:#F2A094; --btn:#1B2338; --btn-ink:#E3E6EE;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;min-height:100vh;color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.55;
   background:radial-gradient(ellipse 90% 55% at 50% 0%,var(--glow),transparent 70%) fixed,linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%) fixed,var(--bg)}
 button,input,select,textarea{font:inherit;color:inherit}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;-webkit-text-size-adjust:100%}
+.num{font-feature-settings:"tnum" 1,"lnum" 1;letter-spacing:.01em}
+.row .m,.tile small,.sumrow span,.stat3 span,.rc .k,.field .k,label.k,.kv{font-weight:500}
+.row .a,.kv b,.sumrow b{font-weight:700}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;display:inline-block;font-size:calc(1em * var(--ns,1))}
 
@@ -172,6 +176,11 @@ body.sub main{padding-top:14px}
 .bref.spin svg{animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .home .banner.lux .bref{position:absolute}
+.rolebadge{display:inline-flex;align-items:center;gap:7px;margin-top:8px;padding:5px 14px 5px 12px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.01em;cursor:pointer;border:1px solid;position:relative}
+.rolebadge svg{width:15px;height:15px;flex:none}
+.rolebadge.admin{background:linear-gradient(180deg,#F1D58E,#C99E4E);color:#1A1405;border-color:#F6E0A6;box-shadow:0 4px 14px rgba(214,178,102,.35)}
+.rolebadge.agent{background:rgba(110,200,170,.16);color:#9BE6C8;border-color:rgba(130,220,185,.55)}
+.rolebadge.view{background:rgba(255,255,255,.08);color:#DCE3F5;border-color:rgba(220,227,245,.35)}
 .reqbar.cool{background:var(--card);border-color:var(--line)}
 .reqbar.cool .dotp{background:var(--muted);box-shadow:none}.reqbar.cool b{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
 .stb{font-size:12px;font-weight:700;border-radius:20px;padding:2px 10px;white-space:nowrap}
@@ -445,6 +454,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
+const APP_VER='5.1';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -601,38 +611,57 @@ const store={
   },
   apply(j,fromCache){
     state.txs=(j.txs||[]);
-    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'}));this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';this.agent=j.agent||'الوكيل';this.mode='api';
+    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';this.agent=j.agent||'الوكيل';this.mode='api';
     if(!fromCache){this.loadedAt=Date.now();saveCache(j);}
     if(j.cfg)notif.cfg=j.cfg;
     return broken;
   },
   // ردود العمليات فيها البيانات المحدّثة: نطبقها مباشرة بدل طلب ثاني
+  proposeFast(op,tx,id){
+    const me=this.isAgent?'agent':'admin',tmp={rid:'tmp'+Date.now().toString(36),op,id,tx,by:me,byName:this.isAgent?this.agent:'المدير',at:Date.now(),status:'pending',local:true};
+    state.reqs=state.reqs.concat([tmp]);
+    api('propose',op==='del'?{op,id}:{op,tx}).then(r=>{state.reqs=state.reqs.filter(x=>x!==tmp);if(!this.applyRes(r))this.refresh().catch(()=>{});render();})
+      .catch(e=>{state.reqs=state.reqs.filter(x=>x!==tmp);render();toast('ما انرسل الطلب: '+apiErr(e));});
+    return this.isAgent?'req':'req2';
+  },
   applyRes(res){if(res&&res.list&&res.list.ok){this.apply(res.list);return true;}return false;},
   async sync(res){if(!this.applyRes(res))await this.refresh();},
-  async refresh(first){
+  async refresh(first,quiet){
     const j=await api('list');
+    const sig=dataSig(j),same=quiet&&sig===this.sig;this.sig=sig;
     const broken=this.apply(j);
-    if(!isForm())render();
+    // التحديث التلقائي: ما نعيد رسم الشاشة إلا إذا تغيّرت البيانات، ونحافظ على مكانك
+    if(!isForm()&&!same){const ae=document.activeElement;if(quiet&&ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)){}else softRender(quiet);}
     // إصلاح تلقائي: أرقام قرأها الشيت كتواريخ، يرجّعها أرقام مرة وحدة
     if(this.canWrite)setTimeout(importY25,600);
     if(this.canWrite&&broken.length&&!this.repaired){this.repaired=true;for(const t of broken){try{await api('put',{tx:t});}catch(e){}}}
   },
   async put(t){
     const old=state.txs.find(x=>x.id===t.id);
-    if(this.isAgent||(old&&old.owner==='agent')){const r=await api('propose',{op:'put',tx:t});if(!this.applyRes(r))this.refresh().catch(()=>{});return this.isAgent?'req':'req2';}
+    if(this.isAgent||(old&&old.owner==='agent'))return this.proposeFast('put',t,t.id);
     const prev=state.txs.slice(),i=state.txs.findIndex(x=>x.id===t.id);
     if(i>=0)state.txs[i]=Object.assign({},t,{owner:old&&old.owner});else state.txs.push(t);
     const bg=api('put',{tx:t}).catch(e=>{state.txs=prev;render();toast('ما انحفظت الحركة: '+apiErr(e));throw e;});
     return {bg};},
   async del(id){
     const old=state.txs.find(x=>x.id===id);
-    if(this.isAgent||(old&&old.owner==='agent')){const r=await api('propose',{op:'del',id});if(!this.applyRes(r))this.refresh().catch(()=>{});return this.isAgent?'req':'req2';}
+    if(this.isAgent||(old&&old.owner==='agent'))return this.proposeFast('del',null,id);
     const prev=state.txs.slice();state.txs=state.txs.filter(x=>x.id!==id);
     const bg=api('del',{id}).catch(e=>{state.txs=prev;render();toast('ما انحذفت الحركة: '+apiErr(e));throw e;});
     return {bg};}
 };
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&Date.now()-store.loadedAt>20000)store.refresh().catch(()=>{});});
-setInterval(()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&!isForm())store.refresh().catch(()=>{});},120000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&Date.now()-store.loadedAt>15000)store.refresh(false,true).catch(()=>{});});
+setInterval(()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&!isForm()&&navigator.onLine!==false)store.refresh(false,true).catch(()=>{});},30000);
+function dataSig(j){const s=JSON.stringify([j.txs,j.reqs,j.closings,j.lock,j.cfg]);let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return s.length+':'+h;}
+function softRender(keep){
+  if(!keep){render();return;}
+  const st=scroller.scrollTop,open=[...document.querySelectorAll('details[open]')].map(d=>[...document.querySelectorAll('details')].indexOf(d));
+  const more=document.getElementById('mvRows')?document.getElementById('mvRows').children.length:0;
+  render();
+  const ds=document.querySelectorAll('details');open.forEach(i=>{if(ds[i])ds[i].open=true;});
+  if(more>MV_CHUNK)while(document.getElementById('mvMore')&&document.getElementById('mvRows').children.length<more)mvMore();
+  scroller.scrollTop=st;
+}
 const CACHE='wareeth-cache';
 function saveCache(j){try{localStorage.setItem(CACHE,JSON.stringify({url:auth.url,at:Date.now(),j}));}catch(e){}}
 function loadCache(){try{const c=JSON.parse(localStorage.getItem(CACHE)||'null');return c&&c.url===auth.url&&c.j&&c.j.ok?c.j:null;}catch(e){return null;}}
@@ -702,12 +731,20 @@ const I={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg>',
   refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.35-5.65"/><path d="M20 4v5h-5"/></svg>',
   lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  crown:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4.5 4L12 4l4.5 7L21 7l-2 11H5z"/><rect x="5" y="19" width="14" height="2" rx="1"/></svg>',
+  key:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg>',
+  eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
   chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--muted)"><path d="M15 6l-6 6 6 6"/></svg>'
 };
 const markSvg='<svg viewBox="110 40 414 380" aria-hidden="true"><defs><linearGradient id="wg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6E0A6"/><stop offset=".55" stop-color="#D9B76E"/><stop offset="1" stop-color="#B08A44"/></linearGradient><linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EDD290"/><stop offset="1" stop-color="#B8913F"/></linearGradient></defs><g fill="url(#wg1)"><polygon points="128,48 164,72 164,352 128,384"/><polygon points="506,48 470,72 470,352 506,384"/><polygon points="200,114 236,136 236,382 200,412"/><polygon points="434,114 398,136 398,382 434,412"/></g><g fill="none" stroke-linejoin="miter" stroke-miterlimit="10"><polyline points="146,372 317,226 488,372" stroke="url(#wg2)" stroke-width="36"/><polyline points="218,402 317,316 416,402" stroke="url(#wg2)" stroke-width="34"/></g></svg>';
 
 /* ===== الصفحات ===== */
 const V={};
+function roleBadge(){
+  if(store.canWrite)return `<button class="rolebadge admin" data-act="settings" aria-label="حساب المدير">${I.crown}<span>حساب المدير</span></button>`;
+  if(store.isAgent)return `<button class="rolebadge agent" data-act="settings" aria-label="حساب الوكيل">${I.key}<span>حساب الوكيل · ${esc(store.agent||'')}</span></button>`;
+  return `<button class="rolebadge view" data-act="settings" aria-label="حساب الورثة">${I.eye}<span>حساب الورثة · عرض فقط</span></button>`;
+}
 V.home=()=>{
   const r=calc();
   const recent=state.txs.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,1);
@@ -716,7 +753,7 @@ V.home=()=>{
     <button class="iconbtn bref" data-act="refresh" aria-label="تحديث البيانات">${I.refresh}</button>
     <div class="mark">${markSvg}<span>WAREETH</span></div>
     <div class="orn" aria-hidden="true"><i></i><b>◆</b><i></i></div>
-    <h2>أهلاً بكم في تطبيق وريث</h2><p>ورثة مبارك علي القصيلي</p></div>
+    <h2>أهلاً بكم في تطبيق وريث</h2><p>ورثة مبارك علي القصيلي</p>${roleBadge()}</div>
   <div class="hero"><div class="lbl">الرصيد المتاح الآن</div>
     <div class="big"><span class="num">${fmt(r.total)}</span> <small>د.إ</small></div>
     <div class="upd">${r.last?'آخر تحديث: '+esc(new Date(r.last).toLocaleString('ar-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'numeric',minute:'2-digit'})):(store.mode==='nodb'?'سجّل دخولك في Claude عشان تظهر البيانات.':'ابدأ بإضافة أول إيداع من حساب البناية أو المزارع.')}</div>
@@ -774,7 +811,7 @@ V.reqs=()=>{
     const lines=t?txLines(t):['الحركة ما عادت موجودة'];
     const was=r.op!=='del'&&r.status==='pending'&&old&&+old.amount!==+(t&&t.amount)?`<div class="m" style="color:var(--muted);font-size:13px">المبلغ الحالي قبل التعديل: <span class="num">${fmt(old.amount)}</span></div>`:'';
     const st=r.status==='approved'?`<span class="stb ok">✓ معتمد</span>`:r.status==='rejected'?`<span class="stb no">✕ مرفوض</span>`:`<span class="stb wait">بانتظار ${forMe?'قرارك':other}</span>`;
-    const btns=forMe?`<button class="mbtn gold" data-act="req-ok" data-id="${esc(r.rid)}"><span class="l">${store.canWrite?'اعتماد':'موافقة'}</span></button><button class="ghost" data-act="req-no" data-id="${esc(r.rid)}">رفض</button>`
+    const btns=r.local?`<span class="stb wait" style="margin:auto">⏳ جاري الإرسال…</span>`:forMe?`<button class="mbtn gold" data-act="req-ok" data-id="${esc(r.rid)}"><span class="l">${store.canWrite?'اعتماد':'موافقة'}</span></button><button class="ghost" data-act="req-no" data-id="${esc(r.rid)}">رفض</button>`
       :`<button class="ghost" data-act="req-dismiss" data-id="${esc(r.rid)}">${r.status==='pending'?'إلغاء الطلب':'إزالة من القائمة'}</button>`;
     return `<div class="card reqc st-${esc(r.status)}"><div class="reqh"><b>${esc(label)}</b>${st}</div>
       <div class="m reqm">${esc(r.byName||'')} · ${esc(when(r.at))}${r.decidedAt?' · القرار: '+esc(when(r.decidedAt)):''}</div>
@@ -1059,7 +1096,7 @@ V.settings=()=>({title:'الإعدادات',html:`
     <div class="actions" style="margin-top:8px"><button class="ghost danger" data-act="logout">تسجيل خروج</button></div>
     ${store.canWrite?'<p class="m" style="font-size:13px;color:var(--muted);margin:10px 0 0">رابط الورثة يفتح التطبيق مباشرة، وما يحتاجون إلا رقم العرض السري. لا ترسل الرقم السري مع الرابط في نفس الرسالة.</p>':''}
   </div>
-  <p class="status">الإعدادات تنحفظ على هذا الجهاز.</p>`});
+  <p class="status">الإعدادات تنحفظ على هذا الجهاز · إصدار التطبيق ${APP_VER}</p>`});
 function updPrefUI(){
   const a=document.getElementById('pFs'),b=document.getElementById('pNs');
   if(a){a.value=prefs.fs;document.getElementById('pFsV').textContent=Math.round(prefs.fs*100)+'%';}
@@ -1100,7 +1137,8 @@ V.login=()=>({title:'وريث',html:`<div class="gate"><div class="gmark">${mark
   <input id="lPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••">
   <div class="err" id="lErr">${esc(state.loginErr||'')}</div>
   <button class="primary" data-act="login">دخول</button>
-  ${auth.url?`<button class="linkbtn" style="margin-top:12px" data-act="reset-url">تغيير رابط الخادم</button>`:''}</div>`});
+  ${auth.url?`<button class="linkbtn" style="margin-top:12px" data-act="reset-url">تغيير رابط الخادم</button>`:''}
+  <p class="status" style="margin-top:18px">إصدار ${APP_VER}</p></div>`});
 
 /* ===== النماذج ===== */
 function newForm(kind,acct,t){
@@ -1207,7 +1245,7 @@ async function save(btn){
     if(!old){state.stack.push({v:'tx',id:t.id});} render();scrollTop0();
     const list=state.txs.filter(x=>x.id!==t.id).concat([t]);
     (res&&res.bg?res.bg:Promise.resolve()).then(()=>afterChange(old?'edit':'new',t,list)).catch(()=>{});}
-  catch(x){err.textContent=x&&x.code==='quota_exceeded'?'امتلأت مساحة الحفظ.':'تعذّر الحفظ. حاول مرة ثانية.';btn.disabled=false;}
+  catch(x){console.error(x);err.textContent='ما انحفظت: '+(x&&x.error?apiErr(x):(x&&x.message)||'خطأ غير معروف');btn.disabled=false;}
 }
 
 /* ===== الإقفال السنوي ومطابقة كشف البنك ===== */
@@ -1748,10 +1786,28 @@ document.addEventListener('click',async e=>{
     const r=state.reqs.find(x=>x.rid===d.id);if(!r){store.refresh().then(render).catch(()=>{});return;}
     if(d.act==='req-no'&&!(await ask('رفض الطلب؟','الحركة ما راح تتغير، والطلب يظهر لصاحبه إنه مرفوض.','رفض')))return;
     if(d.act==='req-dismiss'&&r.status==='pending'&&!(await ask('إلغاء الطلب؟','الطلب ينشال وما يوصل للاعتماد.','إلغاء الطلب')))return;
-    const card=b.closest('.reqc');if(card)card.querySelectorAll('button').forEach(x=>x.disabled=true);
-    const lbl=b.innerHTML;b.innerHTML='<span class="l">جاري…</span>';
+    if(r.local)return;
     const old=state.txs.find(x=>x.id===r.id);
-    const done=busy(d.act==='req-ok'?(store.canWrite?'جاري الاعتماد…':'جاري الموافقة…'):d.act==='req-no'?'جاري الرفض…':'جاري الإزالة…');
+    const fast=r.op!=='close';
+    // تحديث فوري على الشاشة، والسيرفر يتأكد بالخلفية
+    if(fast){
+      const snap={txs:state.txs.slice(),reqs:state.reqs.slice()};
+      if(d.act==='req-dismiss')state.reqs=state.reqs.filter(x=>x.rid!==r.rid);
+      else{state.reqs=state.reqs.map(x=>x.rid===r.rid?Object.assign({},x,{status:d.act==='req-ok'?'approved':'rejected',decidedAt:Date.now()}):x);
+        if(d.act==='req-ok'){if(r.op==='del')state.txs=state.txs.filter(x=>x.id!==r.id);else if(r.tx){const nt=Object.assign({},r.tx,{owner:old?old.owner:(r.by==='agent'?'agent':'')});const i=state.txs.findIndex(x=>x.id===nt.id);if(i>=0)state.txs[i]=nt;else state.txs.push(nt);}}}
+      render();
+      toast(d.act==='req-ok'?(store.isAgent?'تمت الموافقة':'تم الاعتماد'):d.act==='req-no'?'تم رفض الطلب':'تمت الإزالة');
+      api(d.act==='req-ok'?'approve':d.act==='req-no'?'reject':(store.ver<3?'cancel':'dismiss'),{rid:r.rid}).then(res=>{
+        if(!store.applyRes(res))store.refresh().catch(()=>{});render();
+        if(d.act==='req-ok'&&!(res&&res.already)){const t=r.op==='del'?old:r.tx;
+          if(t){const action=r.op==='del'?'del':old?'edit':'new';
+            if(store.canWrite)afterChange(action,t,state.txs,true);
+            else api('notify',{subject:notifySubject(action,t),body:notifyMsg(action,t,state.txs)}).catch(()=>{});}}
+      }).catch(e=>{state.txs=snap.txs;state.reqs=snap.reqs;render();toast('ما تم: '+apiErr(e));store.refresh().then(render).catch(()=>{});});
+      return;
+    }
+    const card=b.closest('.reqc');if(card)card.querySelectorAll('button').forEach(x=>x.disabled=true);
+    const done=busy(d.act==='req-ok'?'جاري اعتماد الإقفال…':d.act==='req-no'?'جاري الرفض…':'جاري الإزالة…');
     try{
       const res=await api(d.act==='req-ok'?'approve':d.act==='req-no'?'reject':(store.ver<3?'cancel':'dismiss'),{rid:r.rid});
       await store.sync(res);render();
