@@ -442,7 +442,10 @@ const API_URLS=['https://script.google.com/macros/s/AKfycbwZj88mqWrVBcYs0l28oIm7
 const DEFAULT_API=API_URLS[0];
 // الرابط الافتراضي يغلب دايماً، إلا إذا غيّره المستخدم بنفسه من شاشة الدخول
 if(auth.def!==DEFAULT_API||(!auth.custom&&!API_URLS.includes(auth.url))){auth.url=DEFAULT_API;auth.custom=false;auth.def=DEFAULT_API;}
-(function(){const m=location.hash.match(/api=([^&]+)/);if(m){auth.url=decodeURIComponent(m[1]);try{localStorage.setItem(AUTH,JSON.stringify(auth))}catch(e){}history.replaceState(null,'',location.pathname+location.search);}})();
+// أمان: ما نقبل رابط خادم من الرابط نفسه (#api=…) عشان ما أحد يرسل للورثة رابط يسرق أرقامهم السرية
+(function(){if(/api=/.test(location.hash))history.replaceState(null,'',location.pathname+location.search);})();
+const API_RE=/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec$/;
+if(auth.url&&!API_RE.test(auth.url)){auth.url=DEFAULT_API;auth.custom=false;}
 function saveAuth(){try{localStorage.setItem(AUTH,JSON.stringify(auth))}catch(e){}}
 let netN=0;
 function net(d){netN=Math.max(0,netN+d);const e=document.getElementById('net');if(e)e.classList.toggle('on',netN>0);}
@@ -465,16 +468,23 @@ function busy(text,sub){
   el.querySelector('span').textContent=text||'جاري…';if(sub)el.querySelector('small').textContent=sub;
   clearTimeout(busyT);busyT=setTimeout(()=>{if(busyN>0)el.classList.add('on');},120);
   let done=false;
-  return ()=>{if(done)return;done=true;busyN=Math.max(0,busyN-1);if(!busyN){clearTimeout(busyT);el.classList.remove('on');}};
+  const fin=()=>{if(done)return;done=true;clearTimeout(guard);busyN=Math.max(0,busyN-1);if(!busyN){clearTimeout(busyT);el.classList.remove('on');}};
+  const guard=setTimeout(fin,150000); // أمان: ما تعلق النافذة أبداً
+  return fin;
 }
+// أي خطأ غير متوقع: نشيل نافذة الانتظار ونوضح للمستخدم بدل ما يعلق التطبيق
+window.addEventListener('unhandledrejection',e=>{busyN=0;const b=document.getElementById('busy');if(b)b.classList.remove('on');console.error(e.reason);});
+window.addEventListener('error',e=>{busyN=0;const b=document.getElementById('busy');if(b)b.classList.remove('on');});
+// رقم مميز لهذا الجهاز: لو أحد خمّن الرقم السري غلط، ينقفل جهازه هو بس
+const DEV=(()=>{try{let d=localStorage.getItem('wareeth-dev');if(!/^[A-Za-z0-9]{8,40}$/.test(d||'')){d=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>(b%36).toString(36)).join('')+Date.now().toString(36);localStorage.setItem('wareeth-dev',d);}return d;}catch(e){return 'nostore'+Math.random().toString(36).slice(2,10);}})();
 async function api_(action,payload){
   if(!auth.url)throw {error:'no_url'};
-  const q=JSON.stringify(Object.assign({action,pin:auth.pin},payload||{}));
+  const q=JSON.stringify(Object.assign({action,pin:auth.pin,dev:DEV},payload||{}));
   const url=auth.url+'?action='+encodeURIComponent(action)+'&pin='+encodeURIComponent(auth.pin||'')+'&q='+encodeURIComponent(q);
   let res,text;
   try{
     const ac=typeof AbortController!=='undefined'?new AbortController():null;
-    const tm=setTimeout(()=>ac&&ac.abort(),30000);
+    const tm=setTimeout(()=>ac&&ac.abort(),60000);
     try{
       res=url.length<7500?await fetch(url,{method:'GET',cache:'no-store',signal:ac&&ac.signal})
         :await fetch(auth.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:q,signal:ac&&ac.signal});
@@ -489,12 +499,14 @@ async function api_(action,payload){
 function apiErr(e){
   const c=e&&e.error;
   if(c==='pin')return 'الرقم السري غلط.';
-  if(c==='locked')return 'الدخول مقفل مؤقتاً بسبب محاولات كثيرة غلط. انتظر ساعة بدون أي محاولة، أو شغّل الدالة unlock من مشروع Apps Script.';
+  if(c==='locked')return 'هذا الجهاز انقفل مؤقتاً بسبب محاولات كثيرة غلط. انتظر نص ساعة، أو اطلب من المدير يفك القفل. باقي الأجهزة ما تتأثر.';
   if(c==='forbidden')return 'ما عندك صلاحية لهذي العملية.';
   if(c==='busy')return 'الخادم مشغول بطلب ثاني. حاول بعد ثواني.';
-  if(c==='timeout')return 'الاتصال تأخر. تأكد من الإنترنت وحاول مرة ثانية.';
+  if(c==='timeout')return 'الخادم تأخر في الرد. اضغط تحديث ↻ وتأكد قبل ما تعيد المحاولة.';
   if(c==='owned')return 'هذي الحركة باسم '+(store.agent||'الوكيل')+'، وأي تعديل عليها يحتاج موافقته.';
   if(c==='not_owned')return 'هذي الحركة باسمك وتقدر تعدّلها مباشرة.';
+  if(c==='setup')return 'إعداد الخادم ناقص: الأرقام السرية الثلاثة لازم تكون مختلفة عن بعض و4 أرقام على الأقل (ملف "الأرقام" في Apps Script).';
+  if(c==='bad_request')return 'البيانات المرسلة فيها خطأ'+(e.detail==='future'?': ما يصير تقفل تاريخ في المستقبل.':e.detail==='already_closed'?': هذي الفترة مقفولة من قبل.':e.detail?' ('+e.detail+').':'.');
   if(c==='closed')return 'هذي الفترة مقفولة (لين '+dShort(lockOf())+')، فما تنعدّل حركاتها إلا إذا المدير فتح السنة.';
   if(c==='not_found')return 'الطلب ما عاد موجود. حدّث البيانات.';
   if(c==='server')return 'صار خطأ في الخادم'+(e.detail?' ('+e.detail+')':'')+'.';
@@ -928,8 +940,8 @@ function barChart(m){
 }
 V.reports=(p)=>{
   const acct=p.acct||'all';
-  const years=[...new Set(state.txs.map(t=>(t.date||'').slice(0,4)).filter(Boolean).concat(String(new Date().getFullYear())))].sort().reverse();
-  const year=p.year||years[0];
+  const years=[...new Set(state.txs.map(t=>(t.date||'').slice(0,4)).filter(y=>/^\d{4}$/.test(y)).concat(String(new Date().getFullYear())))].sort().reverse();
+  const year=/^\d{4}$/.test(p.year||'')?p.year:years[0];
   const {m,heirs}=monthData(acct,year);
   const tot=m.reduce((a,x)=>({dep:a.dep+x.dep,exp:a.exp+x.exp,dist:a.dist+x.dist}),{dep:0,exp:0,dist:0});
   const hmax=Math.max(1,...Object.values(heirs));
@@ -1008,7 +1020,7 @@ V.settings=()=>({title:'الإعدادات',html:`
     <div class="kv"><span>نوع الدخول</span><b>${store.canWrite?'مدير (إضافة وتعديل واعتماد)':store.isAgent?'وكيل (إدخال بانتظار الاعتماد)':'عرض فقط'}</b></div>
     <div class="actions"><button class="ghost" data-act="refresh">تحديث البيانات</button>${store.canWrite?'<button class="ghost" data-act="share-link">نسخ رابط الورثة</button>':''}</div>
     <div class="actions" style="margin-top:8px"><button class="ghost danger" data-act="logout">تسجيل خروج</button></div>
-    ${store.canWrite?'<p class="m" style="font-size:13px;color:var(--muted);margin:10px 0 0">رابط الورثة يفتح التطبيق وفيه رابط الخادم جاهز، فما يحتاجون إلا رقم العرض السري.</p>':''}
+    ${store.canWrite?'<p class="m" style="font-size:13px;color:var(--muted);margin:10px 0 0">رابط الورثة يفتح التطبيق مباشرة، وما يحتاجون إلا رقم العرض السري. لا ترسل الرقم السري مع الرابط في نفس الرسالة.</p>':''}
   </div>
   <p class="status">الإعدادات تنحفظ على هذا الجهاز.</p>`});
 function updPrefUI(){
@@ -1375,7 +1387,7 @@ V.close=()=>{
   const f=cformInit(),c=buildClosing();
   const old=store.ver<4?`<div class="note warnbox">⚠️ الإقفال يحتاج تحديث كود الخادم للإصدار 4. حدّثه وانشر <b>إصدار جديد</b>.</div>`:'';
   const myPend=state.reqs.find(r=>r.op==='close'&&r.status==='pending');
-  const years=[...new Set(state.txs.filter(t=>!t.hist).map(t=>(t.date||'').slice(0,4)).concat([String(new Date().getFullYear())]))].filter(Boolean).sort().reverse();
+  const years=[...new Set(state.txs.filter(t=>!t.hist).map(t=>(t.date||'').slice(0,4)).concat([String(new Date().getFullYear())]))].filter(y=>/^\d{4}$/.test(y)).sort().reverse();
   const acctCard=k=>{const x=c.accts[k];return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px"><b>${ACCTS[k].name}</b><button class="linkbtn" data-go="bank" data-k="${k}">قراءة كشف البنك ←</button></div>
     <div class="kv"><span>رصيد أول السنة</span><b class="num">${fmt(x.open)}</b></div>
     <div class="kv"><span>الإيداعات</span><b class="num in">${fmt(x.dep)}</b></div>
@@ -1385,7 +1397,7 @@ V.close=()=>{
     <label class="k" for="cBank-${k}" style="margin-top:8px">رصيد البنك في نفس التاريخ</label>
     <input id="cBank-${k}" inputmode="decimal" placeholder="من كشف البنك" value="${esc(f.bank[k])}">
     ${x.bank!==''?`<div class="kv" style="margin-top:6px"><span>الفرق</span><b class="num ${Math.abs(x.diff)<1?'in':'out'}">${Math.abs(x.diff)<1?'✓ مطابق':fmt(x.diff)}</b></div>`:''}</div>`;};
-  const chk=(ok,txt)=>`<div class="kv"><span>${ok?'✅':'⚠️'} ${txt}</span></div>`;
+  const chk=(ok,txt)=>`<div class="kv"><span>${ok?'✅':'⚠️'} ${esc(txt)}</span></div>`;
   return {title:'الإقفال السنوي',html:`${old}
   <p class="note" style="margin-top:0">${f.trial?'<b>إقفال تجريبي:</b> يسجّل الأرقام ويطلع حزمة الإقفال، وما يقفل أي حركة. تقدر تحذفه بعدين.':'<b>إقفال فعلي:</b> بعد الاعتماد كل الحركات لين تاريخ الإقفال تصير للعرض بس، ورصيد الإقفال يصير رصيد بداية الفترة الجديدة.'}</p>
   ${myPend?`<div class="note">⏳ فيه إقفال بانتظار اعتماد ${store.canWrite?'منك':'المدير'}. <button class="linkbtn" data-go="reqs">فتح الطلبات</button></div>`:''}
@@ -1440,16 +1452,32 @@ function pdfWrap(c,s,w){const out=[];String(s||'').split('\n').forEach(par=>{let
 const pdfIsNum=s=>/^[\d,.\-+ %]+$/.test(String(s).trim())&&/\d/.test(String(s));
 function pdfRR(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath();}
 /* doc = {title, sub, cards:[[label,value,color]], sections:[{title, cols:[{h,w,al}], rows:[[cell..]], foot:[..]}], note} */
-function pdfPages(doc){
-  const W=PG.w,H=PG.h,M=PG.m,CW=W-2*M,pages=[];let c,y;
+/* دقة الطباعة: الصفحة ترسم بمقاس 1190×1684 وتتكبّر 2.1 مرة ≈ 300 نقطة في البوصة */
+const PDF_RS=2.1,PDF_Q=0.94;
+function pdfPages(doc,total){
+  const dry=total==null; // أول مرة نحسب عدد الصفحات بس، والمرة الثانية نرسم بالدقة العالية
+  const W=PG.w,H=PG.h,M=PG.m,CW=W-2*M,out=[];let c,y,cv=null,count=0;
   const NAVY='#16244F',GOLD='#B08A44',INK='#22263A',MUTED='#6B7286',LINE='#E4E1D8',ZEBRA='#FAF7F0';
   const font=(sz,wt)=>`${wt||400} ${sz}px ${PDF_FONT}`;
   const text=(s,x,yy,o={})=>{c.font=o.font||font(o.size||21,o.w);c.fillStyle=o.color||INK;c.textBaseline='middle';
     s=String(s??'');c.direction=(o.num??pdfIsNum(s))?'ltr':'rtl';c.textAlign=o.align||'right';c.fillText(o.max?pdfFit(c,s,o.max):s,x,yy);};
   const bottom=()=>H-M-40;
+  function footer(){
+    c.fillStyle=LINE;c.fillRect(M,H-M-14,CW,1);
+    text('صفحة '+count+' من '+(total||count),M,H-M+12,{size:16,color:MUTED,align:'left',num:false});
+    text('تطبيق وريث · '+APP_URL.replace(/^https?:\/\//,'').replace(/\/$/,''),W-M,H-M+12,{size:16,color:MUTED,num:false});
+  }
+  // نحوّل كل صفحة لصورة أول ما تخلص ونفضي الذاكرة (مهم للآيفون)
+  function finish(){
+    if(!cv)return;footer();
+    if(!dry){out.push(cv.toDataURL('image/jpeg',PDF_Q));cv.width=1;cv.height=1;cv=null;}
+  }
   function page(){
-    const cv=document.createElement('canvas');cv.width=W;cv.height=H;c=cv.getContext('2d');c.fillStyle='#FFFFFF';c.fillRect(0,0,W,H);pages.push(cv);
-    if(pages.length===1){
+    finish();count++;
+    if(dry){if(!cv){cv=document.createElement('canvas');cv.width=1;cv.height=1;c=cv.getContext('2d');}}
+    else{cv=document.createElement('canvas');cv.width=Math.round(W*PDF_RS);cv.height=Math.round(H*PDF_RS);c=cv.getContext('2d');
+      c.setTransform(PDF_RS,0,0,PDF_RS,0,0);c.imageSmoothingQuality='high';c.fillStyle='#FFFFFF';c.fillRect(0,0,W,H);}
+    if(count===1){
       const g=c.createLinearGradient(0,0,W,220);g.addColorStop(0,'#1F3670');g.addColorStop(1,'#0E1A3E');c.fillStyle=g;c.fillRect(0,0,W,220);
       c.fillStyle=GOLD;c.fillRect(0,220,W,4);
       if(pdfLogo)c.drawImage(pdfLogo,W-M-104,38,104,96);
@@ -1497,10 +1525,8 @@ function pdfPages(doc){
     y+=34;
   });
   if(doc.note){c.font=font(17);const lines=pdfWrap(c,doc.note,CW);lines.forEach(l=>{if(y+30>bottom())page();text(l,W-M,y+12,{size:17,color:MUTED,num:false});y+=30;});}
-  pages.forEach((cv,i)=>{c=cv.getContext('2d');c.fillStyle=LINE;c.fillRect(M,H-M-14,CW,1);
-    text('صفحة '+(i+1)+' من '+pages.length,M,H-M+12,{size:16,color:MUTED,align:'left',num:false});
-    text('تطبيق وريث · '+APP_URL.replace(/^https?:\/\//,'').replace(/\/$/,''),W-M,H-M+12,{size:16,color:MUTED,num:false});});
-  return pages;
+  finish();
+  return dry?count:out;
 }
 async function pdfBlob(pages){
   const enc=new TextEncoder(),parts=[],offs=[];let len=0;
@@ -1510,13 +1536,15 @@ async function pdfBlob(pages){
   const n=pages.length,kids=[];for(let i=0;i<n;i++)kids.push((3+i*3)+' 0 R');
   obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
   obj(2,`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${n} >>`);
+  const IW=Math.round(PG.w*PDF_RS),IH=Math.round(PG.h*PDF_RS);
   for(let i=0;i<n;i++){
-    const cv=pages[i];const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.86));
-    const img=new Uint8Array(await blob.arrayBuffer()),pg=3+i*3;
+    const b64=atob(pages[i].slice(pages[i].indexOf(',')+1)),img=new Uint8Array(b64.length);for(let j=0;j<b64.length;j++)img[j]=b64.charCodeAt(j);
+    pages[i]=null;const pg=3+i*3;
+    if(i%2)await new Promise(r=>setTimeout(r,0));
     const content='q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
     obj(pg,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ${pg+2} 0 R >> >> /Contents ${pg+1} 0 R >>`);
     obj(pg+1,`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
-    obj(pg+2,[`<< /Type /XObject /Subtype /Image /Width ${cv.width} /Height ${cv.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.length} >>\nstream\n`,img,'\nendstream']);
+    obj(pg+2,[`<< /Type /XObject /Subtype /Image /Width ${IW} /Height ${IH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.length} >>\nstream\n`,img,'\nendstream']);
   }
   const xref=len,size=3+n*3;
   let x=`xref\n0 ${size}\n0000000000 65535 f \n`;for(let i=1;i<size;i++)x+=String(offs[i]).padStart(10,'0')+' 00000 n \n';
@@ -1525,7 +1553,7 @@ async function pdfBlob(pages){
 }
 async function exportPdf(doc,name){
   const done=busy('جاري تجهيز ملف PDF…','لحظات بس');
-  try{await pdfPrep();await new Promise(r=>setTimeout(r,30));const pages=pdfPages(doc);const blob=await pdfBlob(pages);done();offerFile(blob,name);}
+  try{await pdfPrep();await new Promise(r=>setTimeout(r,30));const total=pdfPages(doc,null);const pages=pdfPages(doc,total);const blob=await pdfBlob(pages);done();offerFile(blob,name);}
   catch(e){done();toast('ما قدرت أجهز الملف. حاول مرة ثانية.');console.error(e);}
 }
 function offerFile(blob,name){
@@ -1587,7 +1615,7 @@ document.addEventListener('click',async e=>{
   if(d.me!==undefined){setMe(d.me);render();scrollTop0();const sel=document.querySelector('.chip[aria-pressed="true"]');if(sel)sel.scrollIntoView({inline:'center',block:'nearest'});return;}
   if(d.act==='login'){
     const u=document.getElementById('lUrl'),p=document.getElementById('lPin'),er=document.getElementById('lErr');
-    if(u){const v=u.value.trim();if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(v)){er.textContent='الصق رابط النشر اللي يبدأ بـ https://script.google.com';return;}auth.url=v;auth.custom=true;}
+    if(u){const v=u.value.trim();if(!API_RE.test(v)){er.textContent='الرابط لازم يكون رابط نشر Google Apps Script وينتهي بـ /exec';return;}auth.url=v;auth.custom=true;}
     auth.pin=(p&&p.value||'').trim();if(!auth.pin){er.textContent='اكتب الرقم السري.';return;}
     b.disabled=true;state.loginErr='';saveAuth();
     try{store.mode='loading';render();await store.refresh(true);state.stack=[{v:'home'}];render();scrollTop0();toast(store.canWrite?'أهلاً، دخلت كمدير':store.isAgent?'أهلاً، دخلت كوكيل':'أهلاً بك');}
@@ -1637,7 +1665,13 @@ document.addEventListener('click',async e=>{
       if(store.canWrite)await api('close',{close:c});else await api('propose',{op:'close',tx:c});
       await store.refresh();done();render();scrollTop0();
       toast(store.canWrite?(f.trial?'تم الإقفال التجريبي':'تم الإقفال واعتماد السنة'):'انرسل الإقفال لاعتماد المدير');
-    }catch(e){done();er.textContent=apiErr(e);}
+    }catch(e){
+      // الطلب يمكن وصل وتنفّذ بس الرد تأخر: نتأكد قبل ما نقول إنه فشل
+      let ok=false;if(e&&(e.error==='timeout'||e.error==='network')){try{await store.refresh();ok=store.canWrite?(store.closings||[]).some(x=>x.id===c.id):state.reqs.some(r=>r.op==='close'&&r.id===c.id);}catch(x){}}
+      done();
+      if(ok){render();scrollTop0();toast(store.canWrite?'تم الإقفال':'انرسل الإقفال لاعتماد المدير');}
+      else{const er2=document.getElementById('cErr');if(er2)er2.textContent=apiErr(e);}
+    }
     return;
   }
   if(d.act==='close-del'||d.act==='reopen'){
@@ -1702,7 +1736,7 @@ document.addEventListener('click',async e=>{
     try{await store.refresh();render();toast('تم تحديث البيانات');}catch(e){toast(apiErr(e));}
     finally{done();const x=document.querySelector('.bref');if(x)x.classList.remove('spin');b.classList.remove('spin');}return;}
   if(d.act==='share-link'){
-    const link=location.origin+location.pathname+'#api='+encodeURIComponent(auth.url);
+    const link=location.origin+location.pathname;
     try{await navigator.clipboard.writeText(link);toast('تم نسخ رابط الورثة');}catch(x){prompt('انسخ الرابط:',link);}
     return;
   }
