@@ -435,7 +435,7 @@ const HAS_CLAUDE=false;
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
-const API_URLS=['https://script.google.com/macros/s/AKfycbyJNSpaY-WW3puqcnd5vWDpgtjFiQkwXvOxV3m8_E9-VEmvxSFpLpGdYSz2_pRiy8EC/exec','https://script.google.com/macros/s/AKfycbwZj88mqWrVBcYs0l28oIm7GXR2e_xCKy24IJygvA2rhPRysQe5uQnozGGAv_uSU6Vv/exec'];
+const API_URLS=['https://script.google.com/macros/s/AKfycbwZj88mqWrVBcYs0l28oIm7GXR2e_xCKy24IJygvA2rhPRysQe5uQnozGGAv_uSU6Vv/exec','https://script.google.com/macros/s/AKfycbyJNSpaY-WW3puqcnd5vWDpgtjFiQkwXvOxV3m8_E9-VEmvxSFpLpGdYSz2_pRiy8EC/exec'];
 const DEFAULT_API=API_URLS[0];
 // الرابط الافتراضي يغلب دايماً، إلا إذا غيّره المستخدم بنفسه من شاشة الدخول
 if(auth.def!==DEFAULT_API||(!auth.custom&&!API_URLS.includes(auth.url))){auth.url=DEFAULT_API;auth.custom=false;auth.def=DEFAULT_API;}
@@ -486,7 +486,7 @@ async function api_(action,payload){
 function apiErr(e){
   const c=e&&e.error;
   if(c==='pin')return 'الرقم السري غلط.';
-  if(c==='locked')return 'محاولات كثيرة غلط. حاول بعد ساعة.';
+  if(c==='locked')return 'الدخول مقفل مؤقتاً بسبب محاولات كثيرة غلط. انتظر ساعة بدون أي محاولة، أو شغّل الدالة unlock من مشروع Apps Script.';
   if(c==='forbidden')return 'ما عندك صلاحية لهذي العملية.';
   if(c==='busy')return 'الخادم مشغول بطلب ثاني. حاول بعد ثواني.';
   if(c==='timeout')return 'الاتصال تأخر. تأكد من الإنترنت وحاول مرة ثانية.';
