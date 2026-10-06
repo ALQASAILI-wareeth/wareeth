@@ -435,14 +435,25 @@ const HAS_CLAUDE=false;
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
-const DEFAULT_API='https://script.google.com/macros/s/AKfycbwZj88mqWrVBcYs0l28oIm7GXR2e_xCKy24IJygvA2rhPRysQe5uQnozGGAv_uSU6Vv/exec';
+const API_URLS=['https://script.google.com/macros/s/AKfycbyJNSpaY-WW3puqcnd5vWDpgtjFiQkwXvOxV3m8_E9-VEmvxSFpLpGdYSz2_pRiy8EC/exec','https://script.google.com/macros/s/AKfycbwZj88mqWrVBcYs0l28oIm7GXR2e_xCKy24IJygvA2rhPRysQe5uQnozGGAv_uSU6Vv/exec'];
+const DEFAULT_API=API_URLS[0];
 // الرابط الافتراضي يغلب دايماً، إلا إذا غيّره المستخدم بنفسه من شاشة الدخول
-if(!auth.custom||auth.def!==DEFAULT_API){auth.url=DEFAULT_API;auth.custom=false;auth.def=DEFAULT_API;}
+if(auth.def!==DEFAULT_API||(!auth.custom&&!API_URLS.includes(auth.url))){auth.url=DEFAULT_API;auth.custom=false;auth.def=DEFAULT_API;}
 (function(){const m=location.hash.match(/api=([^&]+)/);if(m){auth.url=decodeURIComponent(m[1]);try{localStorage.setItem(AUTH,JSON.stringify(auth))}catch(e){}history.replaceState(null,'',location.pathname+location.search);}})();
 function saveAuth(){try{localStorage.setItem(AUTH,JSON.stringify(auth))}catch(e){}}
 let netN=0;
 function net(d){netN=Math.max(0,netN+d);const e=document.getElementById('net');if(e)e.classList.toggle('on',netN>0);}
-async function api(action,payload){net(1);try{return await api_(action,payload);}finally{net(-1);}}
+async function api(action,payload){net(1);try{
+  try{return await api_(action,payload);}
+  catch(e){
+    // الرابط ما رد بشكل صحيح: جرّب روابط الخادم الثانية المعروفة (الطلب ما تنفّذ أصلاً)
+    if(e&&e.error==='bad_response'&&!auth.custom){
+      for(const u of API_URLS){if(u===auth.url)continue;const prev=auth.url;auth.url=u;
+        try{const j=await api_(action,payload);saveAuth();return j;}
+        catch(e2){if(e2&&e2.error!=='bad_response'&&e2.error!=='network'&&e2.error!=='timeout'){saveAuth();throw e2;}auth.url=prev;}}
+    }
+    throw e;}
+}finally{net(-1);}}
 let busyN=0,busyT=0;
 /* نافذة صغيرة فيها علامة تدور، تطلع أثناء أي عملية يطلبها المستخدم */
 function busy(text,sub){
@@ -468,7 +479,7 @@ async function api_(action,payload){
     }finally{clearTimeout(tm);}
   }catch(e){throw {error:e&&e.name==='AbortError'?'timeout':'network'};}
   let j;
-  try{j=JSON.parse(text);}catch(e){throw {error:'bad_response',detail:(res.status+' '+String(text||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()).slice(0,140)};}
+  try{j=JSON.parse(text);}catch(e){throw {error:'bad_response',status:res.status,kind:/already been declared|SyntaxError/.test(text)?'syntax':res.status===404?'notfound':/accounts\.google\.com|ServiceLogin/.test(text)?'access':'',detail:(res.status+' '+String(text||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()).slice(0,140)};}
   if(!j.ok)throw j;
   return j;
 }
@@ -485,7 +496,10 @@ function apiErr(e){
   if(c==='server')return 'صار خطأ في الخادم'+(e.detail?' ('+e.detail+')':'')+'.';
   if(c==='network')return 'ما فيه اتصال بالإنترنت، أو رابط الخادم غلط.';
   if(c==='no_url')return 'رابط الخادم ناقص.';
-  if(c==='bad_response')return 'الخادم ما رد بشكل صحيح.'+(e.detail?' ('+e.detail+')':'');
+  if(c==='bad_response'&&e.kind==='syntax')return 'كود الخادم فيه خطأ: الكود منسوخ مرتين داخل المشروع. خلّ ملف واحد بس فيه الكود، واحذف الثاني، وانشر إصدار جديد.';
+  if(c==='bad_response'&&e.kind==='notfound')return 'رابط الخادم مو موجود (404): عملية النشر انحذفت أو انأرشفت.';
+  if(c==='bad_response'&&e.kind==='access')return 'الخادم يطلب تسجيل دخول Google: خلّ "من يمكنه الوصول" على "أي شخص" في إعدادات النشر.';
+  if(c==='bad_response')return 'الخادم ما رد بشكل صحيح.'+(e.detail?' ('+String(e.detail).slice(0,60)+')':'');
   return 'صار خطأ. حاول مرة ثانية.';
 }
 /* تنظيف القيم اللي ترجع من الشيت: التواريخ بساعة من خانة وحدة، وأرقام تحولت لتواريخ */
