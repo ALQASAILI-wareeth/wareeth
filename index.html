@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>وريث</title>
-<meta name="wareeth-version" content="2026.10.05.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -415,53 +414,24 @@ const HAS_CLAUDE=false;
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
-const DEFAULT_API='https://script.google.com/macros/s/AKfycbyJNSpaY-WW3puqcnd5vWDpgtjFiQkwXvOxV3m8_E9-VEmvxSFpLpGdYSz2_pRiy8EC/exec';
-// الانتقال مرة واحدة إلى رابط النشر الذي حدّده المالك لهذه النسخة.
-const API_REVISION='2026.10.05.3';
-if(auth.apiRevision!==API_REVISION){
-  auth.url=DEFAULT_API;auth.custom=false;auth.pin='';auth.apiRevision=API_REVISION;saveAuth();
-}else if(!auth.custom){auth.url=DEFAULT_API;}
-
-(function(){const m=location.hash.match(/api=([^&]+)/);if(m){try{const u=decodeURIComponent(m[1]);if(validApiUrl(u)){auth.url=u;auth.custom=true;}}catch(e){}try{localStorage.setItem(AUTH,JSON.stringify(auth))}catch(e){}history.replaceState(null,'',location.pathname+location.search);}})();
+const DEFAULT_API='https://script.google.com/macros/s/AKfycbwZj88mqWrVBcYs0l28oIm7GXR2e_xCKy24IJygvA2rhPRysQe5uQnozGGAv_uSU6Vv/exec';
+// الرابط الافتراضي يغلب دايماً، إلا إذا غيّره المستخدم بنفسه من شاشة الدخول
+if(!auth.custom||auth.def!==DEFAULT_API){auth.url=DEFAULT_API;auth.custom=false;auth.def=DEFAULT_API;}
+(function(){const m=location.hash.match(/api=([^&]+)/);if(m){auth.url=decodeURIComponent(m[1]);try{localStorage.setItem(AUTH,JSON.stringify(auth))}catch(e){}history.replaceState(null,'',location.pathname+location.search);}})();
 function saveAuth(){try{localStorage.setItem(AUTH,JSON.stringify(auth))}catch(e){}}
-function validApiUrl(value){
-  try{const u=new URL(value);return u.protocol==='https:'&&u.hostname==='script.google.com'&&/^\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(u.pathname)&&!u.search&&!u.hash&&!u.username&&!u.password;}catch(e){return false;}
-}
-let sessionEpoch=0;
-const activeRequests=new Set();
-function logout(){
-  sessionEpoch++;activeRequests.forEach(c=>c.abort());activeRequests.clear();
-  auth.pin='';try{localStorage.removeItem(AUTH);}catch(e){}saveAuth();
-  Object.assign(store,{mode:'login',canWrite:false,isAgent:false,role:null,loadedAt:0});
-  state.txs=[];state.reqs=[];state.form=null;state.stack=[{v:'home'}];state.loginErr='';
-  notif.cfg=null;sw=null;setX(0,null);appEl.style.transition='none';
-  document.querySelectorAll('.modal-bg').forEach(x=>x.remove());
-  document.getElementById('prog').hidden=true;
-  render();scrollTop0();
-}
-async function login(btn){
-  const pin=document.getElementById('lPin'),url=document.getElementById('lUrl'),err=document.getElementById('lErr');
-  const nextUrl=(url?url.value:auth.url).trim();
-  if(!validApiUrl(nextUrl)){err.textContent='أدخل رابط نشر Google Apps Script المنتهي بـ /exec.';return;}
-  const nextPin=pin.value.trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-  if(!nextPin){err.textContent='أدخل الرقم السري.';pin.focus();return;}
-  if(btn.disabled)return;btn.disabled=true;
-  if(url){auth.url=nextUrl;auth.custom=true;}
-  auth.pin=nextPin;saveAuth();sessionEpoch++;state.loginErr='';
-  await store.init();
-}
 async function api(action,payload){
-  if(!validApiUrl(auth.url))throw {error:'no_url'};
+  if(!auth.url)throw {error:'no_url'};
   const q=JSON.stringify(Object.assign({action,pin:auth.pin},payload||{}));
+  const url=auth.url+'?action='+encodeURIComponent(action)+'&pin='+encodeURIComponent(auth.pin||'')+'&q='+encodeURIComponent(q);
   let res,text;
   try{
     const ac=typeof AbortController!=='undefined'?new AbortController():null;
-    if(ac)activeRequests.add(ac);
-    const tm=setTimeout(()=>ac&&ac.abort(),60000);
+    const tm=setTimeout(()=>ac&&ac.abort(),30000);
     try{
-      res=await fetch(auth.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:q,cache:'no-store',redirect:'follow',signal:ac&&ac.signal});
+      res=url.length<7500?await fetch(url,{method:'GET',cache:'no-store',signal:ac&&ac.signal})
+        :await fetch(auth.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:q,signal:ac&&ac.signal});
       text=await res.text();
-    }finally{clearTimeout(tm);if(ac)activeRequests.delete(ac);}
+    }finally{clearTimeout(tm);}
   }catch(e){throw {error:e&&e.name==='AbortError'?'timeout':'network'};}
   let j;
   try{j=JSON.parse(text);}catch(e){throw {error:'bad_response',detail:(res.status+' '+String(text||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()).slice(0,140)};}
@@ -474,7 +444,7 @@ function apiErr(e){
   if(c==='locked')return 'محاولات كثيرة غلط. حاول بعد ساعة.';
   if(c==='forbidden')return 'ما عندك صلاحية لهذي العملية.';
   if(c==='busy')return 'الخادم مشغول بطلب ثاني. حاول بعد ثواني.';
-  if(c==='timeout')return 'الخادم لم يرد خلال دقيقة. يمكنك إعادة المحاولة أو تغيير رابط الخادم. إذا كنت تحفظ حركة، حدّث السجل أولًا للتحقق من حفظها.';
+  if(c==='timeout')return 'الاتصال تأخر. تأكد من الإنترنت وحاول مرة ثانية.';
   if(c==='owned')return 'هذي الحركة باسم '+(store.agent||'الوكيل')+'، وأي تعديل عليها يحتاج موافقته.';
   if(c==='not_owned')return 'هذي الحركة باسمك وتقدر تعدّلها مباشرة.';
   if(c==='not_found')return 'الطلب ما عاد موجود. حدّث البيانات.';
@@ -543,17 +513,18 @@ const store={
   mode:'login',canWrite:false,role:null,loadedAt:0,
   async init(){
     if(!auth.url||!auth.pin){this.mode='login';render();return;}
-    const epoch=sessionEpoch;this.mode='loading';render();
-    try{await this.refresh(true);}catch(e){if(epoch!==sessionEpoch)return;if(e&&(e.error==='pin'||e.error==='locked')){this.mode='login';auth.pin='';saveAuth();state.loginErr=apiErr(e);}else{this.mode='offline';state.loginErr=apiErr(e);}render();}
+    this.mode='loading';render();
+    try{await this.refresh(true);}catch(e){if(e&&(e.error==='pin'||e.error==='locked')){this.mode='login';auth.pin='';saveAuth();state.loginErr=apiErr(e);}else{this.mode='offline';state.loginErr=apiErr(e);}render();}
   },
   async refresh(first){
-    const epoch=sessionEpoch;const j=await api('list');
-    if(epoch!==sessionEpoch)return;
+    const j=await api('list');
     state.txs=(j.txs||[]);
-    state.txs.forEach(t=>{t.date=normDate(t.date);});this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'}));this.ver=+j.v||1;this.agent=j.agent||'الوكيل';this.mode='api';this.loadedAt=Date.now();
+    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'}));this.ver=+j.v||1;this.agent=j.agent||'الوكيل';this.mode='api';this.loadedAt=Date.now();
     if(j.cfg)notif.cfg=j.cfg;
     if(!isForm())render();
-    // القراءة لا تُعدّل الحركات أو تستورد بيانات تلقائياً.
+    // إصلاح تلقائي: أرقام قرأها الشيت كتواريخ، يرجّعها أرقام مرة وحدة
+    if(this.canWrite)setTimeout(importY25,600);
+    if(this.canWrite&&broken.length&&!this.repaired){this.repaired=true;for(const t of broken){try{await api('put',{tx:t});}catch(e){}}}
   },
   async put(t){
     const old=state.txs.find(x=>x.id===t.id);
@@ -767,12 +738,23 @@ V.share=({k})=>{
 V.total=()=>{
   const r=calc();
   return {title:'النصيب الكلي',html:`
-  <div class="total-line"><span class="t">إجمالي المبالغ المستلمة للورثة</span><span class="v">${money(r.distTotal)}</span></div>
-  <p class="note">اضغط على الاسم لعرض عدد الاستلامات، ومجموع ما استلمه، ونسبته في البناية والمزارع.</p>
-  <div class="rows">${HEIRS.map(h=>{
-    const available=r.bal.bld*W.bld[h.id]+r.bal.farm*W.farm[h.id];
-    return `<button type="button" class="row" data-go="heir" data-id="${h.id}"><span>${esc(h.n)}<div class="m">عدد الاستلامات: <span class="num">${receipts(h.id).length}</span> · المستلم: <span class="num">${fmt(r.received[h.id])}</span> د.إ</div></span><span class="a">${money(available)}<small class="m" style="display:block">النصيب المتبقي ←</small></span></button>`;
-  }).join('')}<div class="row sum"><span>مجموع النصيب المتبقي</span><span>${money(r.total)}</span></div></div>`};
+  <div class="total-line"><span class="t">إجمالي التوزيع</span><span class="v">${money(r.distTotal)}</span></div>
+  <div class="rows acc">
+    ${HEIRS.map(h=>{const a=r.bal.bld*W.bld[h.id],c=r.bal.farm*W.farm[h.id],rcs=receipts(h.id),n=rcs.length;
+      return `<details class="accrow" data-acc><summary class="row"><span>${h.n}</span><span class="a">${money(a+c)}</span></summary>
+        <div class="accbody">
+          <div class="stat3">
+            <div><span>عدد الاستلامات</span><b class="num">${n}</b></div>
+            <div><span>مجموع المستلم</span><b class="num">${fmt(r.received[h.id])}</b></div>
+            <div><span>آخر استلام</span><b>${rcs.length?esc(dShort(rcs[rcs.length-1].t.date)):'—'}</b></div>
+          </div>
+          ${rcs.length?`<div class="rclist">${rcs.map((x,i)=>({x,i})).reverse().map(({x,i})=>`<div class="rcl"><span class="o">${ord(i)}</span><span class="d">${esc(dShort(x.t.date))}</span><b class="num">${fmt(x.amt)}</b></div>`).join('')}</div>`:'<p class="m" style="color:var(--muted);font-size:13px;margin:8px 0">ما استلم أي مبلغ بعد.</p>'}
+          <div class="kv" style="margin-top:8px"><span>نصيبه الحالي من البناية</span><b class="num">${fmt(a)}</b></div>
+          <div class="kv"><span>نصيبه الحالي من المزارع</span><b class="num">${fmt(c)}</b></div>
+          <button class="linkbtn" data-go="heir" data-id="${h.id}" style="margin-top:6px">الكشف الكامل والتصدير ←</button>
+        </div></details>`}).join('')}
+    <div class="row sum"><span>المجموع</span><span>${money(r.total)}</span></div></div>
+  <p class="note">اضغط على أي اسم يطلع لك كم مرة استلم وتواريخ كل استلام ومبلغه. "إجمالي التوزيع" هو كل اللي انصرف للورثة من الحسابين، والمبالغ جنب الأسماء هي نصيب كل وريث من الرصيد المتبقي الآن.</p>`};
 };
 
 V.heirs=()=>{
@@ -789,14 +771,8 @@ V.heir=({id})=>{
   else if(diff<0) fair=`<div class="fair"><span class="dot" style="background:var(--neg)"></span>استلم أقل من حصته بـ ${money(-diff)}</div>`;
   else fair=`<div class="fair"><span class="dot" style="background:var(--gold)"></span>استلم أكثر من حصته بـ ${money(diff)}</div>`;
   return {title:h.n,html:`
-  <div class="card">
-    <div class="kv"><span>عدد مرات الاستلام</span><b class="num">${rc.length}</b></div>
-    <div class="kv"><span>مجموع المبالغ المستلمة</span><b>${money(r.received[id])}</b></div>
-    <div class="kv"><span>نسبته في البناية</span><b class="num">${ACCTS.bld.shares[id]}%</b></div>
-    <div class="kv"><span>نسبته في المزارع</span><b class="num">${ACCTS.farm.shares[id]}%</b></div>
-  </div><p class="note">عدد الاستلامات والمجموع يشملان التوزيعات السابقة المسجّلة. تختلف نسبة البناية عن نسبة المزارع.</p>
-  <h3 class="sec">تفاصيل الاستلامات</h3>
-  ${rc.length?(()=>{const all=cur().all!==false,items=rc.map((x,i)=>({x,i})).reverse(),shown=all?items:items.slice(0,4);
+  <div class="total-line"><span class="t">المبالغ المستلمة</span><span class="v">${money(r.received[id])}</span></div>
+  ${rc.length?(()=>{const all=cur().all,items=rc.map((x,i)=>({x,i})).reverse(),shown=all?items:items.slice(0,4);
     return `<div class="rows">${shown.map(({x,i})=>`<button class="row" data-go="tx" data-id="${esc(x.t.id)}"><span>الاستلام ${ord(i)}<div class="m">${esc(dShort(x.t.date))} · ${ACCTS[x.t.acct].short}</div></span><span class="a num">${fmt(x.amt)}</span></button>`).join('')}</div>
     ${items.length>4?`<div class="actions" style="margin-top:8px"><button class="ghost" data-act="rc-all">${all?'عرض آخر 4 فقط':'عرض كل الاستلامات ('+items.length+')'}</button></div>`:''}`})()
     :'<p class="empty">ما استلم أي مبلغ بعد.</p>'}
@@ -952,8 +928,7 @@ V.settings=()=>({title:'الإعدادات',html:`
     <div class="actions" style="margin-top:8px"><button class="ghost danger" data-act="logout">تسجيل خروج</button></div>
     ${store.canWrite?'<p class="m" style="font-size:13px;color:var(--muted);margin:10px 0 0">رابط الورثة يفتح التطبيق وفيه رابط الخادم جاهز، فما يحتاجون إلا رقم العرض السري.</p>':''}
   </div>
-  ${store.canWrite?'<div class="actions"><button class="ghost" data-act="import-history">استيراد الحركات القديمة من الملف</button></div>':''}
-  <p class="status">الإصدار 2026.10.05.3 · الإعدادات تنحفظ على هذا الجهاز.</p>`});
+  <p class="status">الإعدادات تنحفظ على هذا الجهاز.</p>`});
 function updPrefUI(){
   const a=document.getElementById('pFs'),b=document.getElementById('pNs');
   if(a){a.value=prefs.fs;document.getElementById('pFsV').textContent=Math.round(prefs.fs*100)+'%';}
@@ -981,11 +956,11 @@ function catSelect(f,cats,label,first,ph){
   ${other?`<input id="fFrom" style="margin-top:8px" placeholder="${ph}" value="${esc(f.from)}">`:''}`;
 }
 
-V.loading=()=>({title:'وريث',html:`<div class="gate"><div class="gmark">${markSvg}<span>WAREETH</span></div><p class="m" style="color:var(--muted)">جاري الاتصال بالخادم…</p><button type="button" class="ghost" data-act="logout" style="margin-top:18px;width:100%">إلغاء الاتصال والعودة للدخول</button></div>`});
+V.loading=()=>({title:'وريث',html:`<div class="gate"><div class="gmark">${markSvg}<span>WAREETH</span></div><p class="m" style="color:var(--muted)">جاري التحميل…</p></div>`});
 V.offline=()=>({title:'وريث',html:`<div class="gate"><div class="gmark">${markSvg}<span>WAREETH</span></div>
   <p class="err" style="text-align:center">${esc(state.loginErr||'تعذّر الاتصال.')}</p>
   <button class="primary" data-act="retry">حاول مرة ثانية</button>
-  <button type="button" class="ghost" style="margin-top:10px;width:100%" data-act="logout">العودة للدخول / تسجيل خروج</button><button type="button" class="linkbtn" style="margin-top:14px" data-act="reset-url">تغيير رابط الخادم</button></div>`});
+  <button class="ghost" style="margin-top:10px;width:100%" data-act="logout">تغيير بيانات الدخول</button></div>`});
 V.login=()=>({title:'وريث',html:`<div class="gate"><div class="gmark">${markSvg}<span>WAREETH</span></div>
   <h2 style="margin:6px 0 2px;font-size:22px">أهلاً بكم في تطبيق وريث</h2>
   <p style="color:var(--muted);margin:0 0 18px">ورثة مبارك علي القصيلي</p>
@@ -1081,11 +1056,11 @@ async function save(btn){
     createdAt:old?(old.createdAt||Date.now()):Date.now(),updatedAt:Date.now()};
   if(!f.date){err.textContent='اختر التاريخ.';return;}
   if(t.kind==='dist'){
-    const alloc={};HEIRS.forEach(h=>{const v=parseAmt(f.alloc[h.id]);if(f.inc[h.id]&&Number.isFinite(v)&&r2(v)>0)alloc[h.id]=r2(v);});
+    const alloc={};HEIRS.forEach(h=>{const v=parseAmt(f.alloc[h.id]);if(f.inc[h.id]&&v>0)alloc[h.id]=r2(v);});
     if(!Object.keys(alloc).length){err.textContent='حدد وريثاً واحداً على الأقل واكتب مبلغه.';return;}
     t.alloc=alloc;t.amount=r2(Object.values(alloc).reduce((a,b)=>a+b,0));
   } else {
-    const a=parseAmt(f.amount);if(!Number.isFinite(a)||!(r2(a)>0)){err.textContent='اكتب مبلغاً أكبر من صفر.';return;}
+    const a=parseAmt(f.amount);if(!(a>0)){err.textContent='اكتب مبلغاً أكبر من صفر.';return;}
     if(t.kind==='exp'&&!(f.from||'').trim()){err.textContent=f.other?'اكتب اسم البند.':'اختر البند من القائمة.';return;}
     t.amount=r2(a);t.from=(f.from||'').trim().slice(0,120);
     if(t.kind==='dep'&&f.acct==='farm'&&f.prop)t.prop=f.prop;
@@ -1099,7 +1074,7 @@ async function save(btn){
     scheduleSync();toast(old?'تم حفظ التعديل':'تم الحفظ');state.form=null;state.stack.pop();
     if(!old){state.stack.push({v:'tx',id:t.id});} render();scrollTop0();
     {const list=state.txs.filter(x=>x.id!==t.id).concat([t]);afterChange(old?'edit':'new',t,list);}}
-  catch(x){err.textContent=x&&x.code==='quota_exceeded'?'امتلأت مساحة الحفظ.':apiErr(x);btn.disabled=false;}
+  catch(x){err.textContent=x&&x.code==='quota_exceeded'?'امتلأت مساحة الحفظ.':'تعذّر الحفظ. حاول مرة ثانية.';btn.disabled=false;}
 }
 
 /* ===== الرفع والتصدير ===== */
@@ -1126,26 +1101,9 @@ function render(){
   if(t.v==='form'&&document.getElementById('allocSum'))updSum();
 }
 
-document.addEventListener('click',e=>{
-  const button=e.target.closest('[data-act="logout"]');
-  if(!button)return;
-  e.preventDefault();e.stopImmediatePropagation();logout();
-},true);
 document.addEventListener('click',async e=>{
   const b=e.target.closest('button,[data-go]');if(!b)return;
   const d=b.dataset;
-  if(b.disabled)return;
-  if(d.act==='login'){await login(b);return;}
-  if(d.act==='logout'){logout();return;}
-  if(d.act==='retry'){await store.init();return;}
-  if(d.act==='reset-url'){logout();auth.url='';auth.custom=true;saveAuth();render();document.getElementById('lUrl').focus();return;}
-  if(d.act==='import-history'){
-    if(!store.canWrite||importY25.run)return;
-    const have=new Set(state.txs.map(t=>t.id)),n=HIST_IMPORT.filter(t=>!have.has(t.id)).length;
-    if(!n){toast('كل الحركات القديمة موجودة بالفعل.');return;}
-    if(await ask('استيراد الحركات القديمة؟','ستُضاف '+n+' حركة من البيانات المرفقة بالملف إلى الشيت. راجع مصدرها قبل المتابعة.','استيراد'))await importY25();
-    return;
-  }
   if(d.tab){tab(d.tab);return;}
   if(d.me!==undefined){setMe(d.me);render();scrollTop0();const sel=document.querySelector('.chip[aria-pressed="true"]');if(sel)sel.scrollIntoView({inline:'center',block:'nearest'});return;}
   if(d.act==='back'){back();return;}
@@ -1153,14 +1111,14 @@ document.addEventListener('click',async e=>{
   if(d.go){if(d.go==='acct'&&d.k){prefs.lastAcct=d.k;savePrefs();}go(d.go,d.go==='moves'?{f:d.k||'all'}:{k:d.k,type:d.type,id:d.id});return;}
   if(d.new){if(!canEditNow())return;state.form=newForm(d.new,d.k);go('form');return;}
   if(d.swacct){const c=cur();if(c.k!==d.swacct){c.k=d.swacct;prefs.lastAcct=d.swacct;savePrefs();render();if(!reduceMotion&&appEl.animate)appEl.animate([{opacity:.4},{opacity:1}],{duration:160});}return;}
-  if(d.act==='rc-all'){cur().all=cur().all===false;render();return;}
+  if(d.act==='rc-all'){cur().all=!cur().all;render();return;}
   if(d.mv){const [k,v]=d.mv.split(':');cur()[k]=v;render();scrollTop0();return;}
   if(d.act==='mv-export'){
     const c=cur(),f=c.f||'all',ty=c.t||'all';
     const list=state.txs.filter(t=>(f==='all'||t.acct===f)&&(ty==='all'||(ty==='dep'?t.kind==='dep':t.kind!=='dep'))).sort(byDate);
     const rows=[['التاريخ','الحساب','النوع','المبلغ','من / الجهة','ملحوظة']];
     list.forEach(t=>rows.push([dTime(t.date),ACCTS[t.acct]?ACCTS[t.acct].short:'',KIND[t.kind],t.amount,t.kind==='dist'?Object.keys(t.alloc||{}).map(h=>H[h].n+' '+t.alloc[h]).join(' | '):(t.from||''),t.note||'']));
-    saveCsv('حركات-'+nowLocal().slice(0,10)+'.csv',rows);return;
+    saveCsv('حركات-'+today()+'.csv',rows);return;
   }
   if(d.out){readForm();state.form.out=d.out;render();return;}
   if(d.mode){readForm();state.form.mode=d.mode;render();fillAlloc();return;}
@@ -1175,15 +1133,15 @@ document.addEventListener('click',async e=>{
     const lbl=b.innerHTML;b.innerHTML='<span class="l">جاري…</span>';
     const old=state.txs.find(x=>x.id===r.id);
     try{
-      const res=await api(d.act==='req-ok'?'approve':d.act==='req-no'?'reject':'dismiss',{rid:r.rid});
-      try{await store.refresh();}catch(e){toast('تم تسجيل القرار، لكن تعذّر تحديث القائمة. حدّث البيانات.');return;}render();
+      const res=await api(d.act==='req-ok'?'approve':d.act==='req-no'?'reject':(store.ver<3?'cancel':'dismiss'),{rid:r.rid});
+      await store.refresh();render();
       if(d.act==='req-ok'&&!(res&&res.already)){
         const t=r.op==='del'?old:r.tx;
         if(t){const action=r.op==='del'?'del':old?'edit':'new';
           if(store.canWrite)afterChange(action,t,state.txs,true);
           else api('notify',{subject:notifySubject(action,t),body:notifyMsg(action,t,state.txs)}).catch(()=>{});}
       }
-      toast(d.act==='req-ok'?(res&&res.already?(res.req&&res.req.status==='rejected'?'الطلب مرفوض سابقًا':'الطلب معتمد سابقًا'):store.isAgent?'تمت الموافقة':'تم الاعتماد'):d.act==='req-no'?'تم رفض الطلب':'تمت الإزالة');
+      toast(d.act==='req-ok'?(res&&res.already?'الطلب كان معتمد من قبل':store.isAgent?'تمت الموافقة':'تم الاعتماد'):d.act==='req-no'?'تم رفض الطلب':'تمت الإزالة');
     }catch(e){
       toast(apiErr(e));
       try{await store.refresh();}catch(x){}
@@ -1219,7 +1177,7 @@ document.addEventListener('click',async e=>{
     if(!(await ask('حذف هذه الحركة؟',`${KIND[t.kind]} بمبلغ ${fmt(t.amount)} د.إ بتاريخ ${dShort(t.date)}. ما تقدر ترجعها بعد الحذف.`,'حذف')))return;
     try{const res=await store.del(d.id);if(res==='req'||res==='req2'){toast(res==='req'?'انرسل طلب الحذف لاعتماد المدير':'انرسل طلب الحذف لموافقة '+(store.agent||'الوكيل'));back();store.refresh().then(render).catch(()=>{});return;}scheduleSync();if(t&&t.receipt&&t.receipt.id&&assetsApi)assetsApi.delete(t.receipt.id).catch(()=>{});toast('تم الحذف');back();
       afterChange('del',t,state.txs.filter(x=>x.id!==t.id));}
-    catch(x){toast(apiErr(x));}
+    catch(x){toast('تعذّر الحذف');}
     return;
   }
   if(d.act==='export'){
@@ -1240,7 +1198,6 @@ document.addEventListener('click',async e=>{
     saveCsv('كشف-'+H[d.id].n+'.csv',rows);return;
   }
 });
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='lPin'){e.preventDefault();const b=document.querySelector('[data-act="login"]');if(b&&!b.disabled)b.click();}});
 document.addEventListener('input',e=>{
   if(e.target.id==='pFs'||e.target.id==='pNs'){prefs[e.target.id==='pFs'?'fs':'ns']=+e.target.value;savePrefs();updPrefUI();return;}
   if(!state.form)return;
@@ -1329,7 +1286,7 @@ function notifySubject(action,t){
 async function afterChange(action,t,list,quiet){
   const text=notifyMsg(action,t,list),cfg=notif.cfg;
   if(cfg&&cfg.auto&&Array.isArray(cfg.emails)&&cfg.emails.length){
-    try{const j=await api('notify',{subject:notifySubject(action,t),body:text});if(j.sent){toast('تم إرسال إشعار البريد' );return;}}
+    try{const j=await api('notify',{subject:notifySubject(action,t),body:text});if(j.sent){toast('وصل الإشعار للورثة بالإيميل');return;}}
     catch(e){toast('ما انرسل الإيميل: '+apiErr(e));}
   }
   if(prefs.notify&&!quiet)setTimeout(()=>openNotify(text),350);
@@ -1388,7 +1345,7 @@ function setX(x,o){appEl.style.transform=x?`translate3d(${x.toFixed(1)}px,0,0)`:
 document.addEventListener('touchstart',e=>{
   sw=null;
   if(!prefs.swipe||e.touches.length!==1)return;
-  if(e.target.closest('button,a,summary,input,select,textarea,.table-wrap,.noswipe,header,nav,.modal-bg'))return;
+  if(e.target.closest('input,select,textarea,.table-wrap,.noswipe,header,nav,.modal-bg'))return;
   const p=e.touches[0];if(p.clientX<10||p.clientX>innerWidth-10)return;
   sw={x:p.clientX,y:p.clientY,dir:0,t:Date.now(),lx:p.clientX,lt:Date.now(),v:0};
   appEl.style.transition='none';
