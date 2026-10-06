@@ -17,7 +17,7 @@
 <link rel="dns-prefetch" href="https://script.googleusercontent.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 :root{
   --navy:#16213F; --bg:#F3EFE6; --bg2:#ECE6DA; --glow:rgba(176,138,68,.10); --card:#FFFCF6; --card2:#F7F2E8; --line:#E2D9C6;
@@ -421,17 +421,24 @@ const KIND={dep:'إيداع',exp:'مصروف',dist:'توزيع'};
 /* ===== أدوات ===== */
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const r2=n=>Math.round((+n||0)*100)/100;
-const fmt=n=>r2(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+// منسّقات جاهزة (إنشاؤها مرة وحدة أسرع بكثير من كل مرة)
+const NF2=new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt=n=>NF2.format(r2(n));
+const DFS={long:new Intl.DateTimeFormat('ar-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),
+  short:new Intl.DateTimeFormat('ar-u-nu-latn',{day:'numeric',month:'long',year:'numeric'}),
+  time:new Intl.DateTimeFormat('ar-u-nu-latn',{day:'numeric',month:'long',year:'numeric',hour:'numeric',minute:'2-digit'})};
+const DMEMO=new Map();
+function dfmt(kind,s){const k=kind+s;let v=DMEMO.get(k);if(v!==undefined)return v;const d=parseD(s);v=d?DFS[kind].format(d):'';if(DMEMO.size>5000)DMEMO.clear();DMEMO.set(k,v);return v;}
 const money=(n,cls='')=>`<span class="num ${cls}">${fmt(n)}</span> <span style="font-size:.8em">د.إ</span>`;
 const pad=n=>String(n).padStart(2,'0');
 const nowLocal=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;};
 function parseD(s){if(!s)return null;const d=new Date(s.length<=10?s+'T00:00':s);return isNaN(d)?null:d;}
-function dDate(s){const d=parseD(s);return d?d.toLocaleDateString('ar-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'';}
-function dShort(s){const d=parseD(s);return d?d.toLocaleDateString('ar-u-nu-latn',{day:'numeric',month:'long',year:'numeric'}):'';}
-function dTime(s){const d=parseD(s);return d?d.toLocaleString('ar-u-nu-latn',{day:'numeric',month:'long',year:'numeric',hour:'numeric',minute:'2-digit'}):'';}
+function dDate(s){return dfmt('long',String(s||''));}
+function dShort(s){return dfmt('short',String(s||''));}
+function dTime(s){return dfmt('time',String(s||''));}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2000);}
 const parseAmt=v=>parseFloat(String(v??'').replace(/٫/g,'.').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[^\d.\-]/g,''));
-const byDate=(a,b)=>(a.date||'').localeCompare(b.date||'')||(a.createdAt||0)-(b.createdAt||0);
+const byDate=(a,b)=>{const x=a.date||'',y=b.date||'';return x<y?-1:x>y?1:(a.createdAt||0)-(b.createdAt||0);};
 
 /* ===== التخزين ===== */
 const state={txs:[],stack:[{v:'home'}],form:null};
@@ -723,6 +730,13 @@ V.home=()=>{
     <button class="tile" data-go="reports"><span class="ic">${I.chart}</span><span>التقارير</span><small>شهرية وسنوية</small></button>
   </div></div>`};
 };
+const MV_CHUNK=60;
+function mvMore(){
+  const c=cur(),box=document.getElementById('mvRows'),btn=document.getElementById('mvMore');if(c.v!=='moves'||!box||!btn)return;
+  const f=c.f||'all',ty=c.t||'all',list=moveList(f,ty).sort((a,b)=>byDate(b,a)),n=box.children.length;
+  box.insertAdjacentHTML('beforeend',list.slice(n,n+120).map(txRow).join(''));
+  const left=list.length-box.children.length;if(left>0)btn.textContent='عرض المزيد ('+left+')';else btn.remove();
+}
 V.moves=(p)=>{
   const f=p.f||'all',ty=p.t||'all';
   const list=state.txs.filter(t=>(f==='all'||t.acct===f)&&(ty==='all'||(ty==='dep'?t.kind==='dep':t.kind!=='dep')))
@@ -734,7 +748,7 @@ V.moves=(p)=>{
   ${seg('t',[['all','الكل'],['dep','إيداعات'],['out','مصروفات']],ty)}
   <div class="sumrow"><div><span>العدد</span><b class="num">${list.length}</b></div><div><span>داخل</span><b class="num in">${fmt(tin)}</b>${mav&&ty!=='out'?`<small class="mav">≈ <span class="num">${fmt(mav.tin)}</span> شهرياً</small>`:''}</div><div><span>خارج</span><b class="num out">${fmt(tout)}</b>${mav&&ty!=='dep'?`<small class="mav">≈ <span class="num">${fmt(mav.tout)}</span> شهرياً</small>`:''}</div></div>
   ${ty==='all'||sm.nh?`<div class="sumnote">${ty==='all'?`الصافي <b class="num">${fmt(tin-tout)}</b>${f==='all'?' = الرصيد الحالي':' = رصيد '+ACCTS[f].short}`:''}${sm.nh?`${ty==='all'?'<br>':''}الحركات السابقة (${sm.nh}) ما تنحسب، لأنها داخلة في الرصيد الافتتاحي`:''}${mav?`<br>المعدّل الشهري على ${mav.n} ${mav.n>2&&mav.n<11?'أشهر':'شهر'}، بدون الرصيد الافتتاحي`:''}</div>`:''}</div>
-  ${list.length?`<div class="rows">${list.map(txRow).join('')}</div>`:'<p class="empty">ما فيه حركات.</p>'}
+  ${list.length?`<div class="rows" id="mvRows">${list.slice(0,MV_CHUNK).map(txRow).join('')}</div>${list.length>MV_CHUNK?`<button class="ghost" id="mvMore" data-act="mv-more" style="width:100%;margin-top:10px">عرض المزيد (${list.length-MV_CHUNK})</button>`:''}`:'<p class="empty">ما فيه حركات.</p>'}
   ${list.length?`<div class="actions"><button class="ghost" data-act="mv-export">تصدير القائمة PDF</button></div>`:''}`};
 };
 /* مجاميع الداخل والخارج: الحركات اللي تأثر على الرصيد بس (السابقة داخلة في الرصيد الافتتاحي) */
@@ -1712,6 +1726,7 @@ document.addEventListener('click',async e=>{
   if(d.swacct){const c=cur();if(c.k!==d.swacct){c.k=d.swacct;prefs.lastAcct=d.swacct;savePrefs();render();if(!reduceMotion&&appEl.animate)appEl.animate([{opacity:.4},{opacity:1}],{duration:160});}return;}
   if(d.act==='rc-all'){cur().all=!cur().all;render();return;}
   if(d.mv){const [k,v]=d.mv.split(':');cur()[k]=v;render();scrollTop0();return;}
+  if(d.act==='mv-more'){mvMore();return;}
   if(d.act==='mv-export'){
     const c=cur(),f=c.f||'all',ty=c.t||'all';
     const list=moveList(f,ty).sort((a,b)=>byDate(b,a)),sm=moveSums(list);
@@ -1756,7 +1771,7 @@ document.addEventListener('click',async e=>{
     }
     return;
   }
-  if(d.act==='refresh'){if(b.classList.contains('spin'))return;b.classList.add('spin');const done=busy('جاري تحديث البيانات…');
+  if(d.act==='refresh'){if(b.classList.contains('spin'))return;b.classList.add('spin');const done=()=>{};
     try{await store.refresh();render();toast('تم تحديث البيانات');}catch(e){toast(apiErr(e));}
     finally{done();const x=document.querySelector('.bref');if(x)x.classList.remove('spin');b.classList.remove('spin');}return;}
   if(d.act==='share-link'){
@@ -1958,6 +1973,8 @@ function layoutHome(){
   if(fits)scrollTop0();
 }
 window.addEventListener('resize',()=>{clearTimeout(layoutHome.t);layoutHome.t=setTimeout(layoutHome,120);});
+// تحميل باقي الحركات تلقائياً لما يقرب المستخدم من آخر القائمة
+scroller.addEventListener('scroll',()=>{if(mvMore.t)return;mvMore.t=requestAnimationFrame(()=>{mvMore.t=0;if(document.getElementById('mvMore')&&scroller.scrollTop+scroller.clientHeight>scroller.scrollHeight-700)mvMore();});},{passive:true});
 
 /* ===== التنقل بالسحب (يتبع الإصبع، ويكفي سحب قصير أو سريع) ===== */
 const TABS=['home','props'];
