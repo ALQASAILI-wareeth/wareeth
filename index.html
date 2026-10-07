@@ -337,6 +337,20 @@ nav.tabs[hidden]{display:none}
 .prop .m{font-size:13px;color:var(--muted)}
 .prop dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:10px 0 0;font-size:14px}
 .prop dt{color:var(--muted)} .prop dd{margin:0}
+.prop dd.num{direction:ltr;text-align:right;unicode-bidi:plaintext}
+#pf_plot,#pf_addr,#pf_area{direction:ltr;text-align:right}
+.prop-h{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.prop-ed{flex:none;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--gold);display:grid;place-items:center;cursor:pointer}
+.prop-ed svg{width:19px;height:19px}
+.prop-st{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:13px;color:var(--muted)}
+.prop-st b{color:var(--ink);font-weight:700}.prop-st b.in{color:var(--pos)}.prop-st b.out{color:var(--neg)}
+.prop .tag{font-size:11px;padding:1px 8px}
+.scanbtn > svg{width:26px;height:26px}
+.pfsh{padding:6px 14px}
+.pfrow{display:grid;grid-template-columns:1fr 110px 18px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.pfrow input.amt{height:44px;padding:8px 10px;text-align:left;direction:ltr}
+.pfrow .pct{color:var(--muted)}
+.hidprops{margin-top:14px}.hidprops summary{cursor:pointer;color:var(--muted);font-weight:600;padding:8px 0}
 details summary{cursor:pointer;color:var(--gold);font-weight:500;margin-top:10px;font-size:14px}
 table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
 td{padding:7px 4px;border-bottom:1px solid var(--line)} td.r{text-align:left}
@@ -372,6 +386,18 @@ td{padding:7px 4px;border-bottom:1px solid var(--line)} td.r{text-align:left}
 .nbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;padding:12px;font-weight:700;text-decoration:none;color:#fff;border:0;cursor:pointer;font-size:16px}
 .nbtn.wa{background:#1FA855}.nbtn.sms{background:#2F5BD3}
 .nbtn svg{width:20px;height:20px}
+.wagrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.wa1{display:flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;padding:12px 6px;font-weight:700;font-size:16px;text-decoration:none;background:#1FA855;color:#fff;min-height:48px}
+.wa1 svg{width:18px;height:18px;flex:none}
+.wa1.sent{background:transparent;color:#1FA855;border:1.5px solid #1FA855}
+.wa1.sent svg{display:none}.wa1.sent::before{content:'✓';font-size:17px}
+.wahead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;font-size:14px;color:var(--muted)}
+.wahead b{color:var(--ink);font-size:15px}
+.modal.tall{max-height:calc(100dvh - 32px);overflow:auto;-webkit-overflow-scrolling:touch}
+.phrow{display:grid;grid-template-columns:76px 1fr;align-items:center;gap:10px;margin-bottom:8px}
+.phrow label{font-weight:700;font-size:16px}
+.phrow input{direction:ltr;text-align:left;font-variant-numeric:tabular-nums}
+.phrow input.bad{border-color:var(--neg)}
 .btn-danger{flex:1;background:var(--neg);color:#fff;border:0;border-radius:12px;padding:12px;font-weight:700;cursor:pointer}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--navy);display:grid;grid-template-columns:repeat(2,1fr);padding-bottom:env(safe-area-inset-bottom,0px);border-top:1px solid rgba(214,178,102,.25)}
 nav.tabs button{background:none;border:0;color:#9AA4C4;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px;cursor:pointer}
@@ -449,12 +475,13 @@ const ACCTS={
 // الإرث: الزوجة 1/8، كل ابن 7/68، كل بنت 7/136. البناية: منحة 1/12 لكل ابن وبنت + إرث الـ 1/12 الباقي بنفس الأنصبة.
 function frac(may,son,dau){const o={may};SONS.forEach(s=>o[s]=son);DAUS.forEach(d=>o[d]=dau);return o;}
 const W={bld:frac(1/96,1/12+7/816,1/12+7/1632),farm:frac(1/8,7/68,7/136)};W.old=W.farm;
-const PROPS=[
+const PROPS_BASE=[
   {id:'bld',acct:'bld',name:'البناية',plot:'C44',where:'مدينة محمد بن زايد (ME12)، أبوظبي',area:325.16,use:'تجاري – أبراج سكنية R35',addr:'6-283-000-C44',date:'1994/05/02',src:'مخطط أرض – مركز أبوظبي العقاري',shares:ACCTS.bld.shares},
   {id:'jrm',acct:'farm',name:'مزرعة جريمدة',plot:'FRM8',where:'ليوا، منطقة الظفرة',area:7228.42,use:'زراعي – أرض زراعية',addr:'25-5-000-FRM8',date:'2007/03/06',src:'مخطط أرض – دائرة البلديات والنقل',shares:Object.assign(mk(12.5,10.2941,5.147),{shamma:5.1469,noura:5.1469})},
   {id:'yaw',acct:'farm',name:'مزرعة يو النظرة',plot:'FRM41',where:'يو النظرة، منطقة الظفرة',area:40000,use:'زراعي – أرض زراعية · غير مرهون',addr:'0-3-000-FRM41',date:'2007/03/18',src:'سند ملكية – مركز أبوظبي العقاري',shares:mk(12.5,10.2941,5.147)},
   {id:'ghy',acct:'farm',name:'المسكن الشعبي – غياثي',plot:'300',where:'غياثي، منطقة الظفرة',area:5063,use:'سكني – بيت شعبي',addr:'27-9-000-300',date:'2007/03/25',src:'مخطط أرض – دائرة البلديات والنقل',shares:Object.assign(mk(12.5007,10.2941,5.1469))}
 ];
+const PROPS=PROPS_BASE.map(p=>Object.assign({builtin:true,own:true},p));
 const P=Object.fromEntries(PROPS.map(p=>[p.id,p]));
 const ORD=['الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن','التاسع','العاشر','الحادي عشر','الثاني عشر','الثالث عشر','الرابع عشر','الخامس عشر','السادس عشر','السابع عشر','الثامن عشر','التاسع عشر','العشرون'];
 const ord=i=>ORD[i]||('رقم '+(i+1));
@@ -487,7 +514,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='5.5';
+const APP_VER='5.8';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -557,6 +584,7 @@ async function api__(action,payload){
 }
 function apiErr(e){
   const c=e&&e.error;
+  if(c==='wa')return e.detail||'صار خطأ في الواتساب.';
   if(c==='pin')return 'الرقم السري غلط.';
   if(c==='locked')return 'هذا الجهاز انقفل مؤقتاً بسبب محاولات كثيرة غلط. انتظر نص ساعة، أو اطلب من المدير يفك القفل. باقي الأجهزة ما تتأثر.';
   if(c==='forbidden')return 'ما عندك صلاحية لهذي العملية.';
@@ -654,6 +682,7 @@ const store={
     const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.agent=j.agent||'الوكيل';this.mode='api';
     if(!fromCache){this.loadedAt=Date.now();saveCache(j);}
     if(j.cfg)notif.cfg=j.cfg;
+    applyProps(j.props);
     return broken;
   },
   // ردود العمليات فيها البيانات المحدّثة: نطبقها مباشرة بدل طلب ثاني
@@ -710,7 +739,7 @@ function clearCache(){try{localStorage.removeItem(CACHE);}catch(e){}}
 const ME='wareeth-me';
 const getMe=()=>{try{return localStorage.getItem(ME)}catch(e){return null}};
 const setMe=v=>{try{v?localStorage.setItem(ME,v):localStorage.removeItem(ME)}catch(e){}};
-const isForm=()=>cur().v==='form';
+const isForm=()=>cur().v==='form'||cur().v==='propform';
 const PREF='wareeth-prefs';
 const prefs=Object.assign({fs:1,ns:1,swipe:true,lock:false,notify:true,theme:'auto'},(()=>{try{return JSON.parse(localStorage.getItem(PREF)||'{}')}catch(e){return {}}})());
 prefs.fs=1;prefs.ns=1; // التكبير انشال من الإعدادات: الحجم ثابت ومريح
@@ -776,6 +805,7 @@ const I={
   crown:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4.5 4L12 4l4.5 7L21 7l-2 11H5z"/><rect x="5" y="19" width="14" height="2" rx="1"/></svg>',
   key:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg>',
   eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
   cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
   chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--muted)"><path d="M15 6l-6 6 6 6"/></svg>'
 };
@@ -902,7 +932,7 @@ function txRow(t){
   const k=(ACCTS[t.acct]?ACCTS[t.acct].short:'')+(t.hist&&t.acct!=='old'?' · سابق':'');
   const sign=t.kind==='dep'?'+':'−', cls=t.kind==='dep'?'in':'out';
   let who=t.kind==='dist'?Object.keys(t.alloc||{}).filter(h=>+t.alloc[h]>0).length+' ورثة':(t.from||'');
-  if(t.kind==='dep'&&t.prop&&P[t.prop]&&t.acct==='farm') who=(who?who+' · ':'')+P[t.prop].name;
+  if(t.kind!=='dist'&&t.prop&&P[t.prop]) who=(who?who+' · ':'')+P[t.prop].name;
   return `<button class="row" data-go="tx" data-id="${esc(t.id)}"><span><span>${KIND[t.kind]}</span><span class="tag">${k}</span>
     <div class="m">${esc(who)}${who?' · ':''}${esc(dShort(t.date))}</div></span><span class="a ${cls}">${sign} <span class="num">${fmt(t.amount)}</span></span></button>`;
 }
@@ -1014,7 +1044,7 @@ V.tx=({id})=>{
   return {title:KIND[t.kind]+' – '+A.short,html:`
   <div class="field"><div class="k">المبلغ</div><div class="v num ${t.kind==='dep'?'in':'out'}">${fmt(t.amount)}</div></div>
   ${t.from?`<div class="field"><div class="k">${t.kind==='dep'?'من':'الجهة'}</div><div class="v">${esc(t.from)}</div></div>`:''}
-  ${t.prop&&P[t.prop]&&t.acct==='farm'?`<div class="field"><div class="k">العقار</div><div class="v">${esc(P[t.prop].name)}</div></div>`:''}
+  ${t.kind!=='dist'&&t.prop&&P[t.prop]?`<div class="field"><div class="k">العقار</div><div class="v">${esc(P[t.prop].name)}</div></div>`:''}
   <div class="field"><div class="k">التاريخ</div><div class="v" style="font-size:17px">${esc(dTime(t.date))}</div></div>
   ${allocRows}
   ${t.note?`<div class="field"><div class="k">ملحوظة</div><div class="v" style="font-size:16px;font-weight:400">${esc(t.note)}</div></div>`:''}
@@ -1026,12 +1056,136 @@ V.tx=({id})=>{
   ${canEditNow()&&!txLocked(t)?`<div class="actions"><button class="ghost" data-act="edit" data-id="${esc(t.id)}">${needsOk(t)?'طلب تعديل':'تعديل'}</button><button class="ghost danger" data-act="del" data-id="${esc(t.id)}">${needsOk(t)?'طلب حذف':'حذف'}</button></div>`:''}
   ${adminView()?`<div class="actions" style="margin-top:10px"><button class="ghost" data-act="notify" data-id="${esc(t.id)}">إشعار الورثة بهذي الحركة</button></div>`:''}`};
 };
-V.props=()=>({title:'العقارات',html:PROPS.map(p=>`<div class="card prop">
-  <h4>${esc(p.name)}</h4><div class="m">${esc(p.where)} · ${ACCTS[p.acct].name}</div>
-  <dl><dt>رقم الأرض</dt><dd class="num">${p.plot}</dd><dt>المساحة</dt><dd><span class="num">${p.area.toLocaleString('en-US')}</span> م²</dd>
-  <dt>الاستخدام</dt><dd>${esc(p.use)}</dd><dt>عنوان القسيمة</dt><dd class="num">${p.addr}</dd><dt>تاريخ التخصيص</dt><dd class="num">${p.date}</dd><dt>المصدر</dt><dd>${esc(p.src)}</dd></dl>
-  <details><summary>حصص الورثة</summary><table>${HEIRS.map(h=>`<tr><td>${h.n}</td><td class="r num">${p.shares[h.id]}%</td></tr>`).join('')}</table></details>
-  </div>`).join('')+`<p class="note">حساب المزارع يستخدم حصص سند ملكية مزرعة يو النظرة (12.5% لمي، 10.2941% لكل ابن، 5.147% لكل بنت). الفروقات بين المزارع في الخانة الرابعة بعد الفاصلة فقط.</p>`});
+/* ===== العقارات: الأصلية + اللي يضيفها المدير (محفوظة في ورقة "العقارات") ===== */
+function applyProps(list){
+  list=Array.isArray(list)?list:[];store.propsRaw=list;
+  const ov={};list.forEach(p=>{if(p&&p.id)ov[p.id]=p;});
+  const fill=(b,o)=>{const x=Object.assign({},b);['name','acct','plot','where','use','addr','date','src'].forEach(k=>{if(o[k]!=null&&String(o[k]).trim()!=='')x[k]=String(o[k]);});
+    if(+o.area>0)x.area=+o.area;if(o.shares)x.shares=o.shares;x.hidden=!!o.hidden;return x;};
+  const all=PROPS_BASE.map(b=>ov[b.id]?fill(Object.assign({},b,{builtin:true,own:true}),ov[b.id]):Object.assign({},b,{builtin:true,own:true}))
+    .concat(list.filter(p=>p&&p.id&&!PROPS_BASE.some(b=>b.id===p.id)&&ACCTS[p.acct]).map(p=>fill({id:p.id,acct:p.acct,name:'',plot:'',where:'',area:0,use:'',addr:'',date:'',src:'',shares:ACCTS[p.acct].shares,own:!!p.shares},p)));
+  all.forEach(p=>{if(!p.shares)p.shares=ACCTS[p.acct].shares;if(!p.builtin)p.own=!!(ov[p.id]&&ov[p.id].shares);});
+  PROPS.length=0;all.filter(p=>!p.hidden).forEach(p=>PROPS.push(p));
+  Object.keys(P).forEach(k=>delete P[k]);all.forEach(p=>{P[p.id]=p;});
+  state.propsAll=all;
+}
+function propStats(id){
+  let dep=0,exp=0,n=0;for(const t of state.txs){if(t.prop!==id||t.hist||t.kind==='dist')continue;n++;if(t.kind==='dep')dep+=+t.amount||0;else exp+=+t.amount||0;}
+  return {dep,exp,n};
+}
+function propSelect(f){
+  if(f.acct==='old')return '';
+  const list=PROPS.filter(p=>p.acct===f.acct);
+  const cur=f.prop&&P[f.prop]&&P[f.prop].hidden?[P[f.prop]]:[];
+  if(!list.length&&!cur.length)return '';
+  if(f.acct!=='farm'&&list.length+cur.length<2&&!f.prop)return '';
+  return `<label class="k" for="fProp">العقار</label><select id="fProp"><option value="">عام</option>${list.concat(cur).map(p=>`<option value="${esc(p.id)}"${f.prop===p.id?' selected':''}>${esc(p.name)}${p.hidden?' (مخفي)':''}</option>`).join('')}</select>`;
+}
+const propCard=p=>{
+  const s=propStats(p.id),dl=[['رقم الأرض',p.plot,1],['المساحة',+p.area>0?`<span class="num">${(+p.area).toLocaleString('en-US')}</span> م²`:'',0,1],['الاستخدام',p.use],['عنوان القسيمة',p.addr,1],['تاريخ التخصيص',p.date,1],['المصدر',p.src]]
+    .filter(x=>x[1]).map(([k,v,num,raw])=>`<dt>${k}</dt><dd${num?' class="num"':''}>${raw?v:esc(v)}</dd>`).join('');
+  return `<div class="card prop">
+  <div class="prop-h"><div><h4>${esc(p.name)}</h4><div class="m">${p.where?esc(p.where)+' · ':''}${ACCTS[p.acct].name}${p.builtin?'':' · <span class="tag">مضاف</span>'}</div></div>
+  ${store.canWrite&&!p.hidden?`<button class="iconbtn prop-ed" data-act="prop-edit" data-id="${esc(p.id)}" aria-label="تعديل ${esc(p.name)}">${I.edit||'✎'}</button>`:''}</div>
+  ${dl?`<dl>${dl}</dl>`:''}
+  ${s.n?`<div class="prop-st"><span>مسجّل على العقار: <b class="num">${s.n}</b> حركة</span><span>إيداعات <b class="num in">${fmt(s.dep)}</b></span><span>مصروفات <b class="num out">${fmt(s.exp)}</b></span></div>`:''}
+  <details><summary>حصص الورثة${p.own?'':' (نفس حصص '+ACCTS[p.acct].short+')'}</summary><table>${HEIRS.map(h=>`<tr><td>${h.n}</td><td class="r num">${p.shares[h.id]!=null?p.shares[h.id]:0}%</td></tr>`).join('')}</table></details>
+  ${p.hidden&&store.canWrite?`<div class="actions" style="margin-top:10px"><button class="ghost" data-act="prop-restore" data-id="${esc(p.id)}">إرجاع العقار</button></div>`:''}
+  </div>`;
+};
+V.props=()=>{
+  const hid=(state.propsAll||[]).filter(p=>p.hidden);
+  const add=store.canWrite?`<button class="scanbtn" data-act="prop-new" style="width:100%;margin:0 0 12px">${I.plus}<span>إضافة عقار<small>مزرعة أو بناية أو أرض جديدة، مع بياناتها وحصص الورثة</small></span></button>`:'';
+  const grp=k=>{const l=PROPS.filter(p=>p.acct===k);return l.length?`<h3 class="sec">${ACCTS[k].name} <small class="num" style="color:var(--muted);font-weight:500">(${l.length})</small></h3>`+l.map(propCard).join(''):'';};
+  return {title:'العقارات',html:add+grp('bld')+grp('farm')
+    +(store.canWrite&&hid.length?`<details class="hidprops"><summary>عقارات مخفية (${hid.length})</summary>${hid.map(propCard).join('')}</details>`:'')
+    +`<p class="note">حساب المزارع يوزّع حسب حصص سند ملكية مزرعة يو النظرة (12.5% لمي، 10.2941% لكل ابن، 5.147% لكل بنت). حصص كل عقار تطلع للمعلومية، والتوزيع يمشي على حصص الحساب.</p>`};
+};
+function propFormInit(p){
+  p=p||null;
+  state.pf=p?{id:p.id,builtin:!!p.builtin,name:p.name||'',acct:p.acct,plot:p.plot||'',where:p.where||'',area:+p.area>0?String(p.area):'',use:p.use||'',addr:p.addr||'',
+    date:/^\d{4}\/\d{2}\/\d{2}$/.test(p.date||'')?p.date.replace(/\//g,'-'):'',src:p.src||'',custom:!!p.own,shares:Object.fromEntries(HEIRS.map(h=>[h.id,String(p.shares[h.id]!=null?p.shares[h.id]:'')]))}
+   :{id:'',name:'',acct:'farm',plot:'',where:'',area:'',use:'',addr:'',date:'',src:'',custom:false,shares:Object.fromEntries(HEIRS.map(h=>[h.id,'']))};
+}
+function readPF(){
+  const f=state.pf;if(!f)return;const q=id=>document.getElementById(id);
+  ['name','plot','where','area','use','addr','date','src'].forEach(k=>{const e=q('pf_'+k);if(e)f[k]=e.value;});
+  HEIRS.forEach(h=>{const e=q('pfs_'+h.id);if(e)f.shares[h.id]=e.value;});
+}
+function pfSum(){return r2(HEIRS.reduce((a,h)=>a+(parseAmt(state.pf.shares[h.id])||0),0)*10000)/10000;}
+V.propform=()=>{
+  const f=state.pf;if(!f)return {title:'العقارات',html:''};
+  const inp=(k,label,ph,extra)=>`<label class="k" for="pf_${k}">${label}</label><input id="pf_${k}" value="${esc(f[k])}" placeholder="${esc(ph||'')}"${extra||''}>`;
+  const sum=pfSum();
+  return {title:f.id?'تعديل عقار':'إضافة عقار',html:`
+  ${inp('name','اسم العقار *','مثال: مزرعة الختم',' maxlength="80" autocomplete="off"')}
+  <label class="k">الحساب اللي يتبع له</label>
+  <div class="seg">${['bld','farm'].map(k=>`<button data-pf-acct="${k}" aria-pressed="${f.acct===k}">${ACCTS[k].name}</button>`).join('')}</div>
+  <div class="grid2">
+    <div>${inp('plot','رقم الأرض','FRM41',' maxlength="40"')}</div>
+    <div>${inp('area','المساحة (م²)','0',' inputmode="decimal"')}</div>
+  </div>
+  ${inp('where','الموقع','مثال: ليوا، منطقة الظفرة',' maxlength="120"')}
+  ${inp('use','الاستخدام','مثال: زراعي – أرض زراعية',' maxlength="120"')}
+  <div class="grid2">
+    <div>${inp('addr','عنوان القسيمة','0-3-000-FRM41',' maxlength="60"')}</div>
+    <div><label class="k" for="pf_date">تاريخ التخصيص</label><input id="pf_date" type="date" value="${esc(f.date)}"></div>
+  </div>
+  ${inp('src','المصدر','مثال: سند ملكية – مركز أبوظبي العقاري',' maxlength="120"')}
+  <h3 class="sec">حصص الورثة في هذا العقار</h3>
+  <div class="seg"><button data-pf-sh="0" aria-pressed="${!f.custom}">نفس حصص ${ACCTS[f.acct].short}</button><button data-pf-sh="1" aria-pressed="${f.custom}">حصص خاصة</button></div>
+  ${f.custom?`<div class="card pfsh">${HEIRS.map(h=>`<div class="pfrow"><span class="grow">${h.n}</span><input class="amt" id="pfs_${h.id}" inputmode="decimal" value="${esc(f.shares[h.id])}" placeholder="0" aria-label="حصة ${h.n} %"><span class="pct">%</span></div>`).join('')}
+    <div class="kv" style="margin-top:8px"><span>المجموع</span><b class="num" id="pfSum" style="color:${Math.abs(sum-100)<=0.05?'var(--pos)':'var(--neg)'}">${sum}%</b></div>
+    <button class="linkbtn" data-act="pf-fill">تعبئة من حصص ${ACCTS[f.acct].short}</button></div>`
+   :`<p class="note" style="margin-top:4px">تنعرض حصص ${ACCTS[f.acct].name} (${ACCTS[f.acct].shares.may}% لمي…). اختر "حصص خاصة" إذا سند ملكية العقار فيه نسب مختلفة.</p>`}
+  <div class="err" id="pfErr"></div>
+  <button class="primary" data-act="prop-save">${f.id?'حفظ التعديل':'إضافة العقار'}</button>
+  ${f.id?`<button class="btn-danger" style="width:100%;margin-top:10px" data-act="prop-del">${f.builtin?'إخفاء العقار':'حذف العقار'}</button>`:''}
+  <p class="note">العقارات تنحفظ في ورقة "العقارات" في الشيت. بعد الإضافة يطلع العقار في خانة "العقار" لما تسجّل إيداع أو مصروف على ${ACCTS[f.acct].short}.</p>`};
+};
+function propSend(prop,okMsg,done){
+  const before=(store.propsRaw||[]).slice();
+  const raw=before.filter(x=>x.id!==prop.id).concat([prop]);
+  applyProps(raw);done&&done();render();toast(okMsg);
+  api('prop-put',{prop}).then(r=>{if(!store.applyRes(r))store.refresh().catch(()=>{});render();})
+    .catch(e=>{applyProps(before);render();toast('ما انحفظ العقار: '+apiErr(e));});
+}
+async function propAction(act,b){
+  if(act==='prop-new'||act==='prop-edit'){
+    if(store.ver<5){toast('حدّث كود الخادم (Code) للإصدار الجديد عشان تقدر تضيف عقارات.');return;}
+    propFormInit(act==='prop-edit'?P[b.dataset.id]:null);go('propform');return;
+  }
+  if(act==='pf-fill'){readPF();HEIRS.forEach(h=>state.pf.shares[h.id]=String(ACCTS[state.pf.acct].shares[h.id]));render();return;}
+  if(act==='prop-restore'){const p=P[b.dataset.id];if(!p)return;
+    propSend(propPayload(p,{hidden:false}),'رجع العقار');return;}
+  if(act==='prop-save'){
+    readPF();const f=state.pf,err=document.getElementById('pfErr');
+    const name=f.name.trim();if(!name){err.textContent='اكتب اسم العقار.';return;}
+    if((state.propsAll||[]).some(p=>p.id!==f.id&&!p.hidden&&p.name.trim()===name)){err.textContent='فيه عقار بنفس الاسم.';return;}
+    const area=f.area.trim()===''?'':parseAmt(f.area);if(area!==''&&!(area>=0)){err.textContent='المساحة لازم تكون رقم.';return;}
+    let shares=null;
+    if(f.custom){shares={};for(const h of HEIRS){const v=f.shares[h.id].trim()===''?0:parseAmt(f.shares[h.id]);if(!(v>=0&&v<=100)){err.textContent='حصة '+h.n+' لازم تكون بين 0 و 100.';return;}shares[h.id]=v;}
+      const s=pfSum();if(Math.abs(s-100)>0.05){err.textContent='مجموع الحصص لازم يكون 100% (الحين '+s+'%).';return;}}
+    const id=f.id||('p'+Date.now().toString(36));
+    const prop={id,name,acct:f.acct,plot:f.plot.trim(),where:f.where.trim(),area,use:f.use.trim(),addr:f.addr.trim(),date:f.date?f.date.replace(/-/g,'/'):'',src:f.src.trim(),shares};
+    propSend(prop,f.id?'تم حفظ التعديل':'تمت إضافة '+name,()=>{state.pf=null;back();});return;
+  }
+  if(act==='prop-del'){
+    const f=state.pf;if(!f||!f.id)return;const p=P[f.id];const used=propStats(f.id).n>0||state.txs.some(t=>t.prop===f.id);
+    const soft=used||f.builtin;
+    if(!await ask(soft?'إخفاء العقار؟':'حذف العقار؟',soft?(used?'عليه حركات مسجّلة، فبينخفي من القوائم وتبقى حركاته كما هي. تقدر ترجّعه من "عقارات مخفية".':'بينخفي من القوائم. تقدر ترجّعه من "عقارات مخفية".'):'بينحذف '+(p?p.name:'العقار')+' نهائياً.',soft?'إخفاء':'حذف'))return;
+    const before=(store.propsRaw||[]).slice();
+    const raw=soft?before.filter(x=>x.id!==f.id).concat([propPayload(p,{hidden:true})]):before.filter(x=>x.id!==f.id);
+    applyProps(raw);state.pf=null;back();render();toast(soft?'تم إخفاء العقار':'تم حذف العقار');
+    api('prop-del',{id:f.id}).then(r=>{if(!store.applyRes(r))store.refresh().catch(()=>{});render();})
+      .catch(e=>{applyProps(before);render();toast('ما تم: '+apiErr(e));});
+    return;
+  }
+}
+function propPayload(p,extra){
+  return Object.assign({id:p.id,name:p.name,acct:p.acct,plot:p.plot||'',where:p.where||'',area:+p.area>0?+p.area:'',use:p.use||'',addr:p.addr||'',date:p.date||'',src:p.src||'',
+    shares:p.own?p.shares:null,hidden:!!p.hidden},extra||{});
+}
 
 V.me=()=>{
   const id=getMe();
@@ -1127,9 +1281,9 @@ V.settings=()=>({title:'الإعدادات',html:`
       <small>اسحب لليمين للعقارات، ولليسار للرئيسي. وفي الصفحات الداخلية أي سحب يرجعك.</small></span><span class="sw"></span></button>
     ${adminView()?`<hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
     <button class="toggle" role="switch" aria-checked="${prefs.notify}" data-pref="notify"><span>رسالة واتساب جاهزة بعد كل حركة
-      <small>تطلع لك رسالة جاهزة ترسلها بالواتساب أو الرسائل. إذا الإيميل التلقائي شغّال ووصل، ما تطلع.</small></span><span class="sw"></span></button>`:''}
+      <small>تطلع لك أسماء الورثة، وكل اسم يفتح الواتساب على محادثته والرسالة جاهزة.</small></span><span class="sw"></span></button>`:''}
   </div>
-  ${adminView()&&notif.ref?emailCard():''}
+  ${adminView()&&notif.ref?phonesCard()+waCard()+emailCard():''}
   <div style="display:none">
   </div>
   <div class="actions"><button class="ghost" data-act="reset-prefs">رجوع للإعدادات الافتراضية</button></div>
@@ -1214,7 +1368,7 @@ V.form=()=>{
   if(f.kind==='dep'){
     body=`<label class="k" for="fAmt">المبلغ (د.إ)</label><input id="fAmt" inputmode="decimal" placeholder="0.00" value="${esc(f.amount)}">
     ${catSelect(f,DEP_FROM[f.acct]||DEP_FROM.bld,'من','اختر الجهة','')}
-    ${f.acct==='farm'?`<label class="k" for="fProp">العقار</label><select id="fProp"><option value="">عام</option>${PROPS.filter(p=>p.acct==='farm').map(p=>`<option value="${p.id}"${f.prop===p.id?' selected':''}>${esc(p.name)}</option>`).join('')}</select>`:''}
+    ${propSelect(f)}
     ${common}`;
   } else {
     body=f.acct==='old'?`<p class="note" style="margin-top:0">توزيع سابق: تعديله يغيّر استلامات الورثة وإجمالي التوزيع فقط، وما يأثر على الرصيد.</p>`
@@ -1222,7 +1376,7 @@ V.form=()=>{
     <p class="note" style="margin-top:4px">الرصيد المتاح في ${A.short}: ${money(r.bal[f.acct])}</p>`;
     if(!isDist){
       body+=`<label class="k" for="fAmt">المبلغ (د.إ)</label><input id="fAmt" inputmode="decimal" placeholder="0.00" value="${esc(f.amount)}">
-      ${catSelect(f)}${common}`;
+      ${catSelect(f)}${propSelect(f)}${common}`;
     } else {
       body+=`<div class="seg"><button data-mode="share" aria-pressed="${f.mode==='share'}">حسب الحصص</button><button data-mode="fixed" aria-pressed="${f.mode==='fixed'}">مبلغ لكل وريث</button></div>
       ${f.mode==='share'?`<label class="k" for="fTotal">المبلغ الإجمالي للتوزيع</label><input id="fTotal" inputmode="decimal" placeholder="مثال: 110000" value="${esc(f.total)}">`
@@ -1287,7 +1441,7 @@ async function save(btn){
     const a=parseAmt(f.amount);if(!(a>0)){err.textContent='اكتب مبلغاً أكبر من صفر.';return;}
     if(t.kind==='exp'&&!(f.from||'').trim()){err.textContent=f.other?'اكتب اسم البند.':'اختر البند من القائمة.';return;}
     t.amount=r2(a);t.from=(f.from||'').trim().slice(0,120);
-    if(t.kind==='dep'&&f.acct==='farm'&&f.prop)t.prop=f.prop;
+    if(f.prop&&P[f.prop]&&P[f.prop].acct===f.acct)t.prop=f.prop;
   }
   if(f.receipt&&f.receipt.id)t.receipt={id:f.receipt.id,type:f.receipt.type||''};
   if(old&&old.hist)t.hist=true;
@@ -1810,7 +1964,7 @@ function offerFile(blob,name){
 }
 const pdfName=s=>s.replace(/[\\/:*?"<>|]+/g,'-')+'.pdf';
 const amtCell=(t)=>({t:fmt(t.amount),c:t.hist?'#8A8FA0':t.kind==='dep'?'#2F7A52':'#A8473A'});
-function txWho(t){return t.kind==='dist'?Object.keys(t.alloc||{}).filter(h=>+t.alloc[h]>0).map(h=>H[h].n).join('، '):(t.from||'')+(t.kind==='dep'&&t.prop&&P[t.prop]&&t.acct==='farm'?' · '+P[t.prop].name:'');}
+function txWho(t){return t.kind==='dist'?Object.keys(t.alloc||{}).filter(h=>+t.alloc[h]>0).map(h=>H[h].n).join('، '):(t.from||'')+(t.kind!=='dist'&&t.prop&&P[t.prop]?' · '+P[t.prop].name:'');}
 const TX_COLS=[{h:'التاريخ',w:17},{h:'الحساب',w:11},{h:'النوع',w:9},{h:'من / الجهة',w:19},{h:'ملحوظة',w:28},{h:'المبلغ',w:16,al:'l'}];
 const txCells=t=>[dShort(t.date),(ACCTS[t.acct]?ACCTS[t.acct].short:'')+(t.hist&&t.acct!=='old'?' · سابق':''),KIND[t.kind],txWho(t),t.note||'',amtCell(t)];
 
@@ -1965,7 +2119,7 @@ document.addEventListener('click',async e=>{
         if(d.act==='req-ok'&&!(res&&res.already)){const t=r.op==='del'?old:r.tx;
           if(t){const action=r.op==='del'?'del':old?'edit':'new';
             if(store.canWrite)afterChange(action,t,state.txs,true);
-            else api('notify',{subject:notifySubject(action,t),body:notifyMsg(action,t,state.txs)}).catch(()=>{});}}
+            else{api('notify',{subject:notifySubject(action,t),body:notifyMsg(action,t,state.txs)}).catch(()=>{});api('wa',waPayload(action,t,state.txs)).catch(()=>{});}}}
       }).catch(e=>{state.txs=snap.txs;state.reqs=snap.reqs;render();toast('ما تم: '+apiErr(e));store.refresh().then(render).catch(()=>{});});
       return;
     }
@@ -1978,7 +2132,7 @@ document.addEventListener('click',async e=>{
         const t=r.op==='del'?old:r.tx;
         if(t){const action=r.op==='del'?'del':old?'edit':'new';
           if(store.canWrite)afterChange(action,t,state.txs,true);
-          else api('notify',{subject:notifySubject(action,t),body:notifyMsg(action,t,state.txs)}).catch(()=>{});}
+          else{api('notify',{subject:notifySubject(action,t),body:notifyMsg(action,t,state.txs)}).catch(()=>{});api('wa',waPayload(action,t,state.txs)).catch(()=>{});}}
       }
       done();
       if(r.op==='close'&&d.act==='req-ok'&&!(res&&res.already)){toast(r.tx&&r.tx.trial?'تم اعتماد الإقفال التجريبي':'تم الإقفال واعتماد السنة');}else
@@ -2005,6 +2159,38 @@ document.addEventListener('click',async e=>{
     if(bad.length){err.textContent='هذي العناوين فيها خطأ: '+bad.join('، ');return;}
     const emails=[...new Set(raw.map(x=>x.toLowerCase()))].slice(0,30);
     try{const c=Object.assign({auto:true},notif.cfg||{},{emails});await notif.ref.set(c);notif.cfg=c;render();toast('انحفظت '+emails.length+' إيميلات');}catch(e){err.textContent='ما قدرت أحفظ. حاول مرة ثانية.';}
+    return;
+  }
+  if(d.act&&d.act.startsWith('wa-')&&adminView()){
+    const err=document.getElementById('waErr'),say=m=>{if(err)err.textContent=m||'';};say('');
+    let payload={};
+    if(d.act==='wa-setup'){payload={token:(document.getElementById('waTok').value||'').trim(),phoneId:(document.getElementById('waPid').value||'').trim(),waba:(document.getElementById('waWaba').value||'').trim()};
+      if(!payload.token||!payload.phoneId||!payload.waba){say('عبّ الخانات الثلاث.');return;}}
+    if(d.act==='wa-auto')payload={on:!((notif.cfg&&notif.cfg.wa)||{}).auto};
+    if(d.act==='wa-test'){const to=normPhone(document.getElementById('waTo').value);if(!to){say('اكتب رقم صحيح.');return;}payload={to};}
+    if(d.act==='wa-off'&&!(await ask('فصل الواتساب التلقائي؟','ينمسح المفتاح من الخادم وترجع للإرسال اليدوي. تقدر تربطه مرة ثانية بعدين.','فصل')))return;
+    const done=busy({'wa-setup':'جاري الربط مع واتساب…','wa-test':'جاري إرسال التجربة…','wa-status':'جاري فحص القالب…','wa-retpl':'جاري طلب قالب جديد…'}[d.act]||'جاري الحفظ…');
+    try{const j=await api(d.act,payload);done();
+      if(j.cfg){notif.cfg=j.cfg;}
+      softRender(true);
+      const w=(notif.cfg&&notif.cfg.wa)||{};
+      if(d.act==='wa-setup')toast(j.tplErr?'انربط الرقم، بس القالب ما انطلب: '+j.tplErr:'انربط الواتساب ✓ وانطلب القالب من ميتا');
+      else if(d.act==='wa-test')toast(j.kind==='ours'?'انرسلت رسالة التجربة ✓':'انرسلت رسالة Hello World ✓ (الربط شغّال)');
+      else if(d.act==='wa-status'||d.act==='wa-retpl')toast(w.tpl==='APPROVED'?'القالب معتمد ✓':w.tpl==='REJECTED'?'القالب مرفوض':'القالب بانتظار موافقة ميتا');
+      else if(d.act==='wa-auto')toast(w.auto?'شغّلت الإرسال التلقائي':'وقّفت الإرسال التلقائي');
+      else if(d.act==='wa-off')toast('انفصل الواتساب');
+      if(j.tplErr){const e2=document.getElementById('waErr');if(e2)e2.textContent=j.tplErr;}
+    }catch(e){done();const e2=document.getElementById('waErr');if(e2)e2.textContent=apiErr(e);else toast(apiErr(e));}
+    return;
+  }
+  if(d.act==='phones-save'&&notif.ref){
+    const err=document.getElementById('phErr'),phones={},bad=[];
+    document.querySelectorAll('[data-ph]').forEach(i=>{const v=i.value.trim();if(!v){i.classList.remove('bad');return;}const n=normPhone(v);i.classList.toggle('bad',!n);if(n)phones[i.dataset.ph]=n;else bad.push(H[i.dataset.ph].n);});
+    if(bad.length){err.textContent='تأكد من رقم: '+bad.join('، ');return;}
+    err.textContent='';
+    const done=busy('جاري حفظ الأرقام…');
+    try{const c=Object.assign({emails:[]},notif.cfg||{},{phones});await notif.ref.set(c);done();softRender(true);toast('انحفظت الأرقام ('+Object.keys(phones).length+')');}
+    catch(e){done();err.textContent='ما قدرت أحفظ: '+apiErr(e);}
     return;
   }
   if(d.act==='notify'){const t=state.txs.find(x=>x.id===d.id);if(t)openNotify(notifyMsg('new',t,state.txs));return;}
@@ -2047,11 +2233,15 @@ document.addEventListener('click',async e=>{
     return;
   }
   if(d.heirCard){heirCard(d.heirCard);return;}
+  if(d.act&&(d.act.indexOf('prop-')===0||d.act==='pf-fill')){await propAction(d.act,b);return;}
+  if(d.pfAcct){readPF();state.pf.acct=d.pfAcct;render();return;}
+  if(d.pfSh!==undefined){readPF();state.pf.custom=d.pfSh==='1';if(state.pf.custom&&HEIRS.every(x=>!String(state.pf.shares[x.id]).trim()))HEIRS.forEach(x=>state.pf.shares[x.id]=String(ACCTS[state.pf.acct].shares[x.id]));render();return;}
   if(d.act==='heir-export'){heirExport(d.id);return;}
 
 });
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id==='lPin'||e.target.id==='lUrl')){e.preventDefault();const b=document.querySelector('[data-act="login"]');if(b)b.click();}});
 document.addEventListener('input',e=>{
+  if(e.target.id&&e.target.id.indexOf('pfs_')===0&&state.pf){readPF();const s=pfSum(),el=document.getElementById('pfSum');if(el){el.textContent=s+'%';el.style.color=Math.abs(s-100)<=0.05?'var(--pos)':'var(--neg)';}}
   if(e.target.id==='pFs'||e.target.id==='pNs'){prefs[e.target.id==='pFs'?'fs':'ns']=+e.target.value;savePrefs();updPrefUI();return;}
   if(!state.form)return;
   if(e.target.id==='fTotal'||e.target.id==='fPer')fillAlloc();
@@ -2107,30 +2297,61 @@ function notifyMsg(action,t,list){
 }
 const waIcon='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.7a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.6-.3z"/></svg>';
 const smsIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg>';
-function openNotify(text){
+/* رقم الواتساب: يقبل 05xxxxxxxx أو +971… أو 00971… ويرجعه بمفتاح الدولة بدون + */
+function normPhone(x){
+  let d=String(x==null?'':x).replace(/[٠-٩]/g,c=>String(c.charCodeAt(0)-1632)).replace(/\D/g,'');
+  if(d.startsWith('00'))d=d.slice(2);
+  if(/^05\d{8}$/.test(d))d='971'+d.slice(1);
+  return /^[1-9]\d{7,14}$/.test(d)?d:'';
+}
+function showPhone(d){return d?'+'+d:'';}
+function heirPhones(){const p=(notif.cfg&&notif.cfg.phones)||{};return HEIRS.filter(h=>p[h.id]).map(h=>({id:h.id,n:h.n,ph:p[h.id]}));}
+function openNotify(text,only){
+  const list=heirPhones().filter(h=>!only||only.includes(h.id));
   const bg=document.createElement('div');bg.className='modal-bg';
-  bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="nT">
-    <h4 id="nT">إشعار الورثة</h4><p>راجع الرسالة، عدّلها لو تبي، واختر طريقة الإرسال. في الواتساب اختر قروب العائلة.</p>
-    <textarea id="nTxt" dir="rtl" style="margin-top:10px;min-height:170px;font-size:14px;line-height:1.6"></textarea>
-    <div class="actions"><a class="nbtn wa" target="_blank" rel="noopener">${waIcon}واتساب</a><a class="nbtn sms" target="_blank" rel="noopener">${smsIcon}رسالة SMS</a></div>
-    <div class="actions" style="margin-top:8px"><button class="ghost" data-n="copy">نسخ الرسالة</button><button class="ghost" data-n="close">تخطي</button></div></div>`;
-  const ta=bg.querySelector('#nTxt'),wa=bg.querySelector('.wa'),sms=bg.querySelector('.sms');
-  const upd=()=>{const v=ta.value;wa.href='https://wa.me/?text='+encodeURIComponent(v);sms.href='sms:?&body='+encodeURIComponent(v);};
+  bg.innerHTML=`<div class="modal tall" role="dialog" aria-modal="true" aria-labelledby="nT">
+    <h4 id="nT">${only?'ما وصلت الرسالة التلقائية لهؤلاء':'إشعار الورثة بالواتساب'}</h4>
+    <p>${only?'أرسلها لهم يدوي: ':''}${list.length?'اضغط على اسم كل وارث، ينفتح الواتساب على محادثته والرسالة جاهزة، اضغط إرسال وارجع للتطبيق.':'ما حطيت أرقام الورثة للحين. حطها مرة وحدة من الإعدادات وبعدها ترسل لكل وارث بضغطة.'}</p>
+    ${list.length?`<div class="wahead"><b>الورثة</b><span id="waCount"><span class="num">0</span> من <span class="num">${list.length}</span></span></div>
+    <div class="wagrid">${list.map(h=>`<a class="wa1" data-wa="${h.id}" target="_blank" rel="noopener">${waIcon}${esc(h.n)}</a>`).join('')}</div>`
+      :`<div class="actions" style="margin-top:12px"><button class="ghost" data-n="phones">حط أرقام الورثة</button></div>`}
+    <details style="margin-top:14px"><summary style="cursor:pointer;color:var(--muted);font-size:14px">نص الرسالة (تقدر تعدّله قبل الإرسال)</summary>
+    <textarea id="nTxt" dir="rtl" style="margin-top:10px;min-height:160px;font-size:14px;line-height:1.6"></textarea></details>
+    <div class="actions" style="margin-top:12px"><a class="nbtn wa" target="_blank" rel="noopener">${waIcon}قروب</a><a class="nbtn sms" target="_blank" rel="noopener">${smsIcon}SMS</a></div>
+    <div class="actions" style="margin-top:8px"><button class="ghost" data-n="copy">نسخ الرسالة</button><button class="ghost" data-n="close">${list.length?'خلصت':'تخطي'}</button></div></div>`;
+  const ta=bg.querySelector('#nTxt'),wa=bg.querySelector('.nbtn.wa'),sms=bg.querySelector('.nbtn.sms');
+  const sent=new Set();
+  const upd=()=>{const v=encodeURIComponent(ta.value);wa.href='https://wa.me/?text='+v;sms.href='sms:?&body='+v;
+    list.forEach(h=>{const a=bg.querySelector(`[data-wa="${h.id}"]`);if(a)a.href='https://wa.me/'+h.ph+'?text='+v;});};
   ta.value=text;upd();ta.addEventListener('input',upd);
+  if(!list.length)bg.querySelector('details').open=true;
   const close=()=>{bg.remove();document.removeEventListener('keydown',onKey);};
   const onKey=e=>{if(e.key==='Escape')close();};
   bg.addEventListener('click',async e=>{
     e.stopPropagation();
     if(e.target===bg){close();return;}
-    if(e.target.closest('.nbtn')){setTimeout(close,400);return;}
+    const one=e.target.closest('[data-wa]');
+    if(one){sent.add(one.dataset.wa);one.classList.add('sent');const c=bg.querySelector('#waCount .num');if(c)c.textContent=String(sent.size);
+      if(sent.size===list.length)setTimeout(()=>toast('انرسلت لكل الورثة'),600);return;}
+    if(e.target.closest('.nbtn')){if(!list.length)setTimeout(close,400);return;}
     const b=e.target.closest('[data-n]');if(!b)return;
     if(b.dataset.n==='close'){close();return;}
+    if(b.dataset.n==='phones'){close();go('settings');setTimeout(()=>{const x=document.getElementById('phonesSec');if(x)x.scrollIntoView({block:'start'});},120);return;}
     let ok=false;
     try{await navigator.clipboard.writeText(ta.value);ok=true;}catch(x){try{ta.select();ok=document.execCommand('copy');}catch(y){}}
     toast(ok?'تم نسخ الرسالة':'ما قدرت أنسخ. حدّد النص وانسخه يدوياً');
   });
   document.addEventListener('keydown',onKey);
   document.body.appendChild(bg);
+}
+function phonesCard(){
+  const p=(notif.cfg&&notif.cfg.phones)||{},n=HEIRS.filter(h=>p[h.id]).length;
+  return `<h3 class="sec" id="phonesSec">أرقام الورثة للواتساب</h3><div class="card">
+    <p class="m" style="font-size:14px;color:var(--muted);margin:0 0 12px">اكتب رقم كل وارث مرة وحدة. بعد كل حركة تطلع لك أسماءهم، تضغط على الاسم فينفتح الواتساب على محادثته والرسالة جاهزة. تقدر تكتب الرقم <span class="num" dir="ltr">05XXXXXXXX</span> أو بمفتاح الدولة. اللي تتركه فاضي ما يطلع.</p>
+    ${HEIRS.map(h=>`<div class="phrow"><label for="ph-${h.id}">${esc(h.n)}</label><input id="ph-${h.id}" data-ph="${h.id}" type="tel" inputmode="tel" autocomplete="off" placeholder="05XXXXXXXX" value="${esc(showPhone(p[h.id]))}"></div>`).join('')}
+    <div class="err" id="phErr"></div>
+    <div class="actions"><button class="ghost" data-act="phones-save">حفظ الأرقام</button></div>
+    <p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">محفوظ <span class="num">${n}</span> من <span class="num">${HEIRS.length}</span>. الأرقام في ورقة الإعدادات في الشيت، وتطلع لك أنت بس كمدير.</p></div>`;
 }
 
 /* ===== إشعار تلقائي بالإيميل (Inkbox) ===== */
@@ -2141,13 +2362,63 @@ function notifySubject(action,t){
   const base=t.kind==='dep'?`إيداع ${fmt(t.amount)} د.إ في ${A.name}`:t.kind==='exp'?`مصروف ${fmt(t.amount)} د.إ من ${A.name}`:`توزيع ${fmt(t.amount)} د.إ على الورثة`;
   return 'وريث: '+(action==='edit'?'تعديل – ':action==='del'?'حذف – ':'')+base;
 }
+function waOn(){const w=notif.cfg&&notif.cfg.wa;return !!(w&&w.ready&&w.auto&&w.tpl==='APPROVED');}
+/* بيانات الرسالة التلقائية (القالب المعتمد عند ميتا) */
+function waPayload(action,t,list){
+  const A=ACCTS[t.acct]||{name:''},r=calc(list);
+  const base=t.kind==='dep'?['إيداع','في '+A.name]:t.kind==='exp'?['مصروف','من '+A.name]:t.hist?['توزيع سابق على الورثة','']:['توزيع على الورثة','من '+A.name];
+  const what=(action==='edit'?'تعديل ':action==='del'?'حذف ':'')+base[0]+(action==='new'&&!t.hist?' جديد':'')+(base[1]?' '+base[1]:'');
+  let detail=t.kind==='dep'?(t.from?'من: '+t.from:''):t.kind==='exp'?'البند: '+(t.from||'—'):'';
+  const alloc={};if(t.kind==='dist'){let n=0;HEIRS.forEach(h=>{const v=+((t.alloc||{})[h.id])||0;if(v>0){alloc[h.id]=fmt(v);n++;}});detail='على '+n+' ورثة';}
+  if(t.note)detail=(detail?detail+' — ':'')+t.note;
+  return {wa:{what,amount:fmt(t.amount),detail:(detail||'—').slice(0,200),date:dTime(t.date),bld:fmt(r.bal.bld),farm:fmt(r.bal.farm),alloc}};
+}
 async function afterChange(action,t,list,quiet){
-  const text=notifyMsg(action,t,list),cfg=notif.cfg;
-  if(cfg&&cfg.auto&&Array.isArray(cfg.emails)&&cfg.emails.length){
-    try{const j=await api('notify',{subject:notifySubject(action,t),body:text});if(j.sent){toast('وصل الإشعار للورثة بالإيميل');return;}}
+  const text=notifyMsg(action,t,list),cfg=notif.cfg||{};
+  let manual=prefs.notify&&!quiet,only=null;
+  if(cfg.auto&&Array.isArray(cfg.emails)&&cfg.emails.length){
+    try{const j=await api('notify',{subject:notifySubject(action,t),body:text});if(j.sent){toast('وصل الإشعار للورثة بالإيميل');if(!heirPhones().length)manual=false;}}
     catch(e){toast('ما انرسل الإيميل: '+apiErr(e));}
   }
-  if(prefs.notify&&!quiet)setTimeout(()=>openNotify(text),350);
+  if(waOn()&&heirPhones().length){
+    try{const j=await api('wa',waPayload(action,t,list));
+      if(j.off){/* انطفى من الخادم: نكمل يدوي */}
+      else{const bad=j.failed||[];
+        if(!bad.length){toast('✓ وصل الواتساب لـ '+(j.sent||0)+' ورثة');manual=false;}
+        else{toast((j.sent?'وصل لـ '+j.sent+'، و':'')+'ما وصل لـ '+bad.length+': '+bad[0].why);only=bad.map(x=>x.id);manual=prefs.notify;}}
+    }catch(e){toast('ما انرسل الواتساب التلقائي: '+apiErr(e));manual=prefs.notify;}
+  }
+  if(manual)setTimeout(()=>openNotify(text,only),350);
+}
+/* إعداد الواتساب التلقائي (للمدير) */
+function waCard(){
+  const w=(notif.cfg&&notif.cfg.wa)||{},n=heirPhones().length;
+  const st=w.tpl==='APPROVED'?'<b style="color:var(--pos)">✓ معتمد</b>':w.tpl==='REJECTED'?'<b style="color:var(--neg)">مرفوض</b>':w.tpl==='PAUSED'||w.tpl==='DISABLED'?'<b style="color:var(--neg)">موقوف من ميتا</b>':w.tpl?'<b style="color:var(--gold)">بانتظار موافقة ميتا</b>':'<b style="color:var(--muted)">—</b>';
+  if(!w.ready)return `<h3 class="sec" id="waSec">الواتساب التلقائي</h3><div class="card">
+    <p class="m" style="font-size:14px;color:var(--muted);margin:0 0 12px">بعد الربط، كل حركة توصل لكل وارث في الواتساب بنفسها، بدون ما تضغط شي. يحتاج حساب واتساب للأعمال من ميتا (الخطوات في الشرح اللي وصلك).</p>
+    <label class="k" for="waTok">مفتاح الدخول الدائم (Access Token)</label>
+    <input id="waTok" type="password" autocomplete="off" dir="ltr" style="text-align:left" placeholder="EAA…">
+    <label class="k" for="waPid">Phone number ID</label>
+    <input id="waPid" inputmode="numeric" autocomplete="off" dir="ltr" style="text-align:left" placeholder="1234567890…">
+    <label class="k" for="waWaba">WhatsApp Business Account ID</label>
+    <input id="waWaba" inputmode="numeric" autocomplete="off" dir="ltr" style="text-align:left" placeholder="1234567890…">
+    <div class="err" id="waErr"></div>
+    <div class="actions"><button class="ghost" data-act="wa-setup">ربط الواتساب</button></div>
+    <p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">المفتاح ينحفظ داخل الخادم بس، وما يرجع يطلع في التطبيق ولا في الشيت.</p></div>`;
+  return `<h3 class="sec" id="waSec">الواتساب التلقائي</h3><div class="card">
+    <div class="kv"><span>الرقم المرسل</span><b><span class="num" dir="ltr">${esc(w.phone||'—')}</span>${w.name?' · '+esc(w.name):''}</b></div>
+    <div class="kv"><span>قالب الرسالة</span>${st}</div>
+    ${w.tpl==='REJECTED'&&w.reason?`<p class="m" style="font-size:13px;color:var(--neg);margin:4px 0 0">السبب من ميتا: ${esc(w.reason)}</p>`:''}
+    <div class="kv"><span>الورثة اللي لهم أرقام</span><b class="num">${n} من ${HEIRS.length}</b></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
+    <button class="toggle" role="switch" aria-checked="${!!w.auto}" data-act="wa-auto"><span>إرسال تلقائي بعد كل حركة
+      <small>${w.tpl==='APPROVED'?'كل حركة تضيفها أو تعدّلها أو تحذفها، أو حركة للوكيل تعتمدها، توصل لكل وارث في محادثته.':'يشتغل أول ما ميتا تعتمد القالب. للحين تطلع لك القائمة اليدوية.'}</small></span><span class="sw"></span></button>
+    <div class="err" id="waErr"></div>
+    <div class="actions" style="margin-top:12px">${w.tpl==='APPROVED'?'':'<button class="ghost" data-act="wa-status">تحديث حالة القالب</button>'}${w.tpl==='REJECTED'?'<button class="ghost" data-act="wa-retpl">طلب قالب جديد</button>':''}</div>
+    <label class="k" for="waTo" style="margin-top:12px">رسالة تجربة لرقم</label>
+    <div class="phrow" style="grid-template-columns:1fr auto"><input id="waTo" type="tel" inputmode="tel" autocomplete="off" placeholder="05XXXXXXXX"><button class="ghost" data-act="wa-test" style="white-space:nowrap">أرسل تجربة</button></div>
+    <p class="m" style="font-size:13px;color:var(--muted);margin:4px 0 0">${w.tpl==='APPROVED'?'توصل نفس رسالة الحركات بس بأرقام تجربة.':'قبل اعتماد القالب توصلك رسالة ميتا الجاهزة "Hello World" بالإنجليزي، عشان تتأكد إن الربط شغّال.'} كل الرسائل تنسجل في ورقة "سجل الواتساب" في الشيت.</p>
+    <div class="actions" style="margin-top:14px"><button class="ghost" data-act="wa-off" style="color:var(--neg)">فصل الربط</button></div></div>`;
 }
 function emailCard(){
   const c=notif.cfg||{},list=(c.emails||[]).join('\n');
