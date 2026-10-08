@@ -206,6 +206,8 @@ body.sub main{padding-top:14px}
 .hc-list{overflow-y:auto;overscroll-behavior:contain;min-height:0;flex:1;margin:2px -2px 0;padding:0 2px}
 .modal.sheet .actions{margin-top:12px}
 .badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.userspill{background:rgba(221,187,114,.12)!important;color:#EBCF8F!important;border-color:rgba(221,187,114,.5)!important}
+.userspill svg{width:16px;height:16px}
 .onlinepill{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:5px 12px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;background:rgba(116,211,156,.14);color:#A9EBC6;border:1px solid rgba(116,211,156,.45)}
 .live{display:inline-block;width:8px;height:8px;border-radius:50%;background:#5FD08F;box-shadow:0 0 0 3px rgba(95,208,143,.25);margin-inline-end:7px;vertical-align:middle;animation:livep 1.6s ease-in-out infinite}
 @keyframes livep{50%{box-shadow:0 0 0 6px rgba(95,208,143,0)}}
@@ -602,7 +604,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='6.3';
+const APP_VER='6.4';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -894,6 +896,7 @@ const I={
   key:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg>',
   eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
   edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.2 3-5 6-5s5.4 1.8 6 5"/><path d="M16 4.8a3 3 0 0 1 0 6.2M18 14.4c1.7.6 2.8 2.2 3 4.6"/></svg>',
   cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
   chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--muted)"><path d="M15 6l-6 6 6 6"/></svg>'
 };
@@ -902,7 +905,7 @@ const markSvg='<svg viewBox="110 40 414 380" aria-hidden="true"><defs><linearGra
 /* ===== الصفحات ===== */
 const V={};
 function roleBadge(){
-  if(store.canWrite)return `<div class="badges"><button class="rolebadge admin" data-act="settings" aria-label="حساب المدير">${I.crown}<span>حساب المدير</span></button>${store.online!=null?`<button class="onlinepill" data-go="activity"><span class="live"></span><span class="num">${store.online}</span> متصل الحين</button>`:''}</div>`;
+  if(store.canWrite)return `<div class="badges"><button class="rolebadge admin" data-act="settings" aria-label="حساب المدير">${I.crown}<span>حساب المدير</span></button>${store.online!=null?`<button class="onlinepill" data-go="activity"><span class="live"></span><span class="num">${store.online}</span> متصل الحين</button>`:''}<button class="onlinepill userspill" data-go="users">${I.users}<span>المستخدمين</span>${(store.users||[]).length?`<span class="num">${store.users.length}</span>`:''}</button></div>`;
   if(store.isAgent)return `<button class="rolebadge agent" data-act="settings" aria-label="حساب الوكيل">${I.key}<span>حساب الوكيل · ${esc(store.agent||'')}</span></button>`;
   if(isHeirUser())return `<button class="rolebadge view" data-act="settings" aria-label="حسابك">${I.eye}<span>حساب ${esc(store.user.name)}${store.user.scope==='all'?'':' · حسابه الشخصي'}</span></button>`;
   return `<button class="rolebadge view" data-act="settings" aria-label="حساب الورثة">${I.eye}<span>${whoName()?esc(whoName())+' · ':''}حساب الورثة · عرض فقط</span></button>`;
@@ -1151,7 +1154,7 @@ const isHeirUser=()=>store.role==='heir'&&!!store.user;
 const ownOnly=()=>isHeirUser()&&store.user.scope!=='all';
 const SCOPE_TXT={own:'يشوف حسابه بس',all:'يشوف كل الحسابات (عرض)'};
 function userFormInit(u){
-  state.uf=u?{id:u.id,name:u.name,heir:u.heir,scope:u.scope||'own',off:!!u.off,pinMode:'keep',pin:''}
+  state.uf=u?{id:u.id,name:u.name,heir:u.heir||'none',scope:u.heir?u.scope||'own':'all',off:!!u.off,pinMode:'keep',pin:''}
     :{id:'',name:'',heir:'',scope:'own',off:false,pinMode:'auto',pin:''};
 }
 function readUF(){const f=state.uf;if(!f)return;const q=id=>document.getElementById(id);
@@ -1163,7 +1166,7 @@ V.users=()=>{
   return {title:'المستخدمين',html:old+`
   <button class="scanbtn" data-act="user-new" style="width:100%;margin:0 0 14px">${I.plus}<span>إضافة مستخدم<small>تختار الوريث، والتطبيق يعطيه رقم سري خاص فيه</small></span></button>
   ${us.length?`<div class="rows">${us.map(u=>`<button class="row" data-act="user-edit" data-id="${esc(u.id)}"><span>${esc(u.name)}${u.off?' <span class="tag" style="color:var(--neg)">موقوف</span>':''}
-      <div class="m">${H[u.heir]?'الوريث: '+esc(H[u.heir].n)+' · ':''}${SCOPE_TXT[u.scope]||''}</div></span>${I.chev}</button>`).join('')}</div>`
+      <div class="m">${H[u.heir]?'الوريث: '+esc(H[u.heir].n)+' · '+(SCOPE_TXT[u.scope]||''):'مستخدم عام · يشوف كل الحسابات (عرض)'}</div></span>${I.chev}</button>`).join('')}</div>`
     :'<p class="empty">ما فيه مستخدمين للحين. أضف أول مستخدم، وأرسل له رقمه السري.</p>'}
   <p class="note">كل مستخدم يدخل برقمه الخاص، ويطلع اسمه في صفحة النشاط بدون ما يختار اسمه. "حسابه بس" يعني يشوف استلاماته ونصيبه، وما يشوف مبالغ باقي الورثة. الأرقام ما تنحفظ في الشيت، تنحفظ بصمتها بس، فإذا نسي رقمه اعمل له رقم جديد.</p>
   <p class="note">الرقم السري العام للورثة (عرض فقط) يبقى شغّال مثل ما هو.</p>`};
@@ -1172,12 +1175,12 @@ V.userform=()=>{
   const f=state.uf;if(!f)return {title:'المستخدمين',html:''};
   return {title:f.id?'تعديل مستخدم':'إضافة مستخدم',html:`
   <label class="k" for="uf_heir">الوريث *</label>
-  <select id="uf_heir"><option value="">اختر الوريث</option>${HEIRS.map(h=>`<option value="${h.id}"${f.heir===h.id?' selected':''}>${esc(h.full||h.n)}</option>`).join('')}</select>
+  <select id="uf_heir"><option value="">اختر الوريث</option>${HEIRS.map(h=>`<option value="${h.id}"${f.heir===h.id?' selected':''}>${esc(h.full||h.n)}</option>`).join('')}<option value="none"${f.heir==='none'?' selected':''}>مستخدم عام (مو من الورثة)</option></select>
   <label class="k" for="uf_name">اسم المستخدم *</label>
   <input id="uf_name" value="${esc(f.name)}" maxlength="60" placeholder="يطلع بهذا الاسم في التطبيق وفي صفحة النشاط" autocomplete="off">
-  <label class="k">يشوف</label>
-  <div class="seg"><button data-uf-scope="own" aria-pressed="${f.scope==='own'}">حسابه بس</button><button data-uf-scope="all" aria-pressed="${f.scope==='all'}">كل الحسابات</button></div>
-  <p class="note" style="margin-top:2px">${f.scope==='own'?'يشوف استلاماته ونصيبه من الرصيد، وحركات الحسابين بدون مبالغ باقي الورثة.':'يشوف التطبيق كامل مثل الرقم العام للورثة (عرض فقط)، ويطلع اسمه في النشاط.'}</p>
+  ${f.heir==='none'?`<p class="note" style="margin-top:8px">المستخدم العام يشوف كل الحسابات عرض بس، وما يقدر يضيف أو يعدّل. يناسب المحاسب أو أي شخص تبيه يتابع.</p>`:`<label class="k">يشوف</label>
+  <div class="seg"><button data-uf-scope="own" aria-pressed="${f.scope==='own'}">حسابه بس</button><button data-uf-scope="all" aria-pressed="${f.scope==='all'}">كل الحسابات</button></div>`}
+  ${f.heir==='none'?'':`<p class="note" style="margin-top:2px">${f.scope==='own'?'يشوف استلاماته ونصيبه من الرصيد، وحركات الحسابين بدون مبالغ باقي الورثة.':'يشوف التطبيق كامل مثل الرقم العام للورثة (عرض فقط)، ويطلع اسمه في النشاط.'}</p>`}
   <label class="k">الرقم السري</label>
   <div class="seg${f.id?' seg3':''}">${f.id?`<button data-uf-pin="keep" aria-pressed="${f.pinMode==='keep'}">نفس رقمه</button>`:''}<button data-uf-pin="auto" aria-pressed="${f.pinMode==='auto'}">${f.id?'رقم جديد':'رقم تلقائي'}</button><button data-uf-pin="manual" aria-pressed="${f.pinMode==='manual'}">أكتبه بنفسي</button></div>
   ${f.pinMode==='manual'?`<input id="uf_pin" inputmode="numeric" pattern="[0-9]*" maxlength="12" value="${esc(f.pin)}" placeholder="من 4 إلى 12 رقم" autocomplete="off" style="direction:ltr;text-align:right;letter-spacing:.2em">`
@@ -1209,10 +1212,11 @@ async function userAction(act,b){
   if(act==='uf-off'){readUF();state.uf.off=!state.uf.off;render();return;}
   if(act==='user-save'){
     readUF();const f=state.uf,err=document.getElementById('ufErr');
-    if(!f.heir){err.textContent='اختر الوريث.';return;}
+    if(!f.heir){err.textContent='اختر الوريث، أو "مستخدم عام".';return;}
     const name=(f.name.trim()||(H[f.heir]&&H[f.heir].n)||'').slice(0,60);
+    if(!name){err.textContent='اكتب اسم المستخدم.';return;}
     if(f.pinMode==='manual'&&!/^\d{4,12}$/.test(f.pin.trim())){err.textContent='الرقم السري لازم يكون أرقام بس، من 4 إلى 12 رقم.';return;}
-    const user={id:f.id||('u'+Date.now().toString(36)),name,heir:f.heir,scope:f.scope,off:!!f.off};
+    const user={id:f.id||('u'+Date.now().toString(36)),name,heir:f.heir==='none'?'':f.heir,scope:f.heir==='none'?'all':f.scope,off:!!f.off};
     if(f.pinMode==='manual')user.pin=f.pin.trim();if(f.pinMode==='auto'&&f.id)user.regen=true;
     const done=busy(f.id?'جاري حفظ التعديل…':'جاري إضافة المستخدم…');
     try{const r=await api('user-put',{user});done();
@@ -1603,6 +1607,9 @@ V.month=({k,id})=>{
 };
 
 V.settings=()=>({title:'الإعدادات',html:`
+  ${store.canWrite?`<h3 class="sec">المستخدمين والأرقام السرية</h3>
+  <div class="propadd"><button class="scanbtn" data-act="user-new">${I.plus}<span>إضافة مستخدم<small>وعمل رقم سري له</small></span></button>
+    <button class="scanbtn" data-go="users">${I.users}<span>المستخدمين${(store.users||[]).length?` (${store.users.length})`:''}<small>تعديل، رقم جديد، إيقاف</small></span></button></div>`:''}
   <h3 class="sec">التنقل والتعديل</h3>
   <div class="card">
     <button class="toggle" role="switch" aria-checked="${prefs.swipe}" data-pref="swipe"><span>التنقل بالسحب
@@ -2668,6 +2675,8 @@ document.addEventListener('toggle',e=>{
   document.querySelectorAll('details[data-acc][open]').forEach(x=>{if(x!==d)x.open=false;});
 },true);
 document.addEventListener('change',e=>{
+  if(e.target.id==='uf_heir'&&state.uf){const prev=state.uf.heir,pn=H[prev]?H[prev].n:'';readUF();const f=state.uf;
+    if(!f.name.trim()||f.name.trim()===pn)f.name=H[f.heir]?H[f.heir].n:'';if(f.heir==='none')f.scope='all';render();return;}
   if(e.target.dataset&&e.target.dataset.dt){dtSync(e.target.dataset.dt);return;}
   if(e.target.id==='propScan'&&e.target.files&&e.target.files.length){const fl=[...e.target.files];e.target.value='';if(store.ver<5){toast('حدّث كود الخادم (Code) للإصدار الجديد عشان تقدر تضيف عقارات.');return;}if(cur().v==='propform')readPF();scanProp(fl);return;}
   if(e.target.id==='fCat'&&state.form){readForm();if(state.form.other)state.form.from='';render();const i=document.getElementById('fFrom');if(i)i.focus();return;}
