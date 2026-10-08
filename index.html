@@ -429,6 +429,60 @@ nav.tabs button[aria-current="true"]{color:#E3C27A;font-weight:600}
 .pdfic{width:58px;height:70px;margin:14px auto 4px;border-radius:8px;background:linear-gradient(180deg,#C9473A,#9E3127);color:#fff;font-weight:800;display:grid;place-items:center;letter-spacing:.06em;box-shadow:0 8px 18px rgba(158,49,39,.3)}
 .modal .actions a.ghost{flex:1;display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink)}
 .modal .actions .mbtn{flex:1;justify-content:center}
+
+/* ===== التاريخ والوقت ===== */
+.dtp{border:1px solid var(--hair);border-radius:14px;padding:10px 12px 12px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0) 60%),var(--card)}
+.dtp-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.dtp-row+.dtp-row{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.dtp-row:has(.wide){grid-template-columns:.85fr 1.55fr 1fr}
+.dtp-f{display:block;min-width:0}
+.dtp-f span{display:block;font-size:11.5px;color:var(--muted);margin:0 2px 4px}
+.dtp-f select{height:46px;font-size:16px;padding-inline-start:10px;padding-inline-end:28px;background-position:left 9px center;font-feature-settings:"tnum" 1}
+.dtp-now{display:block;width:100%;margin-top:10px;padding:8px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;color:var(--gold)}
+.propadd{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
+.propadd .scanbtn{margin:0;padding:14px 10px;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;font-size:16px}
+.propadd .scanbtn svg{width:28px;height:28px}
+.propadd .scanbtn small{font-size:11.5px}
+@media (max-width:360px){.propadd{grid-template-columns:1fr}}
+
+/* ===== الخامة: ذهب مطروق وكحلي لامع (نفس خامة البنر) ===== */
+:root{--leaf:linear-gradient(180deg,#F8E8B8 0%,#E8C981 32%,#CFA452 60%,#AE8336 100%);--leaf-edge:#94692A;
+  --lacq:radial-gradient(ellipse 120% 160% at 50% 0%,#24407F 0%,#132559 52%,#0B1636 100%);--hair:rgba(214,178,102,.42);
+  --lattice:repeating-linear-gradient(45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px),repeating-linear-gradient(-45deg,rgba(214,178,102,.07) 0 1px,transparent 1px 26px)}
+:root[data-theme="light"]{--hair:rgba(150,112,42,.38)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--hair:rgba(150,112,42,.38)}}
+.primary,.mbtn.gold{background:var(--leaf)!important;color:#1A1405!important;border:1px solid var(--leaf-edge)!important;
+  box-shadow:inset 0 1px 0 rgba(255,250,232,.8),inset 0 -2px 0 rgba(120,86,26,.32),0 1px 1px rgba(0,0,0,.18),0 10px 22px -8px rgba(174,131,54,.6)!important;
+  text-shadow:0 1px 0 rgba(255,243,210,.6);transition:transform .08s,box-shadow .08s}
+.primary{font-family:"Amiri","IBM Plex Sans Arabic",serif;font-size:19px;font-weight:700;letter-spacing:.02em;padding:12px 14px 15px;border-radius:15px}
+.primary:active,.mbtn.gold:active{transform:translateY(1px);box-shadow:inset 0 2px 7px rgba(120,86,26,.45),0 2px 6px -2px rgba(174,131,54,.45)!important}
+.primary:disabled{filter:saturate(.35);opacity:.6;box-shadow:none!important}
+.ghost,.seg button,.chip,.stepbtn,.prop-ed,.dtp-now{border:1px solid var(--hair)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0) 55%),var(--card)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 3px 10px -6px rgba(3,8,24,.55);transition:transform .08s}
+.ghost{font-weight:600;border-radius:13px;padding:11px 14px}
+.ghost:active,.seg button:active,.chip:active,.prop-ed:active,.dtp-now:active{transform:scale(.98)}
+.seg button[aria-pressed="true"],.chip[aria-pressed="true"]{background:var(--lacq)!important;color:#F1D58E!important;border-color:rgba(226,194,122,.95)!important;font-weight:700;
+  box-shadow:inset 0 0 0 1px rgba(226,194,122,.22),inset 0 1px 0 rgba(255,255,255,.14),0 6px 16px -8px rgba(11,22,54,.85)!important}
+.mbtn:not(.gold),.tile{border:1px solid var(--hair)!important;
+  box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px rgba(214,178,102,.16),inset 0 1px 0 rgba(255,255,255,.06),0 6px 16px -10px rgba(3,8,24,.7)!important}
+.btn-danger{background:linear-gradient(180deg,#C65B4C 0%,#A13F32 58%,#83301F 100%)!important;border:1px solid #6B241B!important;color:#FFF4F0!important;
+  box-shadow:inset 0 1px 0 rgba(255,215,205,.35),0 8px 18px -8px rgba(131,48,31,.65);text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.btn-danger:active{transform:translateY(1px)}
+.scanbtn{border:1px solid rgba(214,178,102,.6)!important;background:linear-gradient(180deg,rgba(214,178,102,.10),rgba(214,178,102,.03)),var(--card)!important;
+  box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px rgba(214,178,102,.26),0 6px 16px -10px rgba(3,8,24,.7)}
+.scanbtn:active{transform:scale(.99)}
+.linkbtn{font-weight:600;text-decoration:underline;text-decoration-color:rgba(214,178,102,.45);text-underline-offset:4px}
+button:focus-visible,.scanbtn:focus-within,select:focus-visible,input:focus-visible{outline:2px solid #E2C07A;outline-offset:2px}
+/* الشريط السفلي بنفس خامة البنر */
+nav.tabs{background:var(--lacq)!important;border-top:1px solid rgba(214,178,102,.6)!important;box-shadow:0 -10px 24px rgba(3,8,24,.38);overflow:hidden}
+nav.tabs::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;background:var(--lattice)}
+nav.tabs::after{content:"";position:absolute;left:8%;right:8%;top:0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(240,214,150,.95),transparent)}
+nav.tabs button{position:relative;color:#A9B3D1}
+nav.tabs button[aria-current="true"]{color:#EBCB86;text-shadow:0 0 14px rgba(226,194,122,.35)}
+nav.tabs button[aria-current="true"]::before{content:"";position:absolute;top:5px;left:50%;width:6px;height:6px;margin-left:-3px;transform:rotate(45deg);background:linear-gradient(135deg,#F8E8B8,#C99E4E);box-shadow:0 0 8px rgba(226,194,122,.6)}
+nav.tabs button[aria-current="true"] svg{filter:drop-shadow(0 2px 6px rgba(226,194,122,.35))}
+@media (prefers-reduced-motion:reduce){.primary,.mbtn.gold,.ghost,.seg button,.chip{transition:none}}
 </style>
 </head>
 <body>
@@ -504,7 +558,7 @@ const nowLocal=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMon
 function parseD(s){if(!s)return null;const d=new Date(s.length<=10?s+'T00:00':s);return isNaN(d)?null:d;}
 function dDate(s){return dfmt('long',String(s||''));}
 function dShort(s){return dfmt('short',String(s||''));}
-function dTime(s){return dfmt('time',String(s||''));}
+function dTime(s){return fmtDT(String(s||''));}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2000);}
 const parseAmt=v=>parseFloat(String(v??'').replace(/٫/g,'.').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[^\d.\-]/g,''));
 const byDate=(a,b)=>{const x=a.date||'',y=b.date||'';return x<y?-1:x>y?1:(a.createdAt||0)-(b.createdAt||0);};
@@ -514,7 +568,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='5.8';
+const APP_VER='5.9';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -829,7 +883,7 @@ V.home=()=>{
     <h2>أهلاً بكم في تطبيق وريث</h2><p>ورثة مبارك علي القصيلي</p>${roleBadge()}</div>
   <div class="hero"><div class="lbl">الرصيد المتاح الآن</div>
     <div class="big"><span class="num">${fmt(r.total)}</span> <small>د.إ</small></div>
-    <div class="upd">${r.last?'آخر تحديث: '+esc(new Date(r.last).toLocaleString('ar-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'numeric',minute:'2-digit'})):(store.mode==='nodb'?'سجّل دخولك في Claude عشان تظهر البيانات.':'ابدأ بإضافة أول إيداع من حساب البناية أو المزارع.')}</div>
+    <div class="upd">${r.last?'آخر تحديث: '+esc(fmtDT(new Date(r.last),true)):(store.mode==='nodb'?'سجّل دخولك في Claude عشان تظهر البيانات.':'ابدأ بإضافة أول إيداع من حساب البناية أو المزارع.')}</div>
 </div>
   ${store.canWrite&&store.ver<4?`<div class="note warnbox">⚠️ الخادم شغّال على نسخة قديمة، فالإقفال السنوي ما يشتغل${store.ver<3?'، ولا حالة الطلبات وحماية حركات '+esc(store.agent||'الوكيل'):''}. حدّث كود الخادم وانشر <b>إصدار جديد</b> على نفس عملية النشر.</div>`:''}
   ${(()=>{const q=reqSummary();return q?`<button class="reqbar${q.hot?'':' cool'}" data-go="reqs"><span class="dotp"></span><span>${esc(q.text)}</span><b class="num">${q.n}</b>${I.chev}</button>`:''})()}
@@ -869,7 +923,7 @@ V.reqs=()=>{
   const me=store.canWrite?'admin':'agent',other=store.canWrite?(store.agent||'الوكيل'):'المدير';
   const toMe=state.reqs.filter(r=>r.by!==me&&r.status==='pending').sort((a,b)=>(b.at||0)-(a.at||0));
   const mine=state.reqs.filter(r=>r.by===me).sort((a,b)=>(b.at||0)-(a.at||0));
-  const when=ms=>ms?new Date(ms).toLocaleString('ar-u-nu-latn',{day:'numeric',month:'long',hour:'numeric',minute:'2-digit'}):'';
+  const when=ms=>ms?fmtDT(new Date(ms)):'';
   const card=(r,forMe)=>{
     if(r.op==='close'){const c=r.tx||{},a=c.accts||{};
       const st=r.status==='approved'?`<span class="stb ok">✓ معتمد</span>`:r.status==='rejected'?`<span class="stb no">✕ مرفوض</span>`:`<span class="stb wait">بانتظار ${forMe?'قرارك':other}</span>`;
@@ -1056,6 +1110,151 @@ V.tx=({id})=>{
   ${canEditNow()&&!txLocked(t)?`<div class="actions"><button class="ghost" data-act="edit" data-id="${esc(t.id)}">${needsOk(t)?'طلب تعديل':'تعديل'}</button><button class="ghost danger" data-act="del" data-id="${esc(t.id)}">${needsOk(t)?'طلب حذف':'حذف'}</button></div>`:''}
   ${adminView()?`<div class="actions" style="margin-top:10px"><button class="ghost" data-act="notify" data-id="${esc(t.id)}">إشعار الورثة بهذي الحركة</button></div>`:''}`};
 };
+/* ===== التاريخ والوقت: بالترتيب الساعة ← اليوم ← الشهر ← السنة ===== */
+const AR_MON=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const AR_DAY=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const hm=d=>{const h=d.getHours();return `${((h+11)%12)+1}:${pad(d.getMinutes())} ${h<12?'ص':'م'}`;};
+const dmy=d=>`${d.getDate()} ${AR_MON[d.getMonth()]} ${d.getFullYear()}`;
+/* "2:33 م، 7 أكتوبر 2026" (بدون وقت لو التاريخ بدون ساعة) */
+function fmtDT(s,withDay){const d=s instanceof Date?s:parseD(String(s||''));if(!d)return '';const hasT=s instanceof Date||String(s).length>10;
+  return (hasT?hm(d)+'، ':'')+(withDay?AR_DAY[d.getDay()]+' ':'')+dmy(d);}
+const daysIn=(y,m)=>new Date(+y,+m,0).getDate();
+function dtVal(v,time){const m=/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(String(v||''));const n=new Date();
+  return m?{y:+m[1],mo:+m[2],d:+m[3],h:m[4]!=null?+m[4]:12,mi:m[5]!=null?+m[5]:0}:{y:n.getFullYear(),mo:n.getMonth()+1,d:n.getDate(),h:n.getHours(),mi:n.getMinutes()};}
+function dtPicker(id,value,o){
+  o=o||{};const time=!!o.time,v=dtVal(value,time),now=new Date(),blank=!!o.empty&&!value;
+  const yMin=o.yMin!=null?+o.yMin:Math.min(2010,v.y),yMax=o.yMax!=null?+o.yMax:Math.max(now.getFullYear()+1,v.y);
+  const val=blank?'':`${v.y}-${pad(v.mo)}-${pad(v.d)}`+(time?`T${pad(v.h)}:${pad(v.mi)}`:'');
+  const rng=(a,b)=>{const r=[];for(let i=a;i<=b;i++)r.push(i);return r;};
+  const sel=(part,opts,cur,label,cls)=>`<label class="dtp-f${cls?' '+cls:''}"><span>${label}</span><select data-dt="${id}" data-part="${part}" aria-label="${label}">${o.empty?`<option value=""${blank?' selected':''}>—</option>`:''}${opts.map(([x,t])=>`<option value="${x}"${!blank&&String(x)===String(cur)?' selected':''}>${t}</option>`).join('')}</select></label>`;
+  const days=rng(1,daysIn(v.y,v.mo)).map(n=>[n,String(n)]);
+  return `<div class="dtp" id="${id}_w"><input type="hidden" id="${id}" value="${val}">
+    ${time?`<div class="dtp-row">${sel('h',rng(1,12).map(n=>[n,String(n)]),((v.h+11)%12)+1,'الساعة')}${sel('mi',rng(0,59).map(n=>[n,pad(n)]),v.mi,'الدقيقة')}${sel('ap',[['am','ص'],['pm','م']],v.h<12?'am':'pm','الفترة')}</div>`:''}
+    <div class="dtp-row">${sel('d',days,v.d,'اليوم')}${sel('mo',rng(1,12).map(n=>[n,`${n} – ${AR_MON[n-1]}`]),v.mo,'الشهر','wide')}${sel('y',rng(yMin,yMax).reverse().map(n=>[n,String(n)]),v.y,'السنة')}</div>
+    ${o.noNow?'':`<button type="button" class="dtp-now" data-dt-now="${id}" data-dt-time="${time?1:0}">${time?'الآن':'اليوم'}</button>`}</div>`;
+}
+function dtSync(id,set){
+  const w=document.getElementById(id+'_w');if(!w)return;const g=p=>w.querySelector(`[data-part="${p}"]`);
+  if(set){Object.keys(set).forEach(k=>{const s=g(k);if(s&&[...s.options].some(o=>o.value===String(set[k])))s.value=String(set[k]);});}
+  const hid=document.getElementById(id);
+  if(!g('y').value||!g('mo').value||!g('d').value){if(hid.value!==''){hid.value='';hid.dispatchEvent(new Event('change',{bubbles:true}));}return;}
+  const y=+g('y').value,mo=+g('mo').value,ds=g('d'),dim=daysIn(y,mo),em=!!ds.querySelector('option[value=""]');
+  if(ds.options.length!==dim+(em?1:0)){const cur=Math.min(+ds.value,dim);ds.innerHTML=(em?'<option value="">—</option>':'')+Array.from({length:dim},(_,i)=>`<option value="${i+1}"${i+1===cur?' selected':''}>${i+1}</option>`).join('');}
+  let val=`${y}-${pad(mo)}-${pad(+ds.value)}`;
+  if(g('h')){let h=+g('h').value%12;if(g('ap').value==='pm')h+=12;val+=`T${pad(h)}:${pad(+g('mi').value)}`;}
+  if(hid.value===val)return;hid.value=val;
+  hid.dispatchEvent(new Event('change',{bubbles:true}));
+}
+function dtNow(id,time){const n=new Date(),h=n.getHours();
+  dtSync(id,Object.assign({y:n.getFullYear(),mo:n.getMonth()+1,d:n.getDate()},time?{h:((h+11)%12)+1,mi:n.getMinutes(),ap:h<12?'am':'pm'}:{}));}
+
+/* ===== قراءة سند الملكية أو مخطط الأرض وتعبئة بيانات العقار ===== */
+const HEIR_EN={may:'MAY',rashed:'RASHED',saeed:'SAEED',ali:'ALI',eid:'EID',mohamed:'MOHAMED',naser:'NASER',bakheeta:'BAKHEETA',hamda:'HAMDA',shamma:'SHAMMA',madhheya:'MADHHEYA',noura:'NOURA'};
+const AR_RE=/[؀-ۿ]/;
+function arPart(line,label){ // النص العربي في السطر بعد حذف عنوان الخانة (يتعامل مع الترتيب المقلوب في ملفات PDF)
+  const ar=line.split(/\s+/).filter(t=>AR_RE.test(t)||t==='-'||t==='–');
+  if(!ar.length)return '';
+  const lab=label.split(' ');
+  // بالعربي عنوان الخانة يجي قبل القيمة: نختار الترتيب اللي يبدأ بالعنوان (ملفات PDF تطلع الكلمات مقلوبة)
+  for(const seq of [ar,ar.slice().reverse()]){
+    const s=seq.join(' ');
+    if(s.startsWith(label+' ')||s===label)return s.slice(label.length).trim();
+  }
+  return '';
+}
+function enVal(line,re){const m=re.exec(line);if(!m)return '';let s=line.slice(m.index+m[0].length).replace(/^[\s.:]+/,'');const i=s.search(AR_RE);if(i>=0)s=s.slice(0,i);return s.replace(/\s{2,}/g,' ').trim().replace(/^~$/,'');}
+function parseDeed(lines0){
+  const L=lines0.map(l=>normDig(String(l).normalize('NFKC')).replace(/[ً-ْـ]/g,'').replace(/\s+/g,' ').trim()).filter(Boolean);
+  const all=L.join('\n');
+  const find=re=>{const i=L.findIndex(l=>re.test(l));return i<0?null:{i,l:L[i]};};
+  const r={};
+  r.kind=/Site\s*Plan|مخطط\s*أرض|أرض\s*مخطط|مخطط\s*ارض/i.test(all)?'plan':/Title\s*Deed|سند\s*ملكية|ملكية\s*سند/i.test(all)?'deed':'';
+  r.issuer=/Real\s*Estate\s*Centre|Real\s*Estate\s*Center|مركز\s*أبوظبي\s*العقاري/i.test(all)?'مركز أبوظبي العقاري':/smarthub\.adm|Department\s*of\s*Municipalities|دائرة\s*البلديات/i.test(all)?'دائرة البلديات والنقل':'';
+  const fld=(en,ar)=>{const x=find(en);if(!x)return {en:'',ar:''};return {en:enVal(x.l,en),ar:ar?arPart(x.l,ar):''};};
+  const mun=fld(/\bMunicipality\b/i,'البلدية'),zone=fld(/\bZone\b(?!\s+SECTOR)/i,'المنطقة'),sec=fld(/\bSector\b/i,'الحوض');
+  const plot=find(/\b(Land|Plot)\s*No\b\.?/i);r.plot=plot?(enVal(plot.l,/\b(Land|Plot)\s*No\b\.?/i).split(' ')[0]||''):'';
+  if(!r.plot){const m=/\b(FRM\d+|[A-Z]{1,3}\d{1,4})\b/.exec(all);if(m)r.plot=m[1];}
+  const addr=find(/\bPlot\s*Address\b\.?/i);r.addr=addr?(/(\d+-\d+-\d+-[A-Z0-9]+)/.exec(addr.l)||[])[1]||'':((/(\d+-\d+-\d+-[A-Z0-9]+)/.exec(all)||[])[1]||'');
+  const area=find(/\bPlot\s*Area\b|\bLand\s*Area\b|مساحة\s*الأرض/i);
+  if(area){const m=/([\d,]+(?:\.\d+)?)\s*(m2|m²|م2|م²|sq\.?\s*m)/i.exec(area.l)||/([\d,]+(?:\.\d+)?)/.exec(enVal(area.l,/\b(Plot|Land)\s*Area\b\.?/i));if(m)r.area=parseFloat(m[1].replace(/,/g,''));}
+  const ad=find(/Allocation\s*Date|تاريخ\s*التخصيص/i);if(ad){const m=/(\d{4})\/(\d{1,2})\/(\d{1,2})/.exec(ad.l)||/(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(ad.l);
+    if(m)r.date=m[1].length===4?`${m[1]}/${pad(m[2])}/${pad(m[3])}`:`${m[3]}/${pad(m[2])}/${pad(m[1])}`;}
+  const at=fld(/Allocation\s*Type/i,'مسمى التخصيص'),lu=find(/\bLand\s*Use\b|\bUse\s*Type\b/i),bd=fld(/Base\s*District/i,'المنطقة الأساسية');
+  let luAr=lu?arPart(lu.l,'استخدام الأرض')||arPart(lu.l,'نوع الاستخدام'):'';
+  if(lu&&!luAr&&L[lu.i-1]&&!/[A-Za-z]{3}/.test(L[lu.i-1])&&AR_RE.test(L[lu.i-1]))luAr=L[lu.i-1].split(' ').filter(t=>AR_RE.test(t)||t==='-').reverse().join(' ');
+  const enAll=(at.en+' '+(lu?enVal(lu.l,/\bLand\s*Use\b|\bUse\s*Type\b/i):'')).toLowerCase();
+  r.cat=/agri/.test(enAll)||/زراعي/.test(at.ar+luAr)?'agri':/commerc/.test(enAll)||/تجاري/.test(at.ar+luAr)?'comm':/resid/.test(enAll)||/سكني/.test(at.ar+luAr)?'res':'';
+  const catAr={agri:'زراعي',comm:'تجاري',res:'سكني'}[r.cat]||'';
+  let use=at.ar||catAr;
+  const code=(/\(([A-Z0-9]+)\)/.exec(bd.en)||[])[1]||'';
+  if(bd.ar)use=(use?use+' – ':'')+bd.ar+(code?' '+code:'');
+  else if(luAr&&/-/.test(luAr))use=(use?use+' – ':'')+luAr.split(/\s*[-–]\s*/).pop();
+  else if(!use&&luAr)use=luAr;
+  if(/Not\s*Mortgaged|غير\s*مرهون/i.test(all))use+=(use?' · ':'')+'غير مرهون';
+  else if(/\bMortgaged\b/i.test(all))use+=(use?' · ':'')+'مرهون';
+  r.use=use;
+  const nz=x=>String(x||'').replace(/ه(\s|$)/g,'ة$1').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');
+  const zAr=zone.ar,sAr0=sec.ar&&!/^\d/.test(sec.ar)?sec.ar:'',sAr=sAr0&&nz(sAr0)!==nz(zAr)?sAr0:'',mAr=mun.ar;
+  r.where=[zAr&&sAr&&sAr!==zAr&&r.cat!=='comm'?sAr:'',zAr||zone.en,(mAr||mun.en)].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i).join('، ');
+  if(r.cat==='comm'&&sec.en&&/^[A-Z]{1,3}\d+$/.test(sec.en))r.where=(zAr||zone.en)+' ('+sec.en+')'+(mAr||mun.en?'، '+(mAr||mun.en):'');
+  const place=sAr||zAr||sec.en||zone.en;
+  r.name=r.cat==='agri'?'مزرعة '+place:r.cat==='comm'?'بناية '+(r.plot||place):r.cat==='res'?'مسكن – '+place:place;
+  r.src=(r.kind==='deed'?'سند ملكية':r.kind==='plan'?'مخطط أرض':'مستند')+(r.issuer?' – '+r.issuer:'');
+  r.acct=r.cat==='agri'?'farm':r.cat==='comm'?'bld':'';
+  // حصص الملاك: نلقى اسم كل وريث بالإنجليزي ونأخذ نسبته من نفس السطر أو اللي حوله
+  const pct=l=>{const out=[];const re=/(\d{1,3}(?:\.\d+)?)\s*%|%\s*(\d{1,3}(?:\.\d+)?)/g;let m;while((m=re.exec(l))){const v=parseFloat(m[1]||m[2]);if(v>0&&v<=100)out.push(v);}return out;};
+  const sh={};
+  L.forEach((l,i)=>{
+    const U=l.toUpperCase();
+    for(const k of Object.keys(HEIR_EN)){
+      if(sh[k]!=null)continue;
+      const re=new RegExp('(^|[^A-Z])'+HEIR_EN[k]+'\\s+(MUBARAK|RASHED\\s+RASHED)\\b');
+      if(!re.test(U))continue;
+      let p=pct(l);
+      // ما فيه نسبة في سطر الاسم: نأخذ أكبر نسبة في السطرين قبله وبعده (الإجمالي أكبر من أجزائه: منحة + إرث)
+      if(!p.length)for(const j of [i-2,i-1,i+1,i+2]){if(L[j]&&!/(MUBARAK|RASHED\s+RASHED)/i.test(L[j]))p=p.concat(pct(L[j]));}
+      if(p.length)sh[k]=Math.max(...p);
+    }
+  });
+  const n=Object.keys(sh).length,sum=r2(Object.values(sh).reduce((a,b)=>a+b,0)*10000)/10000;
+  r.shares=n>=2&&Math.abs(sum-100)<=0.05?sh:null;r.sharesFound=n;r.sharesSum=sum;
+  return r;
+}
+async function scanProp(files){
+  files=[...files].slice(0,6);if(!files.length)return;
+  const done=busy('جاري قراءة المستند…','أول مرة تاخذ وقت أطول');const prog=m=>{const s=document.querySelector('#busy small');if(s)s.textContent=m;};
+  let lines=[],img='';
+  try{for(const [i,f] of files.entries()){const pre=files.length>1?`ملف ${i+1} من ${files.length}: `:'';
+      const isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name);
+      lines=lines.concat(isPdf?await pdfLines(f,m=>prog(pre+m)):await ocrLines(f,m=>prog(pre+m)));
+      if(!img&&(f.type||'').startsWith('image/'))img=URL.createObjectURL(f);}}
+  catch(e){done();toast((e&&e.message)||'ما قدرت أقرأ المستند.');return;}
+  done();
+  const r=parseDeed(lines);
+  const got=['plot','area','where','use','addr','date'].filter(k=>r[k]).length;
+  if(!got&&!r.shares){toast('ما لقيت بيانات عقار في المستند. جرّب صورة أوضح أو ملف PDF من الجهة نفسها.');return;}
+  const editing=state.pf&&cur().v==='propform';
+  if(!editing)propFormInit(null);
+  const f=state.pf;
+  ['plot','where','use','addr','src'].forEach(k=>{if(r[k])f[k]=r[k];});
+  if(r.area)f.area=String(r.area);if(r.date)f.date=r.date.replace(/\//g,'-');
+  if(!f.name.trim()&&r.name)f.name=r.name;
+  if(r.acct&&!f.id)f.acct=r.acct;
+  if(r.shares){const same=HEIRS.every(h=>Math.abs((r.shares[h.id]||0)-(+ACCTS[f.acct].shares[h.id]||0))<0.00005);
+    f.custom=!same;HEIRS.forEach(h=>f.shares[h.id]=String(r.shares[h.id]||0));}
+  const dup=(state.propsAll||[]).find(p=>p.id!==f.id&&r.plot&&String(p.plot).toUpperCase()===r.plot.toUpperCase());
+  f.scan={img,kind:r.kind,got,shares:r.shares?r.sharesFound:0,sum:r.sharesSum,found:r.sharesFound,acct:r.acct,dup:dup?dup.name:''};
+  if(!editing)go('propform');else render();
+}
+function propScanNote(){
+  const s=state.pf&&state.pf.scan;if(!s)return '';
+  return `<div class="card scancard">${s.img?`<img src="${esc(s.img)}" alt="المستند">`:''}<div><b>📄 قرأت ${s.kind==='deed'?'سند الملكية':s.kind==='plan'?'مخطط الأرض':'المستند'} وعبّيت الخانات</b>
+    <div class="m">لقيت ${s.got} من 6 بيانات${s.shares?` · حصص ${s.shares} ورثة، مجموعها <bdi class="num">${Math.abs(s.sum-100)<=0.05?100:s.sum}%</bdi>`:s.found?` · لقيت ${s.found} حصص بس ومجموعها <bdi class="num">${s.sum}%</bdi>، فما عبّيتها`:''}</div>
+    ${s.acct?'':`<div class="m">ما عرفت الحساب من المستند، اختره تحت.</div>`}
+    ${s.dup?`<div class="m" style="color:var(--neg)">رقم الأرض هذا مسجّل لعقار ثاني: ${esc(s.dup)}</div>`:''}
+    <div class="m" style="color:var(--gold)">راجع البيانات قبل الحفظ.</div></div></div>`;
+}
+
 /* ===== العقارات: الأصلية + اللي يضيفها المدير (محفوظة في ورقة "العقارات") ===== */
 function applyProps(list){
   list=Array.isArray(list)?list:[];store.propsRaw=list;
@@ -1082,7 +1281,7 @@ function propSelect(f){
   return `<label class="k" for="fProp">العقار</label><select id="fProp"><option value="">عام</option>${list.concat(cur).map(p=>`<option value="${esc(p.id)}"${f.prop===p.id?' selected':''}>${esc(p.name)}${p.hidden?' (مخفي)':''}</option>`).join('')}</select>`;
 }
 const propCard=p=>{
-  const s=propStats(p.id),dl=[['رقم الأرض',p.plot,1],['المساحة',+p.area>0?`<span class="num">${(+p.area).toLocaleString('en-US')}</span> م²`:'',0,1],['الاستخدام',p.use],['عنوان القسيمة',p.addr,1],['تاريخ التخصيص',p.date,1],['المصدر',p.src]]
+  const s=propStats(p.id),dl=[['رقم الأرض',p.plot,1],['المساحة',+p.area>0?`<span class="num">${(+p.area).toLocaleString('en-US')}</span> م²`:'',0,1],['الاستخدام',p.use],['عنوان القسيمة',p.addr,1],['تاريخ التخصيص',/^\d{4}\/\d{2}\/\d{2}$/.test(p.date||'')?fmtDT(p.date.replace(/\//g,'-')):p.date],['المصدر',p.src]]
     .filter(x=>x[1]).map(([k,v,num,raw])=>`<dt>${k}</dt><dd${num?' class="num"':''}>${raw?v:esc(v)}</dd>`).join('');
   return `<div class="card prop">
   <div class="prop-h"><div><h4>${esc(p.name)}</h4><div class="m">${p.where?esc(p.where)+' · ':''}${ACCTS[p.acct].name}${p.builtin?'':' · <span class="tag">مضاف</span>'}</div></div>
@@ -1095,7 +1294,8 @@ const propCard=p=>{
 };
 V.props=()=>{
   const hid=(state.propsAll||[]).filter(p=>p.hidden);
-  const add=store.canWrite?`<button class="scanbtn" data-act="prop-new" style="width:100%;margin:0 0 12px">${I.plus}<span>إضافة عقار<small>مزرعة أو بناية أو أرض جديدة، مع بياناتها وحصص الورثة</small></span></button>`:'';
+  const add=store.canWrite?`<div class="propadd"><button class="scanbtn" data-act="prop-new">${I.plus}<span>إضافة عقار<small>إدخال يدوي</small></span></button>
+    <label class="scanbtn">${I.cam}<span>من سند أو مخطط<small>صورة أو PDF</small></span><input type="file" id="propScan" accept="image/*,application/pdf" multiple></label></div>`:'';
   const grp=k=>{const l=PROPS.filter(p=>p.acct===k);return l.length?`<h3 class="sec">${ACCTS[k].name} <small class="num" style="color:var(--muted);font-weight:500">(${l.length})</small></h3>`+l.map(propCard).join(''):'';};
   return {title:'العقارات',html:add+grp('bld')+grp('farm')
     +(store.canWrite&&hid.length?`<details class="hidprops"><summary>عقارات مخفية (${hid.length})</summary>${hid.map(propCard).join('')}</details>`:'')
@@ -1118,6 +1318,7 @@ V.propform=()=>{
   const inp=(k,label,ph,extra)=>`<label class="k" for="pf_${k}">${label}</label><input id="pf_${k}" value="${esc(f[k])}" placeholder="${esc(ph||'')}"${extra||''}>`;
   const sum=pfSum();
   return {title:f.id?'تعديل عقار':'إضافة عقار',html:`
+  ${propScanNote()}<label class="scanbtn sm">${I.cam}<span>${f.scan?'قراءة مستند ثاني':'تعبئة من سند الملكية أو مخطط الأرض'}<small>صوّره أو اختر صورة أو PDF، والتطبيق يعبّي الخانات والحصص</small></span><input type="file" id="propScan" accept="image/*,application/pdf" multiple></label>
   ${inp('name','اسم العقار *','مثال: مزرعة الختم',' maxlength="80" autocomplete="off"')}
   <label class="k">الحساب اللي يتبع له</label>
   <div class="seg">${['bld','farm'].map(k=>`<button data-pf-acct="${k}" aria-pressed="${f.acct===k}">${ACCTS[k].name}</button>`).join('')}</div>
@@ -1127,10 +1328,8 @@ V.propform=()=>{
   </div>
   ${inp('where','الموقع','مثال: ليوا، منطقة الظفرة',' maxlength="120"')}
   ${inp('use','الاستخدام','مثال: زراعي – أرض زراعية',' maxlength="120"')}
-  <div class="grid2">
-    <div>${inp('addr','عنوان القسيمة','0-3-000-FRM41',' maxlength="60"')}</div>
-    <div><label class="k" for="pf_date">تاريخ التخصيص</label><input id="pf_date" type="date" value="${esc(f.date)}"></div>
-  </div>
+  ${inp('addr','عنوان القسيمة','0-3-000-FRM41',' maxlength="60"')}
+  <label class="k">تاريخ التخصيص</label>${dtPicker('pf_date',f.date,{empty:true,noNow:true,yMin:1950})}
   ${inp('src','المصدر','مثال: سند ملكية – مركز أبوظبي العقاري',' maxlength="120"')}
   <h3 class="sec">حصص الورثة في هذا العقار</h3>
   <div class="seg"><button data-pf-sh="0" aria-pressed="${!f.custom}">نفس حصص ${ACCTS[f.acct].short}</button><button data-pf-sh="1" aria-pressed="${f.custom}">حصص خاصة</button></div>
@@ -1361,7 +1560,7 @@ V.form=()=>{
   let receipt='';
   if(f.receipt&&f.receipt.id){receipt=`<div class="receipt">${(f.receipt.type||'').startsWith('image/')?`<img src="/_blob/${esc(f.receipt.id)}" alt="">`:'<span>📄</span>'}<span class="grow">الإيصال مرفق</span><button class="linkbtn" data-act="rm-receipt">إزالة</button></div>`;}
   else if(assetsApi){receipt=`<label class="filebtn">📎 إرفاق إيصال أو فاتورة<input type="file" id="fFile" accept="image/*,application/pdf"></label>`;}
-  const common=`<label class="k" for="fDate">التاريخ والوقت</label><input id="fDate" type="datetime-local" value="${esc(f.date)}">
+  const common=`<label class="k">التاريخ والوقت</label>${dtPicker('fDate',f.date,{time:true})}
     <label class="k" for="fNote">ملحوظة</label><textarea id="fNote" placeholder="اختياري">${esc(f.note)}</textarea>
     <div style="margin-top:12px">${receipt}<div class="err" id="fFileSt" style="color:var(--muted)"></div></div>`;
   let body='';
@@ -1624,8 +1823,8 @@ V.bank=(p)=>{
     ${P.open!=null?`<div class="kv"><span>رصيد أول الكشف</span><b class="num">${fmt(P.open)}</b></div>`:''}
     <div class="kv"><span>تطابق مع التطبيق</span><b><span class="num">${R.mrows}</span> من <span class="num">${P.rows.length}</span></b></div></div>`:''}
   <h3 class="sec">مقارنة الرصيد</h3><div class="card">
-    <div class="grid2" style="margin-bottom:6px"><div><label class="k" for="bkTo" style="margin-top:0">بتاريخ</label><input id="bkTo" type="date" value="${esc(to)}"></div>
-      <div><label class="k" for="bkClose" style="margin-top:0">رصيد البنك</label><input id="bkClose" inputmode="decimal" placeholder="من الكشف" value="${esc(b&&b.close!=null?b.close:(dr&&dr.date===to?dr.bal:''))}"></div></div>
+    <label class="k" style="margin-top:0">بتاريخ</label>${dtPicker('bkTo',to)}
+      <div style="margin-bottom:6px"><label class="k" for="bkClose">رصيد البنك</label><input id="bkClose" inputmode="decimal" placeholder="من الكشف" value="${esc(b&&b.close!=null?b.close:(dr&&dr.date===to?dr.bal:''))}"></div>
     <div class="kv"><span>رصيد التطبيق في ${esc(dShort(to))}</span><b class="num">${fmt(appBal)}</b></div>
     ${diff!=null?`<div class="kv"><span>الفرق</span><b class="num ${Math.abs(diff)<1?'in':'out'}">${Math.abs(diff)<1?'✓ مطابق':fmt(diff)}</b></div>`:''}
     ${diff!=null&&Math.abs(diff)>=1?`<p class="m" style="font-size:12px;color:var(--muted);margin:6px 0 0">${diff>0?'التطبيق أعلى من البنك: غالباً فيه سحب أو رسوم في البنك ما انسجلت في التطبيق.':'البنك أعلى من التطبيق: غالباً فيه إيداع في البنك ما انسجل في التطبيق.'}</p>`:''}
@@ -1686,8 +1885,8 @@ V.close=()=>{
   <p class="note" style="margin-top:0">${f.trial?'<b>إقفال تجريبي:</b> يسجّل الأرقام ويطلع حزمة الإقفال، وما يقفل أي حركة. تقدر تحذفه بعدين.':'<b>إقفال فعلي:</b> بعد الاعتماد كل الحركات لين تاريخ الإقفال تصير للعرض بس، ورصيد الإقفال يصير رصيد بداية الفترة الجديدة.'}</p>
   ${myPend?`<div class="note">⏳ فيه إقفال بانتظار اعتماد ${store.canWrite?'منك':'المدير'}. <button class="linkbtn" data-go="reqs">فتح الطلبات</button></div>`:''}
   <div class="card">
-    <div class="grid2"><div><label class="k" for="cYear" style="margin-top:0">السنة المالية</label><select id="cYear">${years.map(y=>`<option${y===f.year?' selected':''}>${y}</option>`).join('')}</select></div>
-      <div><label class="k" for="cDate" style="margin-top:0">تاريخ الإقفال</label><input id="cDate" type="date" value="${esc(f.date)}" min="${esc(f.year)}-01-01" max="${esc(f.year)}-12-31"></div></div>
+    <label class="k" for="cYear" style="margin-top:0">السنة المالية</label><select id="cYear">${years.map(y=>`<option${y===f.year?' selected':''}>${y}</option>`).join('')}</select>
+    <label class="k">تاريخ الإقفال</label>${dtPicker('cDate',f.date,{yMin:f.year,yMax:f.year,noNow:true})}
     <hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
     <button class="toggle" role="switch" aria-checked="${!!f.trial}" data-act="c-trial"><span>إقفال تجريبي<small>للتجربة والمراجعة بدون قفل الحركات</small></span><span class="sw"></span></button></div>
   ${acctCard('bld')}${acctCard('farm')}
@@ -1765,9 +1964,9 @@ V.activity=()=>{
   <h3 class="sec">متصلين الحين</h3>
   ${(a.online||[]).length?`<div class="rows">${a.online.map(o=>`<div class="row static"><span><span class="live"></span>${esc(o.who)}${roleTag(o.role)}<div class="m">يتصفح: ${esc(o.page||'—')} · من ${ago(now-o.since)}</div></span></div>`).join('')}</div>`:'<p class="empty">ما فيه أحد متصل الحين.</p>'}
   <h3 class="sec">الأشخاص</h3>
-  ${Object.keys(people).length?`<div class="rows">${Object.values(people).map(p=>`<div class="row static"><span>${esc(p.who)}${roleTag(p.role)}<div class="m">آخر ظهور ${esc(p.last.slice(0,16).replace(' ',' · '))}${p.lastPage?' · '+esc(p.lastPage):''}</div></span><span class="a" style="font-size:13px;font-weight:500;color:var(--muted)">${p.visits} دخول · ${p.views} صفحة</span></div>`).join('')}</div>`:'<p class="empty">ما فيه سجل للحين.</p>'}
+  ${Object.keys(people).length?`<div class="rows">${Object.values(people).map(p=>`<div class="row static"><span>${esc(p.who)}${roleTag(p.role)}<div class="m">آخر ظهور ${esc(fmtDT(p.last.slice(0,16).replace(' ','T')))}${p.lastPage?' · '+esc(p.lastPage):''}</div></span><span class="a" style="font-size:13px;font-weight:500;color:var(--muted)">${p.visits} دخول · ${p.views} صفحة</span></div>`).join('')}</div>`:'<p class="empty">ما فيه سجل للحين.</p>'}
   <h3 class="sec">آخر الأحداث</h3>
-  ${log.length?`<div class="rows">${log.slice(0,120).map(x=>`<div class="row static"><span>${evIcon(x.e)} ${esc(x.who)} <span class="m" style="display:inline">· ${esc(x.e)}${x.p?': '+esc(x.p):''}</span><div class="m num">${esc(x.t.slice(0,16))}</div></span></div>`).join('')}</div>`:''}
+  ${log.length?`<div class="rows">${log.slice(0,120).map(x=>`<div class="row static"><span>${evIcon(x.e)} ${esc(x.who)} <span class="m" style="display:inline">· ${esc(x.e)}${x.p?': '+esc(x.p):''}</span><div class="m">${esc(fmtDT(x.t.slice(0,16).replace(' ','T')))}</div></span></div>`).join('')}</div>`:''}
   <p class="note">"متصل" يعني التطبيق مفتوح عنده وكلّم الخادم خلال آخر دقيقة ونص. الورثة يتعرّفون من الاسم اللي اختاروه على جهازهم، لأنهم يدخلون بنفس الرقم السري. السجل محفوظ في ورقة "سجل الدخول" في الشيت.</p>
   <div class="actions"><button class="ghost" data-act="act-refresh">تحديث</button></div>`};
 };
@@ -2233,6 +2432,7 @@ document.addEventListener('click',async e=>{
     return;
   }
   if(d.heirCard){heirCard(d.heirCard);return;}
+  if(d.dtNow){dtNow(d.dtNow,d.dtTime==='1');return;}
   if(d.act&&(d.act.indexOf('prop-')===0||d.act==='pf-fill')){await propAction(d.act,b);return;}
   if(d.pfAcct){readPF();state.pf.acct=d.pfAcct;render();return;}
   if(d.pfSh!==undefined){readPF();state.pf.custom=d.pfSh==='1';if(state.pf.custom&&HEIRS.every(x=>!String(state.pf.shares[x.id]).trim()))HEIRS.forEach(x=>state.pf.shares[x.id]=String(ACCTS[state.pf.acct].shares[x.id]));render();return;}
@@ -2253,6 +2453,8 @@ document.addEventListener('toggle',e=>{
   document.querySelectorAll('details[data-acc][open]').forEach(x=>{if(x!==d)x.open=false;});
 },true);
 document.addEventListener('change',e=>{
+  if(e.target.dataset&&e.target.dataset.dt){dtSync(e.target.dataset.dt);return;}
+  if(e.target.id==='propScan'&&e.target.files&&e.target.files.length){const fl=[...e.target.files];e.target.value='';if(store.ver<5){toast('حدّث كود الخادم (Code) للإصدار الجديد عشان تقدر تضيف عقارات.');return;}if(cur().v==='propform')readPF();scanProp(fl);return;}
   if(e.target.id==='fCat'&&state.form){readForm();if(state.form.other)state.form.from='';render();const i=document.getElementById('fFrom');if(i)i.focus();return;}
   if(e.target.id==='scanFile'&&e.target.files&&e.target.files[0]){const f=e.target.files[0];e.target.value='';scanDoc(f,state.form?state.form.acct:(cur().k==='farm'?'farm':'bld'));return;}
   if(e.target.id==='bkTo'||e.target.id==='bkClose'){const k=cur().k==='farm'?'farm':'bld';if(!state.bank||state.bank.acct!==k)state.bank={acct:k};state.bank[e.target.id==='bkTo'?'to':'close']=e.target.value;render();return;}
