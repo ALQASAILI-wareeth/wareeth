@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -462,8 +462,8 @@ nav.tabs button[aria-current="true"]{color:#E3C27A;font-weight:600}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 3px 10px -6px rgba(3,8,24,.55);transition:transform .08s}
 .ghost{font-weight:600;border-radius:13px;padding:11px 14px}
 .ghost:active,.seg button:active,.chip:active,.prop-ed:active,.dtp-now:active{transform:scale(.98)}
-.seg button[aria-pressed="true"],.chip[aria-pressed="true"]{background:var(--lacq)!important;color:#F1D58E!important;border-color:rgba(226,194,122,.95)!important;font-weight:700;
-  box-shadow:inset 0 0 0 1px rgba(226,194,122,.22),inset 0 1px 0 rgba(255,255,255,.14),0 6px 16px -8px rgba(11,22,54,.85)!important}
+.seg button[aria-pressed="true"],.chip[aria-pressed="true"]{background:linear-gradient(180deg,#FFF7E3 0%,#F6E6BE 55%,#EED79E 100%)!important;color:#4E3A0E!important;border-color:#C29A4C!important;font-weight:700;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),inset 0 -2px 0 rgba(176,133,55,.18),0 6px 14px -8px rgba(150,112,42,.55)!important}
 .mbtn:not(.gold),.tile{border:1px solid var(--hair)!important;
   box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px rgba(214,178,102,.16),inset 0 1px 0 rgba(255,255,255,.06),0 6px 16px -10px rgba(3,8,24,.7)!important}
 .btn-danger{background:linear-gradient(180deg,#C65B4C 0%,#A13F32 58%,#83301F 100%)!important;border:1px solid #6B241B!important;color:#FFF4F0!important;
@@ -483,6 +483,21 @@ nav.tabs button[aria-current="true"]{color:#EBCB86;text-shadow:0 0 14px rgba(226
 nav.tabs button[aria-current="true"]::before{content:"";position:absolute;top:5px;left:50%;width:6px;height:6px;margin-left:-3px;transform:rotate(45deg);background:linear-gradient(135deg,#F8E8B8,#C99E4E);box-shadow:0 0 8px rgba(226,194,122,.6)}
 nav.tabs button[aria-current="true"] svg{filter:drop-shadow(0 2px 6px rgba(226,194,122,.35))}
 @media (prefers-reduced-motion:reduce){.primary,.mbtn.gold,.ghost,.seg button,.chip{transition:none}}
+
+/* ===== صفحة النشاط ===== */
+.actstats{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px;margin-bottom:12px}
+.actstats .k{font-size:12px;white-space:nowrap;color:var(--muted)}
+.actstats .rc{padding:10px 12px}.actstats .v{font-size:24px;font-weight:700}.actstats .v.sm{font-size:15px;line-height:1.5;margin-top:4px}
+.actrow{align-items:flex-start}
+.dur{display:flex;flex-direction:column;align-items:flex-end;gap:1px;white-space:nowrap;font-size:14px}
+.dur small{font-size:11px;color:var(--muted);font-weight:500}
+.dur b,.tick{font-weight:700;font-feature-settings:"tnum" 1;color:var(--ink)}
+.m .tick{color:var(--gold)}
+.sess>summary{list-style:none;cursor:pointer}.sess>summary::-webkit-details-marker{display:none}
+.sess[open]>summary{background:var(--card2)}
+.pglist{background:var(--card2);padding:2px 16px 10px}
+.pg{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:7px 0;border-top:1px dashed var(--line);font-size:13.5px}
+.pg .m{font-size:12px;color:var(--muted);font-feature-settings:"tnum" 1}.pg b{font-feature-settings:"tnum" 1;font-weight:700}
 </style>
 </head>
 <body>
@@ -568,7 +583,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='5.9';
+const APP_VER='6.0';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -797,7 +812,7 @@ const isForm=()=>cur().v==='form'||cur().v==='propform';
 const PREF='wareeth-prefs';
 const prefs=Object.assign({fs:1,ns:1,swipe:true,lock:false,notify:true,theme:'auto'},(()=>{try{return JSON.parse(localStorage.getItem(PREF)||'{}')}catch(e){return {}}})());
 prefs.fs=1;prefs.ns=1; // التكبير انشال من الإعدادات: الحجم ثابت ومريح
-function applyPrefs(){const de=document.documentElement;if(prefs.theme==='dark'||prefs.theme==='light')de.dataset.theme=prefs.theme;else delete de.dataset.theme;
+function applyPrefs(){const de=document.documentElement;de.dataset.theme='light'; // ألوان فاتحة دائماً (البنر والشريط السفلي كحلي)
   const a=document.getElementById('app');if(a)a.style.zoom=prefs.fs;document.documentElement.style.setProperty('--ns',prefs.ns);document.documentElement.style.setProperty('--fs',prefs.fs);}
 function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify(prefs))}catch(e){}applyPrefs();}
 const adminView=()=>store.canWrite;
@@ -1471,9 +1486,6 @@ V.month=({k,id})=>{
 };
 
 V.settings=()=>({title:'الإعدادات',html:`
-  <h3 class="sec">المظهر</h3>
-  <div class="card"><div class="seg seg3" style="margin:0">${[['auto','تلقائي'],['dark','داكن هادئ'],['light','فاتح دافئ']].map(([k,l])=>`<button data-theme-set="${k}" aria-pressed="${(prefs.theme||'auto')===k}">${l}</button>`).join('')}</div>
-    <p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">"تلقائي" يمشي مع إعداد الجوال (ليلي أو نهاري).</p></div>
   <h3 class="sec">التنقل والتعديل</h3>
   <div class="card">
     <button class="toggle" role="switch" aria-checked="${prefs.swipe}" data-pref="swipe"><span>التنقل بالسحب
@@ -1919,12 +1931,27 @@ function closingPdf(c){
     pdfName('إقفال '+c.year+(c.trial?' تجريبي':'')+' - '+c.date));
 }
 
-/* ===== متابعة الاستخدام: مين دخل، ومين متصل الحين، ووش الصفحات ===== */
-const TRACK={q:[],last:'',page:''};
-function trackEv(e,p){TRACK.q.push({e,p:p||'',at:Date.now()});if(TRACK.q.length>40)TRACK.q.shift();}
+/* ===== متابعة الاستخدام: مين دخل، ومين متصل الحين، ووش الصفحات، وكم دقيقة وثانية ===== */
+const TRACK={q:[],last:'',page:'',cur:null,hiddenAt:0};
+const secs=ms=>Math.max(0,Math.round(ms/1000));
+function trackEv(e,p){TRACK.q.push({e,p:p||'',at:Date.now()});if(TRACK.q.length>60)TRACK.q.shift();}
 function whoName(){const id=getMe();return id&&H[id]?H[id].n:'';}
-function trackPayload(){const ev=TRACK.q.splice(0,20);return {who:whoName(),page:TRACK.page,ev};}
-function trackView(t,title){if(store.mode!=='api')return;const key=t.v+'|'+(t.id||'')+'|'+(t.k||'');TRACK.page=title;if(key===TRACK.last)return;TRACK.last=key;trackEv('view',title);}
+function trackPayload(){const ev=TRACK.q.splice(0,20);return {who:whoName(),page:TRACK.page||'الرئيسي',pageAt:TRACK.cur&&TRACK.cur.at||0,ev};}
+/* كل صفحة تنسجّل لما تطلع منها، ومعها كم ثانية قعدت فيها */
+function closePage(){const c=TRACK.cur;if(c&&c.at){TRACK.q.push({e:'view',p:c.p,at:c.at,d:secs(Date.now()-c.at)});if(TRACK.q.length>60)TRACK.q.shift();c.at=0;}}
+function trackView(t,title){if(store.mode!=='api')return;const key=t.v+'|'+(t.id||'')+'|'+(t.k||'');TRACK.page=title;if(key===TRACK.last)return;TRACK.last=key;
+  closePage();TRACK.cur={p:title,at:document.visibilityState==='hidden'?0:Date.now()};}
+function trackBeacon(){
+  if(!TRACK.q.length||!auth.url||!auth.pin||store.mode!=='api')return;
+  try{const q=JSON.stringify(Object.assign({action:'track',pin:auth.pin,dev:DEV},trackPayload()));
+    fetch(auth.url+'?q='+encodeURIComponent(q),{method:'GET',keepalive:true,mode:'no-cors',cache:'no-store'}).catch(()=>{});}catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{
+  if(store.mode!=='api')return;
+  if(document.visibilityState==='hidden'){closePage();TRACK.hiddenAt=Date.now();trackBeacon();}
+  else{if(TRACK.hiddenAt&&Date.now()-TRACK.hiddenAt>120000)trackEv('back');TRACK.hiddenAt=0;if(TRACK.cur&&!TRACK.cur.at)TRACK.cur.at=Date.now();}
+});
+window.addEventListener('pagehide',()=>{if(store.mode==='api'){closePage();trackBeacon();}});
 /* الوارث يختار اسمه مرة وحدة على جهازه */
 function askWho(force){
   if(!force)setTimeout(()=>{if(store.mode==='api'&&TRACK.q.length)api('track',trackPayload()).catch(()=>{});},400);
@@ -1932,7 +1959,7 @@ function askWho(force){
   const bg=document.createElement('div');bg.className='modal-bg';
   bg.innerHTML=`<div class="modal sheet" role="dialog" aria-modal="true" aria-labelledby="whoT"><div class="sheet-grip"></div>
     <h4 id="whoT" style="margin:0 0 6px">مين أنت؟</h4>
-    <p>اختر اسمك عشان يطلع للمدير مين دخل التطبيق. التطبيق يسجّل وقت الدخول والصفحات اللي تفتحها.</p>
+    <p>اختر اسمك عشان يطلع للمدير مين دخل التطبيق. التطبيق يسجّل وقت الدخول والصفحات اللي تفتحها والمدة.</p>
     <div class="whogrid">${HEIRS.map(h=>`<button class="chip" data-who="${h.id}">${h.n}</button>`).join('')}</div>
     <div class="actions"><button class="ghost" data-who="">لاحقاً</button></div></div>`;
   bg.addEventListener('click',e=>{e.stopPropagation();const b=e.target.closest('[data-who]');if(!b)return;
@@ -1942,32 +1969,83 @@ function askWho(force){
 }
 /* صفحة النشاط (للمدير) */
 async function loadActivity(quiet){
-  try{const j=await api('activity',{});state.act=j;state.act.at=Date.now();if(cur().v==='activity')softRender(true);}
+  try{const j=await api('activity',{});j.at=Date.now();j.skew=j.now?Date.now()-j.now:0;state.act=j;if(cur().v==='activity')softRender(true);}
   catch(e){if(!quiet)toast(apiErr(e));}
+}
+/* المدة بالثواني: "1 س 04 د 09 ث" */
+function durTxt(s){s=Math.max(0,Math.round(+s||0));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return h?`${h} س ${pad(m)} د ${pad(x)} ث`:m?`${m} د ${pad(x)} ث`:`${x} ث`;}
+const hms=d=>{const h=d.getHours();return `${((h+11)%12)+1}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${h<12?'ص':'م'}`;};
+const fullT=ms=>{const d=new Date(ms);return `${hms(d)}، ${d.getDate()} ${AR_MON[d.getMonth()]} ${d.getFullYear()}`;};
+const rowMs=x=>{const t=String(x.t||'').trim().replace(' ','T');return Date.parse((t.length===16?t+':00':t)+'+04:00');};
+const STARTS=['دخول','فتح التطبيق','رجع للتطبيق'];
+function buildSessions(log){
+  const rows=(log||[]).map(x=>Object.assign({},x,{ms:rowMs(x)})).filter(x=>isFinite(x.ms))
+    .sort((a,b)=>a.ms-b.ms||(STARTS.includes(b.e)?1:0)-(STARTS.includes(a.e)?1:0));
+  const by={};rows.forEach(r=>{const k=r.dev||r.who;(by[k]||(by[k]=[])).push(r);});
+  const anon=w=>/بدون اسم/.test(w);
+  const S=[];
+  for(const k in by){let s=null;
+    for(const r of by[k]){
+      const end=r.ms+(r.d>0?r.d*1000:0);
+      const isStart=STARTS.includes(r.e);
+      if(s&&isStart&&!s.pages.length&&!s.closed){s.start=r.ms;s.end=Math.max(s.end,r.ms);s.how=r.e;}   // فتح التطبيق ثم دخول: نفس الجلسة
+      else if(!s||s.closed||isStart||r.ms-s.end>10*60000){
+        s={who:r.who,role:r.role,dev:r.dev,start:r.ms,end:r.ms,pages:[],how:isStart?r.e:'',closed:false};S.push(s);}
+      if(anon(s.who)&&!anon(r.who))s.who=r.who;   // الوارث اختار اسمه بعد الدخول
+      if(r.e==='تصفح')s.pages.push({p:r.p,ms:r.ms,d:r.d>0?r.d:0});
+      if(r.e==='خروج')s.closed=true;
+      s.end=Math.max(s.end,end);
+    }}
+  S.forEach(s=>{s.dur=secs(s.end-s.start);s.view=s.pages.reduce((a,p)=>a+p.d,0);});
+  return S.sort((a,b)=>b.start-a.start);
+}
+let actTick=0;
+function startActTick(){
+  clearInterval(actTick);
+  actTick=setInterval(()=>{
+    if(cur().v!=='activity'||document.visibilityState==='hidden'){if(cur().v!=='activity')clearInterval(actTick);return;}
+    const sk=state.act&&state.act.skew||0,now=Date.now()-sk;
+    document.querySelectorAll('[data-tick]').forEach(e=>{e.textContent=durTxt((now-+e.dataset.tick)/1000);});
+  },1000);
 }
 V.activity=()=>{
   if(!store.canWrite)return {title:'النشاط',html:'<p class="empty">هذي الصفحة للمدير بس.</p>'};
   const a=state.act;
   if(!a){loadActivity();return {title:'النشاط',html:'<div class="loadbox"><div class="ring"></div><span>جاري جلب النشاط…</span></div>'};}
-  const now=Date.now(),ago=ms=>{const s=Math.max(0,Math.round(ms/1000));return s<60?'الحين':s<3600?Math.round(s/60)+' د':s<86400?Math.round(s/3600)+' س':Math.round(s/86400)+' يوم';};
-  const today=nowLocal().slice(0,10),log=a.log||[];
-  const todayWho=new Set(log.filter(x=>x.t.slice(0,10)===today).map(x=>x.who));
-  const people={};log.forEach(x=>{const p=people[x.who]||(people[x.who]={who:x.who,role:x.role,last:x.t,visits:0,views:0,lastPage:''});
-    if(x.e==='دخول'||x.e==='فتح التطبيق')p.visits++;if(x.e==='تصفح'){p.views++;if(!p.lastPage)p.lastPage=x.p;}});
+  setTimeout(startActTick,0);
+  const sk=a.skew||0,now=Date.now()-sk,log=a.log||[],S=buildSessions(log);
+  const d0=new Date();d0.setHours(0,0,0,0);const today=d0.getTime();
+  const todayS=S.filter(s=>s.end>=today),todayWho=new Set(todayS.map(s=>s.who)),todaySec=todayS.reduce((x,s)=>x+secs(Math.min(s.end,now)-Math.max(s.start,today)),0);
   const roleTag=r=>`<span class="tag">${esc(r==='admin'||r==='مدير'?'مدير':r==='agent'||r==='وكيل'?'وكيل':'وارث')}</span>`;
-  const evIcon=e=>e==='دخول'?'🔑':e==='خروج'?'🚪':e==='فتح التطبيق'?'📱':e==='اختار اسمه'?'👤':'📄';
+  const people={};S.forEach(s=>{const p=people[s.who]||(people[s.who]={who:s.who,role:s.role,last:0,n:0,sec:0,pages:0});p.n++;p.sec+=s.dur;p.pages+=s.pages.length;p.last=Math.max(p.last,s.end);});
+  const evIcon=e=>e==='دخول'?'🔑':e==='خروج'?'🚪':e==='فتح التطبيق'?'📱':e==='رجع للتطبيق'?'↩️':e==='اختار اسمه'?'👤':'📄';
+  const on=a.online||[];
   return {title:'النشاط',html:`
-  <div class="grid2" style="margin-bottom:12px">
-    <div class="rc"><div class="k">متصلين الحين</div><div class="v num in" style="font-size:24px">${(a.online||[]).length}</div></div>
-    <div class="rc"><div class="k">دخلوا اليوم</div><div class="v num" style="font-size:24px">${todayWho.size}</div></div>
+  <div class="actstats">
+    <div class="rc"><div class="k">متصلين الحين</div><div class="v num in">${on.length}</div></div>
+    <div class="rc"><div class="k">دخلوا اليوم</div><div class="v num">${todayWho.size}</div></div>
+    <div class="rc"><div class="k">وقت الاستخدام اليوم</div><div class="v sm">${durTxt(todaySec)}</div></div>
   </div>
   <h3 class="sec">متصلين الحين</h3>
-  ${(a.online||[]).length?`<div class="rows">${a.online.map(o=>`<div class="row static"><span><span class="live"></span>${esc(o.who)}${roleTag(o.role)}<div class="m">يتصفح: ${esc(o.page||'—')} · من ${ago(now-o.since)}</div></span></div>`).join('')}</div>`:'<p class="empty">ما فيه أحد متصل الحين.</p>'}
+  ${on.length?`<div class="rows">${on.map(o=>`<div class="row static actrow"><span><span class="live"></span>${esc(o.who)}${roleTag(o.role)}
+      <div class="m">يتصفح: ${esc(o.page||'—')}${o.pageAt?` · على الصفحة <b class="tick" data-tick="${o.pageAt}">${durTxt((now-o.pageAt)/1000)}</b>`:''}</div>
+      <div class="m">دخل ${esc(fullT(o.since+sk))}</div></span>
+      <span class="a dur"><small>مدة الدخول</small><b class="tick" data-tick="${o.since}">${durTxt((now-o.since)/1000)}</b></span></div>`).join('')}</div>`:'<p class="empty">ما فيه أحد متصل الحين.</p>'}
+  <h3 class="sec">الجلسات <small class="num" style="color:var(--muted);font-weight:500">(${S.length})</small></h3>
+  ${S.length?`<div class="rows">${S.slice(0,80).map(s=>`<details class="sess"><summary class="row"><span>${esc(s.who)}${roleTag(s.role)}
+      <div class="m">من ${esc(hms(new Date(s.start)))} إلى ${esc(hms(new Date(s.end)))}، ${new Date(s.start).getDate()} ${AR_MON[new Date(s.start).getMonth()]} ${new Date(s.start).getFullYear()}</div>
+      <div class="m">${s.pages.length} صفحة${s.closed?' · سجّل خروج':''}</div></span>
+      <span class="a dur"><small>المدة</small><b>${durTxt(s.dur)}</b></span></summary>
+    ${s.pages.length?`<div class="pglist">${s.pages.map(p=>`<div class="pg"><span>${esc(p.p||'—')}</span><span class="m">${esc(hms(new Date(p.ms)))}</span><b>${durTxt(p.d)}</b></div>`).join('')}</div>`:'<p class="empty" style="padding:10px">ما فيه صفحات مسجّلة بالمدة في هذي الجلسة.</p>'}</details>`).join('')}</div>`:'<p class="empty">ما فيه جلسات للحين.</p>'}
   <h3 class="sec">الأشخاص</h3>
-  ${Object.keys(people).length?`<div class="rows">${Object.values(people).map(p=>`<div class="row static"><span>${esc(p.who)}${roleTag(p.role)}<div class="m">آخر ظهور ${esc(fmtDT(p.last.slice(0,16).replace(' ','T')))}${p.lastPage?' · '+esc(p.lastPage):''}</div></span><span class="a" style="font-size:13px;font-weight:500;color:var(--muted)">${p.visits} دخول · ${p.views} صفحة</span></div>`).join('')}</div>`:'<p class="empty">ما فيه سجل للحين.</p>'}
+  ${Object.keys(people).length?`<div class="rows">${Object.values(people).sort((x,y)=>y.last-x.last).map(p=>`<div class="row static"><span>${esc(p.who)}${roleTag(p.role)}
+      <div class="m">آخر ظهور ${esc(fullT(p.last))}</div><div class="m">${p.n} جلسة · ${p.pages} صفحة</div></span>
+      <span class="a dur"><small>مجموع الوقت</small><b>${durTxt(p.sec)}</b></span></div>`).join('')}</div>`:'<p class="empty">ما فيه سجل للحين.</p>'}
   <h3 class="sec">آخر الأحداث</h3>
-  ${log.length?`<div class="rows">${log.slice(0,120).map(x=>`<div class="row static"><span>${evIcon(x.e)} ${esc(x.who)} <span class="m" style="display:inline">· ${esc(x.e)}${x.p?': '+esc(x.p):''}</span><div class="m">${esc(fmtDT(x.t.slice(0,16).replace(' ','T')))}</div></span></div>`).join('')}</div>`:''}
-  <p class="note">"متصل" يعني التطبيق مفتوح عنده وكلّم الخادم خلال آخر دقيقة ونص. الورثة يتعرّفون من الاسم اللي اختاروه على جهازهم، لأنهم يدخلون بنفس الرقم السري. السجل محفوظ في ورقة "سجل الدخول" في الشيت.</p>
+  ${log.length?`<div class="rows">${log.slice(0,150).map(x=>{const ms=rowMs(x);return `<div class="row static"><span>${evIcon(x.e)} ${esc(x.who)} <span class="m" style="display:inline">· ${esc(x.e)}${x.p?': '+esc(x.p):''}</span>
+      <div class="m">${isFinite(ms)?esc(fullT(ms)):esc(x.t)}</div></span>${x.d!=null&&x.e==='تصفح'?`<span class="a dur"><b>${durTxt(x.d)}</b></span>`:''}</div>`;}).join('')}</div>`:''}
+  <p class="note">الأوقات بالثانية. "متصل" يعني التطبيق مفتوح عنده وكلّم الخادم خلال آخر دقيقة ونص. مدة كل صفحة تنحسب من فتحها لين يطلع منها أو يقفل التطبيق. الجلسة تبدأ بالدخول أو فتح التطبيق، وتنتهي بالخروج أو إذا وقف الاستخدام أكثر من 10 دقايق. الورثة يتعرّفون من الاسم اللي اختاروه على جهازهم. السجل محفوظ في ورقة "سجل الدخول" في الشيت.</p>
   <div class="actions"><button class="ghost" data-act="act-refresh">تحديث</button></div>`};
 };
 
@@ -2214,7 +2292,7 @@ document.addEventListener('click',async e=>{
   if(d.act==='reset-url'){auth.url='';auth.custom=true;saveAuth();state.loginErr='';render();return;}
   if(d.act==='logout'){
     if(store.mode==='api'&&!(await ask('تسجيل خروج؟','بتحتاج الرقم السري عشان تدخل مرة ثانية.','خروج')))return;
-    trackEv('logout');api('track',trackPayload()).catch(()=>{});
+    closePage();trackEv('logout');api('track',trackPayload()).catch(()=>{});TRACK.cur=null;
     auth.pin='';saveAuth();clearCache();TRACK.last='';
     Object.assign(store,{mode:'login',canWrite:false,isAgent:false,role:null,ver:0,repaired:false});
     state.txs=[];state.reqs=[];state.form=null;state.loginErr='';state.stack=[{v:'home'}];notif.cfg=null;
