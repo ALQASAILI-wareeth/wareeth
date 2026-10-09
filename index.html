@@ -655,7 +655,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='6.6';
+const APP_VER='6.7';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1001,8 +1001,9 @@ V.moves=(p)=>{
   const sm=moveSums(list),tin=sm.tin,tout=sm.tout,mav=monthlyAvg(list);
   const since=k=>{const ds=list.filter(t=>!t.hist&&(k==='in'?t.kind==='dep':t.kind!=='dep')).map(t=>(t.date||'').slice(0,10)).filter(Boolean).sort();return ds.length?`<small class="since">من ${esc(dShort(ds[0]))}</small>`:'';};
   const seg=(key,opts,cur)=>`<div class="seg seg3">${opts.map(([k,l])=>`<button data-mv="${key}:${k}" aria-pressed="${k===cur}">${l}</button>`).join('')}</div>`;
-  return {title:'سجل الحركات',html:`
-  <div class="stick">${seg('f',[['all','الحسابين'],['bld','البناية'],['farm','المزارع']],f)}
+  const lock=!!p.lock&&!!ACCTS[f]&&f!=='all';   // جاي من صفحة الحساب: حركات هذا الحساب بس
+  return {title:lock?'سجل حركات '+ACCTS[f].short:'سجل الحركات',html:`
+  <div class="stick">${lock?'':seg('f',[['all','الحسابين'],['bld','البناية'],['farm','المزارع']],f)}
   ${seg('t',[['all','الكل'],['dep','إيداعات'],['out','مصروفات']],ty)}
   <div class="sumrow"><div><span>العدد</span><b class="num">${list.length}</b></div><div><span>داخل</span><b class="num in">${fmt(tin)}</b>${since('in')}${mav&&ty!=='out'?`<small class="mav">≈ <span class="num">${fmt(mav.tin)}</span> شهرياً</small>`:''}</div><div><span>خارج</span><b class="num out">${fmt(tout)}</b>${since('out')}${mav&&ty!=='dep'?`<small class="mav">≈ <span class="num">${fmt(mav.tout)}</span> شهرياً</small>`:''}</div></div>
   ${ty==='all'||sm.nh?`<div class="sumnote">${ty==='all'?`الصافي <b class="num">${fmt(tin-tout)}</b>${f==='all'?' = الرصيد الحالي':' = رصيد '+ACCTS[f].short}`:''}${sm.nh?`${ty==='all'?'<br>':''}الحركات السابقة (${sm.nh}) ما تنحسب، لأنها داخلة في الرصيد الافتتاحي`:''}${mav?`<br>المعدّل الشهري على ${mav.n} ${mav.n>2&&mav.n<11?'أشهر':'شهر'}، بدون الرصيد الافتتاحي`:''}</div>`:''}</div>
@@ -1094,7 +1095,7 @@ V.acct=({k})=>{
   </div>
   <label class="scanbtn">${I.cam}<span>تسجيل من صورة فاتورة أو مستند<small>صوّرها أو اختر صورة/PDF، والتطبيق يعبّي المبلغ والتاريخ والبند</small></span><input type="file" id="scanFile" accept="image/*,application/pdf"></label>`:''}
   <div class="menu" style="margin-top:22px">
-    <button class="mbtn" data-go="moves" data-k="${k}"><span class="l"><span class="ic">${I.list}</span><span>سجل حركات ${A.short}<small class="msub">الإيداعات والمصروفات والتوزيعات</small></span></span>${I.chev}</button>
+    <button class="mbtn" data-go="moves" data-k="${k}" data-lock="1"><span class="l"><span class="ic">${I.list}</span><span>سجل حركات ${A.short}<small class="msub">الإيداعات والمصروفات والتوزيعات</small></span></span>${I.chev}</button>
     ${canEditNow()?`<button class="mbtn" data-go="bank" data-k="${k}"><span class="l"><span class="ic">${I.rep}</span><span>مطابقة كشف البنك<small class="msub">ارفع الكشف PDF أو صورة ويقارنه بالتطبيق</small></span></span>${I.chev}</button>`:''}
     <button class="mbtn" data-go="close"><span class="l"><span class="ic">${I.lock}</span><span>الإقفال السنوي<small class="msub">${canEditNow()?'إقفال السنة واعتمادها':'الإقفالات المعتمدة'}${lockOf()?' · مقفول لين '+esc(dShort(lockOf())):''}</small></span></span>${I.chev}</button>
   </div>`};
@@ -2740,7 +2741,7 @@ document.addEventListener('click',async e=>{
   }
   if(d.act==='back'){back();return;}
   if(d.act==='top'){homeOfTab();return;}
-  if(d.go){if(d.go==='acct'&&d.k){prefs.lastAcct=d.k;savePrefs();}go(d.go,d.go==='moves'?{f:d.k||'all'}:{k:d.k,type:d.type,id:d.id});return;}
+  if(d.go){if(d.go==='acct'&&d.k){prefs.lastAcct=d.k;savePrefs();}go(d.go,d.go==='moves'?{f:d.k||'all',lock:d.lock==='1'&&!!ACCTS[d.k]}:{k:d.k,type:d.type,id:d.id});return;}
   if(d.new){if(!canEditNow())return;state.form=newForm(d.new,d.k);go('form');return;}
   if(d.swacct){const c=cur();if(c.k!==d.swacct){c.k=d.swacct;prefs.lastAcct=d.swacct;savePrefs();render();if(!reduceMotion&&appEl.animate)appEl.animate([{opacity:.4},{opacity:1}],{duration:160});}return;}
   if(d.act==='rc-all'){cur().all=!cur().all;render();return;}
@@ -2753,7 +2754,7 @@ document.addEventListener('click',async e=>{
     const mav=monthlyAvg(list);
     const cards=[['عدد الحركات',String(list.length)],['داخل'+(mav&&ty!=='out'?' (≈ '+fmt(mav.tin)+' شهرياً)':''),fmt(sm.tin),'#2F7A52'],['خارج'+(mav&&ty!=='dep'?' (≈ '+fmt(mav.tout)+' شهرياً)':''),fmt(sm.tout),'#A8473A']];
     if(ty==='all')cards.push(['الصافي',fmt(sm.tin-sm.tout),'#16244F']);
-    exportPdf({title:'سجل الحركات',sub:fl,cards,sections:[{cols:TX_COLS,rows:list.map(txCells),foot:['المجموع','','','','',{t:fmt(ty==='dep'?sm.tin:ty==='out'?sm.tout:sm.tin-sm.tout)}]}],
+    exportPdf({title:c.lock&&ACCTS[f]&&f!=='all'?'سجل حركات '+ACCTS[f].short:'سجل الحركات',sub:fl,cards,sections:[{cols:TX_COLS,rows:list.map(txCells),foot:['المجموع','','','','',{t:fmt(ty==='dep'?sm.tin:ty==='out'?sm.tout:sm.tin-sm.tout)}]}],
       note:(sm.nh?'الحركات المعلّمة "سابق" قبل نوفمبر 2025 وداخلة في الرصيد الافتتاحي، فما تنحسب في المجاميع. ':'')+'المجاميع تشمل الحركات اللي تأثر على الرصيد الحالي فقط.'},
       pdfName('سجل الحركات - '+fl.replace(' · ',' - ')+' - '+nowLocal().slice(0,10)));
     return;
