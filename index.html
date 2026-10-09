@@ -554,6 +554,22 @@ nav.tabs button.hasnew::after{content:"";position:absolute;top:8px;left:calc(50%
 .prsn{margin-bottom:12px}
 .hint{font-size:12.5px;color:var(--muted);margin:6px 2px 0}
 button.row.actrow{text-align:start}
+
+/* نافذة الجديد */
+.modal-bg.newsbg{z-index:60;align-items:center;background:rgba(5,9,22,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.newsmodal{position:relative;width:min(440px,calc(100vw - 32px));max-height:min(78vh,640px);overflow-y:auto;overscroll-behavior:contain;padding:14px 14px 14px;border-radius:22px;
+  border:1px solid rgba(221,187,114,.7);background:linear-gradient(180deg,rgba(221,187,114,.10),rgba(221,187,114,0) 40%),var(--card);
+  box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px rgba(221,187,114,.28),0 24px 60px rgba(0,0,0,.55);animation:nmIn .22s ease-out}
+@keyframes nmIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.newsmodal{animation:none}}
+.newsmodal .newscard{margin:0;padding:0;border:0;background:none;box-shadow:none}
+.nm-x{position:absolute;top:8px;left:8px;width:34px;height:34px;color:var(--muted)!important;font-size:16px;z-index:1}
+.nm-acts{margin-top:12px}.nm-acts .primary{margin-top:0;flex:1.4}.nm-acts .ghost{flex:1}
+.reqline{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;padding:12px 14px;border-radius:14px;cursor:pointer;color:var(--ink);font-weight:600;text-align:start;
+  background:linear-gradient(90deg,rgba(214,178,102,.18),rgba(214,178,102,.05));border:1px solid rgba(214,178,102,.55)}
+.reqline span:nth-child(2){flex:1}.reqline b{background:var(--gold);color:#1A1405;border-radius:20px;padding:1px 10px;font-size:14px}.reqline svg{width:18px;height:18px}
+.reqpill{background:rgba(221,187,114,.10)!important;color:#EBCF8F!important;border-color:rgba(221,187,114,.45)!important}
+.reqpill.hot{background:var(--leaf)!important;color:#1A1405!important;border-color:var(--leaf-edge)!important}
 </style>
 </head>
 <body>
@@ -639,7 +655,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='6.5';
+const APP_VER='6.6';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -942,9 +958,10 @@ const markSvg='<svg viewBox="110 40 414 380" aria-hidden="true"><defs><linearGra
 
 /* ===== الصفحات ===== */
 const V={};
+function reqPill(){const q=reqSummary();if(!q)return '';return `<button class="onlinepill reqpill${q.hot?' hot':''}" data-go="reqs" aria-label="${esc(q.text)}">⏳ <span class="num">${q.n}</span> ${q.hot?'بانتظارك':'طلباتك'}</button>`;}
 function roleBadge(){
-  if(store.canWrite)return `<div class="badges"><button class="rolebadge admin" data-act="settings" aria-label="حساب المدير">${I.crown}<span>حساب المدير</span></button>${store.online!=null?`<button class="onlinepill" data-go="activity"><span class="live"></span><span class="num">${store.online}</span> متصل الحين</button>`:''}<button class="onlinepill userspill" data-go="users">${I.users}<span>المستخدمين</span>${(store.users||[]).length?`<span class="num">${store.users.length}</span>`:''}</button></div>`;
-  if(store.isAgent)return `<button class="rolebadge agent" data-act="settings" aria-label="حساب الوكيل">${I.key}<span>حساب الوكيل · ${esc(store.agent||'')}</span></button>`;
+  if(store.canWrite)return `<div class="badges"><button class="rolebadge admin" data-act="settings" aria-label="حساب المدير">${I.crown}<span>حساب المدير</span></button>${store.online!=null?`<button class="onlinepill" data-go="activity"><span class="live"></span><span class="num">${store.online}</span> متصل الحين</button>`:''}${reqPill()}<button class="onlinepill userspill" data-go="users">${I.users}<span>المستخدمين</span>${(store.users||[]).length?`<span class="num">${store.users.length}</span>`:''}</button></div>`;
+  if(store.isAgent)return `<div class="badges"><button class="rolebadge agent" data-act="settings" aria-label="حساب الوكيل">${I.key}<span>حساب الوكيل · ${esc(store.agent||'')}</span></button>${reqPill()}</div>`;
   if(isHeirUser())return `<button class="rolebadge view" data-act="settings" aria-label="حسابك">${I.eye}<span>حساب ${esc(store.user.name)}${store.user.scope==='all'?'':' · حسابه الشخصي'}</span></button>`;
   return `<button class="rolebadge view" data-act="settings" aria-label="حساب الورثة">${I.eye}<span>${whoName()?esc(whoName())+' · ':''}حساب الورثة · عرض فقط</span></button>`;
 }
@@ -962,9 +979,7 @@ V.home=()=>{
     <div class="upd">${r.last?'آخر تحديث: '+esc(fmtDT(new Date(r.last),true)):(store.mode==='nodb'?'سجّل دخولك في Claude عشان تظهر البيانات.':'ابدأ بإضافة أول إيداع من حساب البناية أو المزارع.')}</div>
 </div>
   ${store.canWrite&&store.ver<4?`<div class="note warnbox">⚠️ الخادم شغّال على نسخة قديمة، فالإقفال السنوي ما يشتغل${store.ver<3?'، ولا حالة الطلبات وحماية حركات '+esc(store.agent||'الوكيل'):''}. حدّث كود الخادم وانشر <b>إصدار جديد</b> على نفس عملية النشر.</div>`:''}
-  ${(()=>{const q=reqSummary();return q?`<button class="reqbar${q.hot?'':' cool'}" data-go="reqs"><span class="dotp"></span><span>${esc(q.text)}</span><b class="num">${q.n}</b>${I.chev}</button>`:''})()}
   ${myCard()}
-  ${newsCard()}
   <div class="tiles">
     <button class="tile" data-go="acct" data-k="${prefs.lastAcct==='farm'?'farm':'bld'}"><span class="ic">${I.wallet}</span><span>الحسابات</span><small>${adminView()?'إيداع وخصم':'الأرصدة'}</small></button>
     <button class="tile" data-go="moves"><span class="ic">${I.list}</span>${nbadge(NEWS.cache?NEWS.cache.txNew.length+NEWS.cache.txEdit.length:0)}<span>آخر الحركات</span><small>${recent[0]?esc(KIND[recent[0].kind])+' · '+esc(dShort(recent[0].date)):'لا يوجد'}</small></button>
@@ -2304,7 +2319,7 @@ function newsCard(){
       ${txs.length>4?`<button class="nc-more" data-go="moves">و${txs.length-4} غيرها في سجل الحركات</button>`:''}</div>`:''}
     ${n.share?`<div class="kv"><span>نصيبك من الرصيد</span><b><span class="num">${fmt(n.share[0])}</span> ← <span class="num">${fmt(n.share[1])}</span></b></div>`
       :n.bal?`<div class="kv"><span>الرصيد المتاح</span><b><span class="num">${fmt(n.bal[0])}</span> ← <span class="num">${fmt(n.bal[1])}</span></b></div>`:''}
-    <button class="ghost nc-ok" data-act="news-ok">تم الاطلاع</button></div>`;
+    </div>`;
 }
 /* لما يوصل جديد والتطبيق مفتوح: تنبيه صغير */
 function newsToast(prevIds){
@@ -2313,6 +2328,33 @@ function newsToast(prevIds){
   if(add.length===1){const t=add[0];toast(`🔔 ${KIND[t.kind]} جديد: ${fmt(t.amount)} – ${ACCTS[t.acct]?ACCTS[t.acct].short:''}`);}
   else if(add.length>1)toast(`🔔 ${add.length} حركات جديدة`);
 }
+
+
+/* ===== نافذة الجديد: تطلع فوق الشاشة الرئيسية بدون ما تحرّك شي ===== */
+function newsSig(){const n=NEWS.cache,q=reqSummary();
+  return (n?Object.keys(n.ids).sort().join(',')+'|'+n.txDel+'|'+n.prDel+'|'+n.clNew.length+'|'+(n.bal||[]).join('/')+'|'+(n.share||[]).join('/'):'')+'#'+(q&&q.hot?q.n:0);}
+function maybeNewsPopup(){
+  if(store.mode!=='api'||cur().v!=='home'||state.stack.length!==1)return;
+  const n=NEWS.cache,q=reqSummary(),hot=q&&q.hot;
+  if(!n&&!hot){closeNewsPopup();return;}
+  const sig=newsSig();
+  if(sig===NEWS.dismissed)return;
+  const open=document.querySelector('.modal-bg.newsbg');
+  if(open){if(open.dataset.sig===sig)return;open.remove();}
+  else if(document.querySelector('.modal-bg')){clearTimeout(maybeNewsPopup.t);maybeNewsPopup.t=setTimeout(maybeNewsPopup,1500);return;}   // فيه نافذة ثانية مفتوحة: ننتظر
+  const bg=document.createElement('div');bg.className='modal-bg newsbg';bg.dataset.sig=sig;
+  bg.innerHTML=`<div class="modal newsmodal" role="dialog" aria-modal="true" aria-label="الجديد">
+    <button class="iconbtn nm-x" data-nm="later" aria-label="إغلاق">✕</button>
+    ${n?newsCard():''}
+    ${hot?`<button class="reqline" data-go="reqs"><span class="dotp"></span><span>${esc(q.text)}</span><b class="num">${q.n}</b>${I.chev}</button>`:''}
+    <div class="actions nm-acts">${n?`<button class="primary nm-ok" data-act="news-ok">تم الاطلاع</button>`:''}<button class="ghost" data-nm="later">لاحقاً</button></div></div>`;
+  bg.addEventListener('click',e=>{
+    if(e.target===bg||e.target.closest('[data-nm="later"]')){e.stopPropagation();NEWS.dismissed=sig;bg.remove();return;}
+    if(e.target.closest('[data-go],[data-act]'))setTimeout(()=>bg.remove(),0);   // الزر يشتغل عادي، والنافذة تتسكّر
+  });
+  document.body.appendChild(bg);
+}
+function closeNewsPopup(){const b=document.querySelector('.modal-bg.newsbg');if(b)b.remove();}
 
 /* ===== تسجيل النقرات والعمليات (لصفحة النشاط) ===== */
 const ACT_DESC={
@@ -2605,6 +2647,7 @@ function render(){
   document.getElementById('hRight').innerHTML=state.stack.length>1?`<button class="iconbtn" data-act="back" aria-label="رجوع">${I.back}</button>`:'';
   document.getElementById('hLeft').innerHTML=(state.stack.length>2&&t.v!=='form'?`<button class="iconbtn" data-act="top" aria-label="رجوع للبداية">${I.home}</button>`:'')+(t.v==='settings'||t.v==='form'?'':`<button class="iconbtn" data-act="settings" aria-label="الإعدادات">${I.gear}</button>`);
   if(!gate)trackView(t,out.title);
+  if(!gate&&t.v==='home'&&state.stack.length===1){clearTimeout(maybeNewsPopup.t);maybeNewsPopup.t=setTimeout(maybeNewsPopup,450);}else closeNewsPopup();
   document.getElementById('app').innerHTML=out.html;
   applyPrefs();
   layoutHome();
@@ -2855,7 +2898,7 @@ document.addEventListener('click',async e=>{
   }
   if(d.heirCard){heirCard(d.heirCard);return;}
   if(d.dtNow){dtNow(d.dtNow,d.dtTime==='1');return;}
-  if(d.act==='news-ok'){seenAll();render();toast('تمام، تم الاطلاع');return;}
+  if(d.act==='news-ok'){seenAll();NEWS.cache=newsCalc();NEWS.dismissed=newsSig();closeNewsPopup();render();toast('تمام، تم الاطلاع');return;}
   if(d.act&&(d.act.indexOf('user-')===0||d.act==='uf-off')){await userAction(d.act,b);return;}
   if(d.ufScope){readUF();state.uf.scope=d.ufScope;render();return;}
   if(d.ufPin){readUF();state.uf.pinMode=d.ufPin;render();return;}
