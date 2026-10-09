@@ -519,6 +519,41 @@ nav.tabs button[aria-current="true"] svg{filter:drop-shadow(0 2px 6px rgba(226,1
 .pinbig{font-size:42px;font-weight:700;letter-spacing:.28em;text-align:center;padding:14px 10px 14px calc(10px + .28em);margin:4px 0 6px;border-radius:14px;
   border:1px dashed rgba(176,133,55,.7);background:var(--card2);color:var(--gold)}
 a.ghost{display:flex;align-items:center;justify-content:center;flex:1;text-decoration:none;color:var(--ink);text-align:center}
+
+/* ===== الجديد منذ آخر زيارة ===== */
+.newscard{margin:0 0 14px;padding:12px 14px 12px;border-radius:18px;border:1px solid rgba(221,187,114,.65);
+  background:linear-gradient(180deg,rgba(221,187,114,.16),rgba(221,187,114,.04)),var(--card);
+  box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px rgba(221,187,114,.28),0 10px 24px -14px rgba(0,0,0,.8)}
+.nc-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.nc-h b{display:block;font-family:"Amiri","IBM Plex Sans Arabic",serif;font-size:19px;color:var(--gold-hi)}
+.nc-h small{display:block;font-size:12px;color:var(--muted)}
+.nc-bell{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--leaf);color:#1A1405;box-shadow:0 0 0 3px rgba(221,187,114,.18)}
+.nc-bell svg{width:19px;height:19px}
+.nc-sum{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.nc-sum span{font-size:12.5px;padding:3px 10px;border-radius:999px;background:rgba(221,187,114,.12);border:1px solid rgba(221,187,114,.35);color:var(--ink)}
+.nc-list{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:8px}
+.nc-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;width:100%;padding:9px 12px;background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);text-align:start;cursor:pointer}
+.nc-row:last-child{border-bottom:0}
+.nc-t{font-size:14px;font-weight:600}.nc-t small{display:block;font-size:11.5px;color:var(--muted);font-weight:400}
+.nc-row b{font-size:15px}
+.nc-more{width:100%;padding:8px;background:none;border:0;color:var(--gold);font-weight:600;cursor:pointer;font-size:13px}
+.nc-ok{width:100%;margin-top:4px}
+.ntag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;margin-inline-start:6px;vertical-align:middle;line-height:1.6}
+.ntag.new{background:var(--leaf);color:#1A1405}
+.ntag.edit{background:rgba(140,210,255,.16);color:#A9DBFF;border:1px solid rgba(140,210,255,.45)}
+.row.isnew{box-shadow:inset -3px 0 0 #DDBB72}
+.tile{position:relative}
+.nbadge{position:absolute;top:10px;left:12px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--leaf);color:#1A1405;font-style:normal;font-size:12px;font-weight:700;display:grid;place-items:center;box-shadow:0 0 0 3px var(--card)}
+.ndot{position:absolute;top:14px;left:14px;width:10px;height:10px;border-radius:50%;background:#EBCF8F;box-shadow:0 0 0 3px var(--card),0 0 10px rgba(235,207,143,.8)}
+nav.tabs button.hasnew::after{content:"";position:absolute;top:8px;left:calc(50% + 10px);width:8px;height:8px;border-radius:50%;background:#EBCF8F;box-shadow:0 0 8px rgba(235,207,143,.9)}
+.newsnote{border-color:rgba(221,187,114,.6)!important;color:var(--ink);margin:0 0 12px}
+/* صفحة الشخص في النشاط */
+.actstats.st5{grid-template-columns:repeat(4,1fr)}
+.actstats.st5 .wide{grid-column:1/-1}
+.actstats.st5 .v{font-size:20px}
+.prsn{margin-bottom:12px}
+.hint{font-size:12.5px;color:var(--muted);margin:6px 2px 0}
+button.row.actrow{text-align:start}
 </style>
 </head>
 <body>
@@ -604,7 +639,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='6.4';
+const APP_VER='6.5';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -621,7 +656,7 @@ let netN=0;
 function net(d){netN=Math.max(0,netN+d);const e=document.getElementById('net');if(e)e.classList.toggle('on',netN>0);}
 const NETSTAT={last:null,err:null};
 async function api(action,payload){try{
-  try{return await api_(action,payload);}
+  try{const r=await api_(action,payload);actLog(action,payload,r);return r;}
   catch(e){
     // الرابط ما رد بشكل صحيح: جرّب روابط الخادم الثانية المعروفة (الطلب ما تنفّذ أصلاً)
     if(e&&e.error==='bad_response'&&!auth.custom){
@@ -768,9 +803,10 @@ const store={
     try{await this.refresh(true);setTimeout(()=>askWho(),600);}catch(e){if(e&&(e.error==='pin'||e.error==='locked')){this.mode='login';auth.pin='';saveAuth();state.loginErr=apiErr(e);}else{this.mode='offline';state.loginErr=apiErr(e);}render();}
   },
   apply(j,fromCache){
+    const prevIds=!fromCache&&this.loadedAt&&NEWS.base?new Set(state.txs.map(t=>t.id)):null;
     state.txs=(j.txs||[]);
     const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;if(j.users)this.users=j.users;if(this.user&&H[this.user.heir])setMe(this.user.heir);
-    if(!fromCache){this.loadedAt=Date.now();saveCache(j);}
+    if(!fromCache){this.loadedAt=Date.now();saveCache(j);if(prevIds)setTimeout(()=>newsToast(prevIds),0);}
     if(j.cfg)notif.cfg=j.cfg;
     applyProps(j.props);
     return broken;
@@ -806,12 +842,13 @@ const store={
   async del(id){
     const old=state.txs.find(x=>x.id===id);
     if(this.isAgent||(old&&old.owner==='agent'))return this.proposeFast('del',null,id);
+    if(old)NEWS.gone[id]=old;
     const prev=state.txs.slice();state.txs=state.txs.filter(x=>x.id!==id);
     const bg=api('del',{id}).catch(e=>{state.txs=prev;render();toast('ما انحذفت الحركة: '+apiErr(e));throw e;});
     return {bg};}
 };
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&Date.now()-store.loadedAt>15000)store.refresh(false,true).catch(()=>{});});
-setInterval(()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&!isForm()&&navigator.onLine!==false){store.refresh(false,true).catch(()=>{});if(cur().v==='activity')loadActivity(true);}},30000);
+setInterval(()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&!isForm()&&navigator.onLine!==false){store.refresh(false,true).catch(()=>{});if(cur().v==='activity'||cur().v==='actperson')loadActivity(true);}},30000);
 function dataSig(j){const s=JSON.stringify([j.txs,j.reqs,j.closings,j.lock,j.cfg]);let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return s.length+':'+h;}
 function softRender(keep){
   if(!keep){render();return;}
@@ -897,6 +934,7 @@ const I={
   eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
   edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
   users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.2 3-5 6-5s5.4 1.8 6 5"/><path d="M16 4.8a3 3 0 0 1 0 6.2M18 14.4c1.7.6 2.8 2.2 3 4.6"/></svg>',
+  bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
   cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
   chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--muted)"><path d="M15 6l-6 6 6 6"/></svg>'
 };
@@ -926,10 +964,11 @@ V.home=()=>{
   ${store.canWrite&&store.ver<4?`<div class="note warnbox">⚠️ الخادم شغّال على نسخة قديمة، فالإقفال السنوي ما يشتغل${store.ver<3?'، ولا حالة الطلبات وحماية حركات '+esc(store.agent||'الوكيل'):''}. حدّث كود الخادم وانشر <b>إصدار جديد</b> على نفس عملية النشر.</div>`:''}
   ${(()=>{const q=reqSummary();return q?`<button class="reqbar${q.hot?'':' cool'}" data-go="reqs"><span class="dotp"></span><span>${esc(q.text)}</span><b class="num">${q.n}</b>${I.chev}</button>`:''})()}
   ${myCard()}
+  ${newsCard()}
   <div class="tiles">
     <button class="tile" data-go="acct" data-k="${prefs.lastAcct==='farm'?'farm':'bld'}"><span class="ic">${I.wallet}</span><span>الحسابات</span><small>${adminView()?'إيداع وخصم':'الأرصدة'}</small></button>
-    <button class="tile" data-go="moves"><span class="ic">${I.list}</span><span>آخر الحركات</span><small>${recent[0]?esc(KIND[recent[0].kind])+' · '+esc(dShort(recent[0].date)):'لا يوجد'}</small></button>
-    ${ownOnly()?`<button class="tile" data-tab="props"><span class="ic">${I.farm}</span><span>العقارات</span><small>البيانات والحصص</small></button>`:`<button class="tile" data-go="total"><span class="ic">${I.pie}</span><span>النصيب الكلي</span><small>لكل وريث</small></button>`}
+    <button class="tile" data-go="moves"><span class="ic">${I.list}</span>${nbadge(NEWS.cache?NEWS.cache.txNew.length+NEWS.cache.txEdit.length:0)}<span>آخر الحركات</span><small>${recent[0]?esc(KIND[recent[0].kind])+' · '+esc(dShort(recent[0].date)):'لا يوجد'}</small></button>
+    ${ownOnly()?`<button class="tile" data-tab="props"><span class="ic">${I.farm}</span><span>العقارات</span><small>البيانات والحصص</small></button>`:`<button class="tile" data-go="total"><span class="ic">${I.pie}</span>${NEWS.cache&&NEWS.cache.dist?'<i class="ndot"></i>':''}<span>النصيب الكلي</span><small>لكل وريث</small></button>`}
     <button class="tile" data-go="reports"><span class="ic">${I.chart}</span><span>التقارير</span><small>شهرية وسنوية</small></button>
   </div></div>`};
 };
@@ -1026,7 +1065,7 @@ function txRow(t){
   const sign=t.kind==='dep'?'+':'−', cls=t.kind==='dep'?'in':'out';
   let who=t.kind==='dist'?Object.keys(t.alloc||{}).filter(h=>+t.alloc[h]>0).length+' ورثة':(t.from||'');
   if(t.kind!=='dist'&&t.prop&&P[t.prop]) who=(who?who+' · ':'')+P[t.prop].name;
-  return `<button class="row" data-go="tx" data-id="${esc(t.id)}"><span><span>${KIND[t.kind]}</span><span class="tag">${k}</span>
+  return `<button class="row${NEWS.cache&&NEWS.cache.ids[t.id]?' isnew':''}" data-go="tx" data-id="${esc(t.id)}"><span><span>${KIND[t.kind]}</span><span class="tag">${k}</span>${newsTag(t.id)}
     <div class="m">${esc(who)}${who?' · ':''}${esc(dShort(t.date))}</div></span><span class="a ${cls}">${sign} <span class="num">${fmt(t.amount)}</span></span></button>`;
 }
 V.acct=({k})=>{
@@ -1131,10 +1170,12 @@ V.heir=({id})=>{
 V.tx=({id})=>{
   const t=state.txs.find(x=>x.id===id);
   if(!t) return {title:'الحركة',html:'<p class="empty">هذه الحركة محذوفة.</p>'};
+  const nk=NEWS.cache&&NEWS.cache.ids[t.id];if(nk)setTimeout(()=>seenTx(t.id),0);
   const A=ACCTS[t.acct];
-  const allocRows=t.kind==='dist'?`<div class="rows" style="margin-bottom:10px">${HEIRS.filter(h=>+(t.alloc||{})[h.id]>0).map(h=>`<button class="row" data-go="heir" data-id="${h.id}"><span>${h.n}</span><span class="a">${money(t.alloc[h.id])}</span></button>`).join('')}</div>`:'';
+  const allocRows=t.kind==='dist'?`<div class="rows" style="margin-bottom:10px">${HEIRS.filter(h=>+(t.alloc||{})[h.id]>0).map(h=>`<div class="row static"><span>${h.n}</span><span class="a">${money(t.alloc[h.id])}</span></div>`).join('')}</div>`:'';
   const rcpt=t.receipt&&t.receipt.id?`<div class="field"><div class="k">الإيصال</div>${(t.receipt.type||'').startsWith('image/')?`<a href="/_blob/${esc(t.receipt.id)}" target="_blank" rel="noopener"><img src="/_blob/${esc(t.receipt.id)}" alt="الإيصال" style="max-width:100%;border-radius:10px;margin-top:6px"></a>`:`<a class="linkbtn" href="/_blob/${esc(t.receipt.id)}" target="_blank" rel="noopener">فتح الملف</a>`}</div>`:'';
   return {title:KIND[t.kind]+' – '+A.short,html:`
+  ${nk?`<div class="note newsnote">🔔 هذي الحركة ${nk==='new'?'جديدة':'تعدّلت'} من بعد آخر زيارة لك${whoDid(t)?' · أدخلها '+esc(whoDid(t)):''}.</div>`:''}
   <div class="field"><div class="k">المبلغ</div><div class="v num ${t.kind==='dep'?'in':'out'}">${fmt(t.amount)}</div></div>
   ${t.from?`<div class="field"><div class="k">${t.kind==='dep'?'من':'الجهة'}</div><div class="v">${esc(t.from)}</div></div>`:''}
   ${t.kind!=='dist'&&t.prop&&P[t.prop]?`<div class="field"><div class="k">العقار</div><div class="v">${esc(P[t.prop].name)}</div></div>`:''}
@@ -1420,7 +1461,7 @@ const propCard=p=>{
   const s=propStats(p.id),dl=[['رقم الأرض',p.plot,1],['المساحة',+p.area>0?`<span class="num">${(+p.area).toLocaleString('en-US')}</span> م²`:'',0,1],['الاستخدام',p.use],['عنوان القسيمة',p.addr,1],['تاريخ التخصيص',/^\d{4}\/\d{2}\/\d{2}$/.test(p.date||'')?fmtDT(p.date.replace(/\//g,'-')):p.date],['المصدر',p.src]]
     .filter(x=>x[1]).map(([k,v,num,raw])=>`<dt>${k}</dt><dd${num?' class="num"':''}>${raw?v:esc(v)}</dd>`).join('');
   return `<div class="card prop">
-  <div class="prop-h"><div><h4>${esc(p.name)}</h4><div class="m">${p.where?esc(p.where)+' · ':''}${ACCTS[p.acct].name}${p.builtin?'':' · <span class="tag">مضاف</span>'}</div></div>
+  <div class="prop-h"><div><h4>${esc(p.name)}${newsTag('p:'+p.id)}</h4><div class="m">${p.where?esc(p.where)+' · ':''}${ACCTS[p.acct].name}${p.builtin?'':' · <span class="tag">مضاف</span>'}</div></div>
   ${store.canWrite&&!p.hidden?`<button class="iconbtn prop-ed" data-act="prop-edit" data-id="${esc(p.id)}" aria-label="تعديل ${esc(p.name)}">${I.edit||'✎'}</button>`:''}</div>
   ${dl?`<dl>${dl}</dl>`:''}
   ${s.n?`<div class="prop-st"><span>مسجّل على العقار: <b class="num">${s.n}</b> حركة</span><span>إيداعات <b class="num in">${fmt(s.dep)}</b></span><span>مصروفات <b class="num out">${fmt(s.exp)}</b></span></div>`:''}
@@ -1429,6 +1470,7 @@ const propCard=p=>{
   </div>`;
 };
 V.props=()=>{
+  if(NEWS.cache&&(NEWS.cache.prNew.length||NEWS.cache.prEdit.length||NEWS.cache.prDel))setTimeout(seenProps,0);
   const hid=(state.propsAll||[]).filter(p=>p.hidden);
   const add=store.canWrite?`<div class="propadd"><button class="scanbtn" data-act="prop-new">${I.plus}<span>إضافة عقار<small>إدخال يدوي</small></span></button>
     <label class="scanbtn">${I.cam}<span>من سند أو مخطط<small>صورة أو PDF</small></span><input type="file" id="propScan" accept="image/*,application/pdf" multiple></label></div>`:'';
@@ -2099,7 +2141,7 @@ function askWho(force){
 }
 /* صفحة النشاط (للمدير) */
 async function loadActivity(quiet){
-  try{const j=await api('activity',{});j.at=Date.now();j.skew=j.now?Date.now()-j.now:0;state.act=j;if(cur().v==='activity')softRender(true);}
+  try{const j=await api('activity',{});j.at=Date.now();j.skew=j.now?Date.now()-j.now:0;state.act=j;if(cur().v==='activity'||cur().v==='actperson')softRender(true);}
   catch(e){if(!quiet)toast(apiErr(e));}
 }
 /* المدة بالثواني: "1 س 04 د 09 ث" */
@@ -2167,10 +2209,11 @@ V.activity=()=>{
     <div class="rc"><div class="k">وقت الاستخدام اليوم</div><div class="v sm">${durTxt(todaySec)}</div></div>
   </div>
   <h3 class="sec">متصلين الحين</h3>
-  ${on.length?`<div class="rows">${on.map(o=>`<div class="row static actrow"><span><span class="live"></span>${esc(o.who)}${roleTag(o.role)}
+  ${on.length?`<div class="rows">${on.map(o=>`<button class="row actrow" data-go="actperson" data-id="${esc(o.who)}"><span><span class="live"></span>${esc(o.who)}${roleTag(o.role)}
       <div class="m">يتصفح: ${esc(o.page||'—')}${o.pageAt?` · على الصفحة <b class="tick" data-tick="${o.pageAt}">${durTxt((now-o.pageAt)/1000)}</b>`:''}</div>
       <div class="m">دخل ${esc(fullT(o.since+sk))}</div></span>
-      <span class="a dur"><small>مدة الدخول</small><b class="tick" data-tick="${o.since}">${durTxt((now-o.since)/1000)}</b></span></div>`).join('')}</div>`:'<p class="empty">ما فيه أحد متصل الحين.</p>'}
+      <span class="a dur"><small>مدة الدخول</small><b class="tick" data-tick="${o.since}">${durTxt((now-o.since)/1000)}</b></span></button>`).join('')}</div>
+    <p class="m hint">اضغط على أي اسم تطلع لك صفحاته ونقراته والعمليات اللي سوّاها.</p>`:'<p class="empty">ما فيه أحد متصل الحين.</p>'}
   <h3 class="sec">الجلسات <small class="num" style="color:var(--muted);font-weight:500">(${S.length})</small></h3>
   ${S.length?`<div class="rows">${S.slice(0,80).map(s=>`<details class="sess"><summary class="row"><span>${esc(s.who)}${roleTag(s.role)}
       <div class="m">من ${esc(hms(new Date(s.start)))} ${s.live?'لين الحين':'إلى '+esc(hms(new Date(s.end)))}، ${new Date(s.start).getDate()} ${AR_MON[new Date(s.start).getMonth()]} ${new Date(s.start).getFullYear()}</div>
@@ -2178,13 +2221,170 @@ V.activity=()=>{
       <span class="a dur"><small>${s.live?'مستمرة':'المدة'}</small><b${s.live?` class="tick" data-tick="${s.start}"`:''}>${durTxt(s.dur)}</b></span></summary>
     ${s.pages.length?`<div class="pglist">${s.pages.map(p=>`<div class="pg"><span>${esc(p.p||'—')}</span><span class="m">${esc(hms(new Date(p.ms)))}</span><b>${durTxt(p.d)}</b></div>`).join('')}</div>`:'<p class="empty" style="padding:10px">ما فيه صفحات مسجّلة بالمدة في هذي الجلسة.</p>'}</details>`).join('')}</div>`:'<p class="empty">ما فيه جلسات للحين.</p>'}
   <h3 class="sec">الأشخاص</h3>
-  ${Object.keys(people).length?`<div class="rows">${Object.values(people).sort((x,y)=>y.last-x.last).map(p=>`<div class="row static"><span>${esc(p.who)}${roleTag(p.role)}
+  ${Object.keys(people).length?`<div class="rows">${Object.values(people).sort((x,y)=>y.last-x.last).map(p=>`<button class="row" data-go="actperson" data-id="${esc(p.who)}"><span>${esc(p.who)}${roleTag(p.role)}
       <div class="m">آخر ظهور ${esc(fullT(p.last))}</div><div class="m">${p.n} جلسة · ${p.pages} صفحة</div></span>
-      <span class="a dur"><small>مجموع الوقت</small><b>${durTxt(p.sec)}</b></span></div>`).join('')}</div>`:'<p class="empty">ما فيه سجل للحين.</p>'}
+      <span class="a dur"><small>مجموع الوقت</small><b>${durTxt(p.sec)}</b></span></button>`).join('')}</div>`:'<p class="empty">ما فيه سجل للحين.</p>'}
   <h3 class="sec">آخر الأحداث</h3>
   ${log.length?`<div class="rows">${log.slice(0,150).map(x=>{const ms=rowMs(x);return `<div class="row static"><span>${evIcon(x.e)} ${esc(x.who)} <span class="m" style="display:inline">· ${esc(x.e)}${x.p?': '+esc(x.p):''}</span>
       <div class="m">${isFinite(ms)?esc(fullT(ms)):esc(x.t)}</div></span>${x.d!=null&&x.e==='تصفح'?`<span class="a dur"><b>${durTxt(x.d)}</b></span>`:''}</div>`;}).join('')}</div>`:''}
   <p class="note">الأوقات بالثانية. "متصل" يعني التطبيق مفتوح عنده وكلّم الخادم خلال آخر دقيقة ونص. مدة كل صفحة تنحسب من فتحها لين يطلع منها أو يقفل التطبيق. الجلسة تبدأ بالدخول أو فتح التطبيق، وتنتهي بالخروج أو إذا وقف الاستخدام أكثر من 10 دقايق. الورثة يتعرّفون من الاسم اللي اختاروه على جهازهم. السجل محفوظ في ورقة "سجل الدخول" في الشيت.</p>
+  <div class="actions"><button class="ghost" data-act="act-refresh">تحديث</button></div>`};
+};
+
+/* ===== الجديد منذ آخر زيارة: كل جهاز يحفظ آخر شي شافه، والتطبيق يعلّم اللي تغيّر بعده ===== */
+const NEWS={base:null,mine:new Set(),key:''};
+const stampTx=t=>+t.updatedAt||+t.createdAt||1;
+function seenKey(){return 'wareeth-seen:'+(store.role||'')+(store.user&&store.user.id?':'+store.user.id:'');}
+function snapNow(){
+  const r=calc(),tx={},pr={},cl={};
+  state.txs.forEach(t=>{tx[t.id]=stampTx(t);});
+  (store.propsRaw||[]).forEach(p=>{if(p&&p.id)pr[p.id]=(+p.updatedAt||1)+(p.hidden?'h':'');});
+  (store.closings||[]).forEach(c=>{if(c&&c.id)cl[c.id]=String(c.status||'')+(c.trial?'t':'');});
+  return {at:Date.now(),tx,pr,cl,bal:r2(r.total),share:isHeirUser()&&H[store.user.heir]?r2(r.bal.bld*W.bld[store.user.heir]+r.bal.farm*W.farm[store.user.heir]):null};
+}
+function seenSave(){try{localStorage.setItem(NEWS.key,JSON.stringify(NEWS.base));}catch(e){}}
+function seenInit(){
+  const k=seenKey();if(NEWS.key===k&&NEWS.base)return;
+  NEWS.key=k;NEWS.mine=new Set();
+  try{NEWS.base=JSON.parse(localStorage.getItem(k)||'null');}catch(e){NEWS.base=null;}
+  if(!NEWS.base||!NEWS.base.tx){NEWS.base=snapNow();seenSave();}   // أول مرة على هذا الجهاز: نبدأ من الحين
+}
+/* اللي سوّيته أنا من هذا الجهاز ما يطلع لي كـ"جديد" */
+function seenMine(){
+  if(!NEWS.base||!NEWS.mine.size)return;const b=NEWS.base,now=snapNow();let ch=false;
+  NEWS.mine.forEach(id=>{
+    if(id in now.tx){if(b.tx[id]!==now.tx[id]){b.tx[id]=now.tx[id];ch=true;}}else if(id in b.tx){delete b.tx[id];ch=true;}
+    if(id in now.pr){if(b.pr[id]!==now.pr[id]){b.pr[id]=now.pr[id];ch=true;}}else if(id in b.pr){delete b.pr[id];ch=true;}
+  });
+  if(ch){b.bal=now.bal;b.share=now.share;seenSave();}
+}
+function newsCalc(){
+  const b=NEWS.base;if(!b||store.mode!=='api')return null;
+  const n={txNew:[],txEdit:[],txDel:0,prNew:[],prEdit:[],prDel:0,clNew:[],bal:null,share:null,ids:{}};
+  const cur=new Set();
+  state.txs.forEach(t=>{cur.add(t.id);if(NEWS.mine.has(t.id)||t.hist)return;
+    if(!(t.id in b.tx)){n.txNew.push(t);n.ids[t.id]='new';}else if(stampTx(t)>b.tx[t.id]){n.txEdit.push(t);n.ids[t.id]='edit';}});
+  Object.keys(b.tx).forEach(id=>{if(!cur.has(id)&&!NEWS.mine.has(id))n.txDel++;});
+  const praw=store.propsRaw||[],pcur=new Set();
+  praw.forEach(p=>{if(!p||!p.id)return;pcur.add(p.id);if(NEWS.mine.has(p.id))return;const s=(+p.updatedAt||1)+(p.hidden?'h':'');
+    if(!(p.id in b.pr)){if(!p.hidden){n.prNew.push(p.id);n.ids['p:'+p.id]='new';}}else if(s!==b.pr[p.id]){if(p.hidden)n.prDel++;else{n.prEdit.push(p.id);n.ids['p:'+p.id]='edit';}}});
+  Object.keys(b.pr).forEach(id=>{if(!pcur.has(id)&&!NEWS.mine.has(id))n.prDel++;});
+  (store.closings||[]).forEach(c=>{if(c&&c.id&&!(c.id in (b.cl||{})))n.clNew.push(c);});
+  const now=snapNow();
+  if(Math.abs(now.bal-(b.bal||0))>=0.01)n.bal=[b.bal||0,now.bal];
+  if(now.share!=null&&b.share!=null&&Math.abs(now.share-b.share)>=0.01)n.share=[b.share,now.share];
+  n.count=n.txNew.length+n.txEdit.length+n.txDel+n.prNew.length+n.prEdit.length+n.prDel+n.clNew.length;
+  n.dist=n.txNew.concat(n.txEdit).some(t=>t.kind==='dist')||!!n.share;
+  return n.count||n.bal||n.share?n:null;
+}
+function seenAll(){NEWS.base=snapNow();seenSave();}
+function seenTx(id){const t=state.txs.find(x=>x.id===id);if(!t||!NEWS.base)return;if(NEWS.base.tx[id]!==stampTx(t)){NEWS.base.tx[id]=stampTx(t);seenSave();}}
+function seenProps(){if(!NEWS.base)return;const s=snapNow();if(JSON.stringify(s.pr)!==JSON.stringify(NEWS.base.pr)){NEWS.base.pr=s.pr;seenSave();}}
+const newsTag=id=>{const k=NEWS.cache&&NEWS.cache.ids[id];return k?`<span class="ntag ${k}">${k==='new'?'جديد':'معدّل'}</span>`:'';};
+const nbadge=n=>n?`<i class="nbadge num">${n>99?'99+':n}</i>`:'';
+function whoDid(t){return t.owner==='agent'?(store.agent||'الوكيل'):'';}
+function newsCard(){
+  const n=NEWS.cache;if(!n)return '';
+  const b=NEWS.base,since=b&&b.at?fmtDT(new Date(b.at)):'';
+  const txs=n.txNew.concat(n.txEdit).sort((a,c)=>stampTx(c)-stampTx(a));
+  const L=[];
+  if(n.txNew.length)L.push(`${n.txNew.length} ${n.txNew.length>2&&n.txNew.length<11?'حركات جديدة':'حركة جديدة'}`);
+  if(n.txEdit.length)L.push(`تعديل ${n.txEdit.length} ${n.txEdit.length>2&&n.txEdit.length<11?'حركات':'حركة'}`);
+  if(n.txDel)L.push(`حذف ${n.txDel} ${n.txDel>2&&n.txDel<11?'حركات':'حركة'}`);
+  if(n.prNew.length)L.push('عقار جديد: '+n.prNew.map(id=>P[id]?P[id].name:'').filter(Boolean).join('، '));
+  if(n.prEdit.length)L.push('تعديل عقار: '+n.prEdit.map(id=>P[id]?P[id].name:'').filter(Boolean).join('، '));
+  if(n.prDel)L.push(`إخفاء أو حذف ${n.prDel} عقار`);
+  n.clNew.forEach(c=>L.push(`${c.trial?'إقفال تجريبي':'إقفال'} سنة ${esc(c.year||'')}`));
+  return `<div class="newscard" role="status">
+    <div class="nc-h"><span class="nc-bell">${I.bell}</span><span><b>الجديد منذ آخر زيارة</b>${since?`<small>${esc(since)}</small>`:''}</span></div>
+    ${L.length?`<div class="nc-sum">${L.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}
+    ${txs.length?`<div class="nc-list">${txs.slice(0,4).map(t=>{const w=whoDid(t),k=n.ids[t.id];return `<button class="nc-row" data-go="tx" data-id="${esc(t.id)}"><span class="ntag ${k}">${k==='new'?'جديد':'معدّل'}</span>
+        <span class="nc-t">${KIND[t.kind]} · ${esc(ACCTS[t.acct]?ACCTS[t.acct].short:'')}<small>${esc(dShort(t.date))}${w?' · أدخلها '+esc(w):''}</small></span>
+        <b class="num ${t.kind==='dep'?'in':'out'}">${fmt(t.amount)}</b></button>`;}).join('')}
+      ${txs.length>4?`<button class="nc-more" data-go="moves">و${txs.length-4} غيرها في سجل الحركات</button>`:''}</div>`:''}
+    ${n.share?`<div class="kv"><span>نصيبك من الرصيد</span><b><span class="num">${fmt(n.share[0])}</span> ← <span class="num">${fmt(n.share[1])}</span></b></div>`
+      :n.bal?`<div class="kv"><span>الرصيد المتاح</span><b><span class="num">${fmt(n.bal[0])}</span> ← <span class="num">${fmt(n.bal[1])}</span></b></div>`:''}
+    <button class="ghost nc-ok" data-act="news-ok">تم الاطلاع</button></div>`;
+}
+/* لما يوصل جديد والتطبيق مفتوح: تنبيه صغير */
+function newsToast(prevIds){
+  if(!prevIds||store.mode!=='api')return;
+  const add=state.txs.filter(t=>!prevIds.has(t.id)&&!NEWS.mine.has(t.id));
+  if(add.length===1){const t=add[0];toast(`🔔 ${KIND[t.kind]} جديد: ${fmt(t.amount)} – ${ACCTS[t.acct]?ACCTS[t.acct].short:''}`);}
+  else if(add.length>1)toast(`🔔 ${add.length} حركات جديدة`);
+}
+
+/* ===== تسجيل النقرات والعمليات (لصفحة النشاط) ===== */
+const ACT_DESC={
+  put:p=>{const t=p.tx||{},isNew=!t.createdAt||Math.abs((+t.updatedAt||0)-(+t.createdAt||0))<2000;return `${isNew?'أضاف':'عدّل'} ${KIND[t.kind]||'حركة'} ${fmt(t.amount)} – ${ACCTS[t.acct]?ACCTS[t.acct].short:''}`;},
+  del:p=>{const t=state.txs.find(x=>x.id===p.id)||NEWS.gone[p.id];return t?`حذف ${KIND[t.kind]} ${fmt(t.amount)} – ${ACCTS[t.acct]?ACCTS[t.acct].short:''}`:'حذف حركة';},
+  propose:p=>p.op==='close'?'طلب اعتماد إقفال':(p.op==='del'?'طلب حذف حركة':`طلب حفظ ${KIND[(p.tx||{}).kind]||'حركة'} ${fmt((p.tx||{}).amount)}`),
+  approve:()=>'اعتماد طلب',reject:()=>'رفض طلب',dismiss:()=>'إزالة طلب',cancel:()=>'إلغاء طلب',
+  'prop-put':p=>'حفظ عقار: '+((p.prop||{}).name||''),'prop-del':p=>'حذف أو إخفاء عقار: '+(P[p.id]?P[p.id].name:''),
+  'user-put':p=>'حفظ مستخدم: '+((p.user||{}).name||''),'user-del':()=>'حذف مستخدم',
+  close:()=>'اعتماد إقفال','close-del':()=>'حذف إقفال تجريبي',reopen:()=>'فتح سنة مقفولة',cfg:()=>'تغيير الإعدادات',
+  notify:()=>'إرسال إشعار للورثة',wa:()=>'إرسال واتساب'
+};
+NEWS.gone={};
+function actLog(action,payload,res){
+  const f=ACT_DESC[action];if(!f||!res||res.ok===false)return;
+  try{const p=payload||{};
+    [p.tx&&p.tx.id,p.id,p.prop&&p.prop.id].filter(Boolean).forEach(id=>NEWS.mine.add(id));
+    if(action==='approve'){const r=(state.reqs||[]).find(x=>x.rid===p.rid);if(r&&r.id)NEWS.mine.add(r.id);}
+    if(action==='put'&&p.tx&&p.tx.hist)return;   // نقل الحركات القديمة تلقائياً مو عملية من الشخص
+    trackEv('act',String(f(p)).slice(0,80));
+    if(TRACK.q.length>=15)trackFlushSoon();
+  }catch(e){}
+}
+function trackFlushSoon(){clearTimeout(trackFlushSoon.t);trackFlushSoon.t=setTimeout(()=>{if(store.mode!=='api'||!TRACK.q.length)return;const tp=trackPayload();api_('track',tp).then(()=>trackAck(tp.ev)).catch(()=>{});},2500);}
+function clickLabel(el){
+  let s=el.getAttribute('aria-label')||'';
+  if(!s){const c=el.cloneNode(true);c.querySelectorAll('small,.m,svg,.num.a,.nbadge,.ndot,.ntag,.live').forEach(x=>x.remove());s=(c.innerText||c.textContent||'').trim().split('\n')[0];}
+  s=s.replace(/\s+/g,' ').trim();
+  if(!s&&el.dataset.go)s=el.dataset.go;
+  return s.slice(0,40);
+}
+document.addEventListener('click',e=>{
+  if(store.mode!=='api')return;
+  const el=e.target.closest('button,a,summary,label.scanbtn,[data-go]');if(!el)return;
+  const lab=clickLabel(el);if(!lab)return;
+  const p=((TRACK.page||'الرئيسي')+' ← '+lab).slice(0,80),now=Date.now();
+  if(TRACK.lastClick&&TRACK.lastClick.p===p&&now-TRACK.lastClick.at<1200)return;
+  TRACK.lastClick={p,at:now};trackEv('click',p);if(TRACK.q.length>=15)trackFlushSoon();
+},true);
+
+/* ===== صفحة شخص في النشاط: صفحاته ونقراته وعملياته ===== */
+V.actperson=({id})=>{
+  if(!store.canWrite)return {title:'النشاط',html:'<p class="empty">هذي الصفحة للمدير بس.</p>'};
+  const a=state.act;if(!a){loadActivity();return {title:id||'النشاط',html:'<div class="loadbox"><div class="ring"></div><span>جاري جلب النشاط…</span></div>'};}
+  setTimeout(startActTick,0);
+  const who=id,sk=a.skew||0,now=Date.now()-sk;
+  const log=(a.log||[]).filter(x=>x.who===who),S=buildSessions(a.log||[]).filter(s=>s.who===who);
+  const on=(a.online||[]).find(o=>o.who===who);
+  const views=log.filter(x=>x.e==='تصفح'),clicks=log.filter(x=>x.e==='نقر'),acts=log.filter(x=>x.e==='عملية');
+  const pages={};views.forEach(x=>{const k=x.p||'—';const g=pages[k]||(pages[k]={p:k,n:0,d:0});g.n++;g.d+=x.d>0?x.d:0;});
+  const totSec=S.reduce((s,x)=>s+x.dur,0),last=S.reduce((m,s)=>Math.max(m,s.end),0);
+  const t=x=>{const ms=rowMs(x);return isFinite(ms)?fullT(ms):x.t;};
+  const evIcon=e=>e==='دخول'?'🔑':e==='خروج'?'🚪':e==='فتح التطبيق'?'📱':e==='رجع للتطبيق'?'↩️':e==='نقر'?'👆':e==='عملية'?'✍️':'📄';
+  return {title:who,html:`
+  <div class="card prsn">${on?`<div class="kv"><span><span class="live"></span>متصل الحين</span><b>يتصفح: ${esc(on.page||'—')}</b></div>
+    <div class="kv"><span>مدة الدخول</span><b class="tick" data-tick="${on.since}">${durTxt((now-on.since)/1000)}</b></div>`
+    :`<div class="kv"><span>آخر ظهور</span><b>${last?esc(fullT(last)):'—'}</b></div>`}</div>
+  <div class="actstats st5">
+    <div class="rc"><div class="k">الجلسات</div><div class="v num">${S.length}</div></div>
+    <div class="rc"><div class="k">الصفحات</div><div class="v num">${views.length}</div></div>
+    <div class="rc"><div class="k">النقرات</div><div class="v num">${clicks.length}</div></div>
+    <div class="rc"><div class="k">العمليات</div><div class="v num in">${acts.length}</div></div>
+    <div class="rc wide"><div class="k">مجموع الوقت</div><div class="v sm">${durTxt(totSec)}</div></div>
+  </div>
+  <h3 class="sec">العمليات اللي سوّاها <small class="num" style="color:var(--muted);font-weight:500">(${acts.length})</small></h3>
+  ${acts.length?`<div class="rows">${acts.slice(0,100).map(x=>`<div class="row static"><span>✍️ ${esc(x.p||'')}<div class="m">${esc(t(x))}</div></span></div>`).join('')}</div>`:'<p class="empty">ما سوّى أي عملية (إضافة أو تعديل أو حذف).</p>'}
+  <h3 class="sec">الصفحات اللي زارها</h3>
+  ${Object.keys(pages).length?`<div class="rows">${Object.values(pages).sort((x,y)=>y.d-x.d).map(g=>`<div class="row static"><span>📄 ${esc(g.p)}<div class="m">${g.n} ${g.n>2&&g.n<11?'زيارات':'زيارة'}</div></span><span class="a dur"><small>المدة</small><b>${durTxt(g.d)}</b></span></div>`).join('')}</div>`:'<p class="empty">ما فيه صفحات مسجّلة.</p>'}
+  <h3 class="sec">على وش نقر <small class="num" style="color:var(--muted);font-weight:500">(${clicks.length})</small></h3>
+  ${clicks.length?`<div class="rows">${clicks.slice(0,120).map(x=>`<div class="row static"><span>👆 ${esc(x.p||'')}<div class="m">${esc(t(x))}</div></span></div>`).join('')}</div>`:'<p class="empty">ما فيه نقرات مسجّلة للحين. النقرات تنسجّل من بعد هذا التحديث.</p>'}
+  <h3 class="sec">السجل الكامل</h3>
+  ${log.length?`<div class="rows">${log.slice(0,200).map(x=>`<div class="row static"><span>${evIcon(x.e)} ${esc(x.e)}${x.p?': '+esc(x.p):''}<div class="m">${esc(t(x))}</div></span>${x.d!=null&&x.e==='تصفح'?`<span class="a dur"><b>${durTxt(x.d)}</b></span>`:''}</div>`).join('')}</div>`:''}
   <div class="actions"><button class="ghost" data-act="act-refresh">تحديث</button></div>`};
 };
 
@@ -2396,8 +2596,10 @@ function render(){
   const gate=store.mode==='login'||store.mode==='loading'||store.mode==='offline';
   let t=gate?{v:store.mode}:cur();
   if(!gate&&ownOnly()&&['total','heirs','me','heir'].includes(t.v)&&t.id!==store.user.heir)t=Object.assign({},t,{v:'heir',id:store.user.heir});
+  if(!gate&&store.mode==='api'){try{seenInit();seenMine();NEWS.cache=newsCalc();}catch(e){NEWS.cache=null;}}else NEWS.cache=null;
   const out=(V[t.v]||V.home)(t);
   document.querySelector('nav.tabs').hidden=gate;
+  {const pt=document.querySelector('nav.tabs [data-tab="props"]');if(pt)pt.classList.toggle('hasnew',!!(NEWS.cache&&(NEWS.cache.prNew.length||NEWS.cache.prEdit.length||NEWS.cache.prDel)));}
   document.getElementById('hTitle').textContent=out.title;
   const noBar=gate||(t.v==='home'&&state.stack.length===1);document.querySelector('header.bar').hidden=noBar;document.body.classList.toggle('sub',!noBar);syncBars();
   document.getElementById('hRight').innerHTML=state.stack.length>1?`<button class="iconbtn" data-act="back" aria-label="رجوع">${I.back}</button>`:'';
@@ -2434,6 +2636,7 @@ document.addEventListener('click',async e=>{
   if(d.act==='logout'){
     if(store.mode==='api'&&!(await ask('تسجيل خروج؟','بتحتاج الرقم السري عشان تدخل مرة ثانية.','خروج')))return;
     closePage();trackEv('logout');api('track',trackPayload()).catch(()=>{});TRACK.cur=null;TRACK.q=[];trackSave();
+    NEWS.key='';NEWS.base=null;NEWS.mine=new Set();
     auth.pin='';saveAuth();clearCache();TRACK.last='';
     Object.assign(store,{mode:'login',canWrite:false,isAgent:false,role:null,ver:0,repaired:false,user:null,users:null});
     state.txs=[];state.reqs=[];state.form=null;state.loginErr='';state.stack=[{v:'home'}];notif.cfg=null;
@@ -2652,6 +2855,7 @@ document.addEventListener('click',async e=>{
   }
   if(d.heirCard){heirCard(d.heirCard);return;}
   if(d.dtNow){dtNow(d.dtNow,d.dtTime==='1');return;}
+  if(d.act==='news-ok'){seenAll();render();toast('تمام، تم الاطلاع');return;}
   if(d.act&&(d.act.indexOf('user-')===0||d.act==='uf-off')){await userAction(d.act,b);return;}
   if(d.ufScope){readUF();state.uf.scope=d.ufScope;render();return;}
   if(d.ufPin){readUF();state.uf.pinMode=d.ufPin;render();return;}
