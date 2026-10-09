@@ -570,6 +570,35 @@ button.row.actrow{text-align:start}
 .reqline span:nth-child(2){flex:1}.reqline b{background:var(--gold);color:#1A1405;border-radius:20px;padding:1px 10px;font-size:14px}.reqline svg{width:18px;height:18px}
 .reqpill{background:rgba(221,187,114,.10)!important;color:#EBCF8F!important;border-color:rgba(221,187,114,.45)!important}
 .reqpill.hot{background:var(--leaf)!important;color:#1A1405!important;border-color:var(--leaf-edge)!important}
+
+/* شاشة القفل بالبصمة */
+#biolock{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:var(--lacq);color:#fff;text-align:center}
+#biolock::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;background:var(--lattice)}
+#biolock[hidden]{display:none}
+.bl-in{position:relative;width:min(360px,100%);display:flex;flex-direction:column;align-items:center;gap:10px}
+.bl-in .gmark svg{width:96px;height:88px}.bl-in .gmark span{color:#E3C27A}
+.bl-in h2{margin:6px 0 0;font-family:"Amiri","IBM Plex Sans Arabic",serif;font-size:26px}
+.bl-in p{margin:0 0 10px;color:#C9D2EA}
+.bl-go{display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 26px;border-radius:22px;cursor:pointer;
+  background:var(--leaf);color:#1A1405;border:1px solid var(--leaf-edge);font-weight:700;font-size:17px;
+  box-shadow:inset 0 1px 0 rgba(255,250,232,.8),0 14px 30px -10px rgba(174,131,54,.7)}
+.bl-go svg{width:54px;height:54px}
+.bl-go:disabled{opacity:.6}
+.bl-pin{width:100%;display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.bl-pin input{text-align:center;letter-spacing:.3em;font-size:20px;background:rgba(255,255,255,.08);color:#fff;border-color:rgba(226,194,122,.5)}
+.bl-pin .primary{margin-top:0}
+.bl-pin[hidden]{display:none}
+#biolock .linkbtn{color:#EBCF8F}
+#biolock .bl-out{color:#C9D2EA;font-size:13px;margin-top:6px}
+.bio-locked body{overflow:hidden}
+.modal-bg.biobg{z-index:60;align-items:center;background:rgba(5,9,22,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.bio-offer{text-align:center}
+.bio-offer .actions .primary{width:auto;flex:1.4}.bio-offer .actions .ghost{flex:1}
+.bio-offer .bo-ic{width:72px;height:72px;margin:4px auto 6px;border-radius:50%;display:grid;place-items:center;background:var(--leaf);color:#1A1405}
+.bio-offer .bo-ic svg{width:44px;height:44px}
+.bio-offer h4{margin:4px 0 6px;font-family:"Amiri","IBM Plex Sans Arabic",serif;font-size:22px;color:var(--gold-hi)}
+.bio-offer p{color:var(--muted);margin:0 0 14px;line-height:1.8}
 </style>
 </head>
 <body>
@@ -655,7 +684,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='6.7';
+const APP_VER='6.8';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -951,6 +980,7 @@ const I={
   edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
   users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.2 3-5 6-5s5.4 1.8 6 5"/><path d="M16 4.8a3 3 0 0 1 0 6.2M18 14.4c1.7.6 2.8 2.2 3 4.6"/></svg>',
   bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+  faceid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.2 15.6a4 4 0 0 0 5.6 0"/></svg>',
   cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
   chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--muted)"><path d="M15 6l-6 6 6 6"/></svg>'
 };
@@ -1668,6 +1698,7 @@ V.settings=()=>({title:'الإعدادات',html:`
   ${store.canWrite?`<h3 class="sec">المستخدمين والأرقام السرية</h3>
   <div class="propadd"><button class="scanbtn" data-act="user-new">${I.plus}<span>إضافة مستخدم<small>وعمل رقم سري له</small></span></button>
     <button class="scanbtn" data-go="users">${I.users}<span>المستخدمين${(store.users||[]).length?` (${store.users.length})`:''}<small>تعديل، رقم جديد، إيقاف</small></span></button></div>`:''}
+  ${bioSettings()}
   <h3 class="sec">التنقل والتعديل</h3>
   <div class="card">
     <button class="toggle" role="switch" aria-checked="${prefs.swipe}" data-pref="swipe"><span>التنقل بالسحب
@@ -2335,6 +2366,7 @@ function newsToast(prevIds){
 function newsSig(){const n=NEWS.cache,q=reqSummary();
   return (n?Object.keys(n.ids).sort().join(',')+'|'+n.txDel+'|'+n.prDel+'|'+n.clNew.length+'|'+(n.bal||[]).join('/')+'|'+(n.share||[]).join('/'):'')+'#'+(q&&q.hot?q.n:0);}
 function maybeNewsPopup(){
+  if(BIO.locked)return;
   if(store.mode!=='api'||cur().v!=='home'||state.stack.length!==1)return;
   const n=NEWS.cache,q=reqSummary(),hot=q&&q.hot;
   if(!n&&!hot){closeNewsPopup();return;}
@@ -2356,6 +2388,118 @@ function maybeNewsPopup(){
   document.body.appendChild(bg);
 }
 function closeNewsPopup(){const b=document.querySelector('.modal-bg.newsbg');if(b)b.remove();}
+
+/* ===== الدخول ببصمة الوجه أو الإصبع (مثل تطبيقات البنوك) =====
+   كل جهاز لحاله: بعد الدخول بالرقم السري مرة، التطبيق يفتح بالبصمة. البصمة نفسها ما تطلع من الجوال أبداً. */
+const BIO_KEY='wareeth-bio',BIO_ASKED='wareeth-bio-asked',BIO_RELOCK=5*60000;
+const BIO={on:false,id:'',who:'',avail:null,locked:false,hiddenAt:0,fails:0};
+const b64u=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const unb64u=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'==='.slice((s.length+3)%4)),c=>c.charCodeAt(0));
+function pinTag(){let h=7;const s=(auth.url||'')+'|'+(auth.pin||'');for(let i=0;i<s.length;i++)h=(h*131+s.charCodeAt(i))>>>0;return h.toString(36);}
+function bioLoad(){
+  try{const b=JSON.parse(localStorage.getItem(BIO_KEY)||'null');
+    if(b&&b.id&&b.tag===pinTag()){BIO.on=true;BIO.id=b.id;BIO.who=b.who||'';}else{BIO.on=false;BIO.id='';}}catch(e){BIO.on=false;}
+}
+function bioClear(){BIO.on=false;BIO.id='';try{localStorage.removeItem(BIO_KEY);}catch(e){}}
+async function bioAvailable(){
+  if(BIO.avail!=null)return BIO.avail;
+  try{BIO.avail=!!(window.PublicKeyCredential&&window.isSecureContext&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());}catch(e){BIO.avail=false;}
+  return BIO.avail;
+}
+function bioWho(){return store.canWrite?'المدير':store.isAgent?(store.agent||'الوكيل'):isHeirUser()?store.user.name:(whoName()||'الورثة');}
+async function bioEnable(){
+  if(!await bioAvailable()){toast('هذا الجهاز ما يدعم الدخول بالبصمة من المتصفح.');return false;}
+  const who=bioWho();
+  try{
+    const cred=await navigator.credentials.create({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      rp:{name:'وريث'},
+      user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'wareeth-'+who,displayName:'وريث – '+who},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},
+      timeout:60000,attestation:'none'}});
+    if(!cred)return false;
+    localStorage.setItem(BIO_KEY,JSON.stringify({id:b64u(cred.rawId),tag:pinTag(),who,at:Date.now()}));
+    bioLoad();toast('تم تفعيل الدخول بالبصمة على هذا الجهاز');return true;
+  }catch(e){toast(e&&e.name==='NotAllowedError'?'ما تم التفعيل (انلغى أو انتهى الوقت).':'ما قدرت أفعّل البصمة: '+((e&&e.message)||''));return false;}
+}
+async function bioVerify(){
+  try{const a=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials:[{type:'public-key',id:unb64u(BIO.id),transports:['internal']}],userVerification:'required',timeout:60000}});
+    return !!(a&&a.response&&b64u(a.rawId)===BIO.id);
+  }catch(e){return false;}
+}
+/* شاشة القفل: تغطي التطبيق كامل لين يتأكد من البصمة */
+function bioLock(){
+  if(!BIO.on||!auth.pin)return;
+  BIO.locked=true;BIO.fails=0;closeNewsPopup&&closeNewsPopup();
+  let el=document.getElementById('biolock');
+  if(!el){el=document.createElement('div');el.id='biolock';document.body.appendChild(el);}
+  el.innerHTML=`<div class="bl-in">
+    <div class="gmark">${markSvg}<span>WAREETH</span></div>
+    <h2>أهلاً ${esc(BIO.who||'')}</h2>
+    <p>افتح التطبيق ببصمة الوجه أو الإصبع</p>
+    <button class="bl-go" data-bio="go" aria-label="فتح بالبصمة">${I.faceid}<span>فتح بالبصمة</span></button>
+    <div class="bl-pin" hidden><input id="blPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="الرقم السري" aria-label="الرقم السري"><button class="primary" data-bio="pin">دخول</button><div class="err" id="blErr"></div></div>
+    <button class="linkbtn" data-bio="usepin">الدخول بالرقم السري</button>
+    <button class="linkbtn bl-out" data-bio="out">تسجيل خروج</button></div>`;
+  el.hidden=false;document.documentElement.classList.add('bio-locked');
+}
+function bioUnlock(how){
+  BIO.locked=false;const el=document.getElementById('biolock');if(el){el.hidden=true;el.innerHTML='';}
+  document.documentElement.classList.remove('bio-locked');
+  if(store.mode==='api'){trackEv('login',how==='pin'?'بالرقم السري':'بالبصمة');}
+  render();
+}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-bio]');if(!b)return;e.stopPropagation();e.preventDefault();
+  const k=b.dataset.bio,el=document.getElementById('biolock');
+  if(k==='go'){b.disabled=true;const ok=await bioVerify();b.disabled=false;if(ok)bioUnlock('bio');else toast('ما تم التأكد من البصمة. جرّب مرة ثانية أو ادخل بالرقم السري.');return;}
+  if(k==='usepin'){const p=el.querySelector('.bl-pin');p.hidden=false;b.hidden=true;setTimeout(()=>{const i=document.getElementById('blPin');if(i)i.focus();},50);return;}
+  if(k==='pin'){const i=document.getElementById('blPin'),er=document.getElementById('blErr');
+    if((i.value||'').trim()===auth.pin){bioUnlock('pin');return;}
+    BIO.fails++;i.value='';er.textContent=BIO.fails>=5?'محاولات كثيرة. سجّل دخول من جديد.':'الرقم السري غلط.';
+    if(BIO.fails>=5){setTimeout(()=>bioLogout(),900);}return;}
+  if(k==='out'){bioLogout();return;}
+},true);
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='blPin'){const b=document.querySelector('[data-bio="pin"]');if(b)b.click();}});
+function bioLogout(){
+  bioClear();BIO.locked=false;const el=document.getElementById('biolock');if(el){el.hidden=true;el.innerHTML='';}
+  document.documentElement.classList.remove('bio-locked');
+  NEWS.key='';NEWS.base=null;auth.pin='';saveAuth();clearCache();
+  Object.assign(store,{mode:'login',canWrite:false,isAgent:false,role:null,ver:0,user:null,users:null});
+  state.txs=[];state.reqs=[];state.form=null;state.loginErr='';state.stack=[{v:'home'}];render();
+}
+/* يرجع يقفل لو التطبيق بقى بالخلفية أكثر من 5 دقايق */
+document.addEventListener('visibilitychange',()=>{
+  if(!BIO.on)return;
+  if(document.visibilityState==='hidden'){BIO.hiddenAt=Date.now();}
+  else if(BIO.hiddenAt&&Date.now()-BIO.hiddenAt>BIO_RELOCK&&!BIO.locked&&store.mode==='api'){bioLock();}
+});
+/* بعد الدخول بالرقم السري: نعرض تفعيل البصمة مرة وحدة على الجهاز */
+async function bioOffer(){
+  if(BIO.on||store.mode!=='api')return;
+  try{if(localStorage.getItem(BIO_ASKED)===pinTag())return;}catch(e){}
+  if(!await bioAvailable())return;
+  if(document.querySelector('.modal-bg')){setTimeout(bioOffer,2500);return;}
+  try{localStorage.setItem(BIO_ASKED,pinTag());}catch(e){}
+  const bg=document.createElement('div');bg.className='modal-bg biobg';
+  bg.innerHTML=`<div class="modal newsmodal bio-offer" role="dialog" aria-modal="true" aria-labelledby="boT">
+    <div class="bo-ic">${I.faceid}</div>
+    <h4 id="boT">الدخول بالبصمة</h4>
+    <p>تبي تفتح التطبيق المرة الجاية ببصمة الوجه أو الإصبع بدل الرقم السري؟ البصمة تبقى في جوالك وما تنرسل لأحد.</p>
+    <div class="actions"><button class="primary" data-bo="yes" style="margin-top:0">تفعيل</button><button class="ghost" data-bo="no">لاحقاً</button></div></div>`;
+  bg.addEventListener('click',async e=>{e.stopPropagation();const b=e.target.closest('[data-bo]');
+    if(e.target===bg||(b&&b.dataset.bo==='no')){bg.remove();return;}
+    if(b&&b.dataset.bo==='yes'){b.disabled=true;const ok=await bioEnable();bg.remove();if(ok&&cur().v==='settings')render();}});
+  document.body.appendChild(bg);
+}
+function bioSettings(){
+  if(BIO.avail===false)return '';
+  if(BIO.avail==null){bioAvailable().then(v=>{if(v&&cur().v==='settings')render();});return '';}
+  return `<h3 class="sec">الأمان</h3>
+  <div class="card"><button class="toggle" role="switch" aria-checked="${BIO.on}" data-act="bio-toggle"><span>الدخول ببصمة الوجه أو الإصبع<small>${BIO.on?'مفعّل على هذا الجهاز. التطبيق يطلب البصمة لما ينفتح، وبعد 5 دقايق في الخلفية.':'التطبيق يفتح بالبصمة بدل الرقم السري، على هذا الجهاز بس.'}</small></span><span class="sw"></span></button></div>`;
+}
 
 /* ===== تسجيل النقرات والعمليات (لصفحة النشاط) ===== */
 const ACT_DESC={
@@ -2671,7 +2815,7 @@ document.addEventListener('click',async e=>{
     try{store.mode='loading';state.loadMsg='';loadTick();render();
       try{await store.refresh(true);}
       catch(e1){if(e1&&(e1.error==='timeout'||e1.error==='network'||e1.error==='busy')){state.loadMsg='الخادم يتجهّز… محاولة ثانية';render();await store.refresh(true);}else throw e1;}
-      state.stack=[{v:'home'}];render();scrollTop0();toast(store.canWrite?'أهلاً، دخلت كمدير':store.isAgent?'أهلاً، دخلت كوكيل':'أهلاً بك');setTimeout(()=>askWho(),700);}
+      state.stack=[{v:'home'}];render();scrollTop0();toast(store.canWrite?'أهلاً، دخلت كمدير':store.isAgent?'أهلاً، دخلت كوكيل':'أهلاً بك');bioLoad();setTimeout(bioOffer,1800);setTimeout(()=>askWho(),700);}
     catch(e){auth.pin='';saveAuth();store.mode='login';state.loginErr=e&&e.error==='timeout'?'سيرفر Google ما رد خلال دقيقة مرتين. انتظر شوي وجرّب، وإذا تكررت صوّر صفحة "التنفيذات" في Apps Script.':apiErr(e);render();}
     return;
   }
@@ -2680,7 +2824,7 @@ document.addEventListener('click',async e=>{
   if(d.act==='logout'){
     if(store.mode==='api'&&!(await ask('تسجيل خروج؟','بتحتاج الرقم السري عشان تدخل مرة ثانية.','خروج')))return;
     closePage();trackEv('logout');api('track',trackPayload()).catch(()=>{});TRACK.cur=null;TRACK.q=[];trackSave();
-    NEWS.key='';NEWS.base=null;NEWS.mine=new Set();
+    NEWS.key='';NEWS.base=null;NEWS.mine=new Set();bioClear();
     auth.pin='';saveAuth();clearCache();TRACK.last='';
     Object.assign(store,{mode:'login',canWrite:false,isAgent:false,role:null,ver:0,repaired:false,user:null,users:null});
     state.txs=[];state.reqs=[];state.form=null;state.loginErr='';state.stack=[{v:'home'}];notif.cfg=null;
@@ -2899,6 +3043,7 @@ document.addEventListener('click',async e=>{
   }
   if(d.heirCard){heirCard(d.heirCard);return;}
   if(d.dtNow){dtNow(d.dtNow,d.dtTime==='1');return;}
+  if(d.act==='bio-toggle'){if(BIO.on){bioClear();toast('تم إيقاف الدخول بالبصمة على هذا الجهاز');render();}else{await bioEnable();render();}return;}
   if(d.act==='news-ok'){seenAll();NEWS.cache=newsCalc();NEWS.dismissed=newsSig();closeNewsPopup();render();toast('تمام، تم الاطلاع');return;}
   if(d.act&&(d.act.indexOf('user-')===0||d.act==='uf-off')){await userAction(d.act,b);return;}
   if(d.ufScope){readUF();state.uf.scope=d.ufScope;render();return;}
@@ -3179,6 +3324,7 @@ document.addEventListener('touchend',e=>{
 document.addEventListener('touchcancel',()=>{if(sw){sw=null;appEl.style.transition='transform .2s';setX(0,null);}});
 
 applyPrefs();
+bioLoad();if(BIO.on&&auth.pin&&auth.url)bioLock();
 store.init();
 
 </script>
