@@ -606,6 +606,28 @@ button.row.actrow{text-align:start}
 .bio-offer .bo-ic svg{width:44px;height:44px}
 .bio-offer h4{margin:4px 0 6px;font-family:"Amiri","IBM Plex Sans Arabic",serif;font-size:22px;color:var(--gold-hi)}
 .bio-offer p{color:var(--muted);margin:0 0 14px;line-height:1.8}
+
+/* اختيار الورثة في نافذة الإشعار */
+.wa1.pick{background:transparent;color:var(--ink);border:1.5px solid var(--hair);cursor:pointer;gap:8px}
+.wa1.pick .ck{width:18px;height:18px;border-radius:6px;border:1.5px solid var(--muted);flex:none;display:grid;place-items:center;font-size:13px;line-height:1}
+.wa1.pick[aria-pressed="true"]{background:#1FA855;border-color:#1FA855;color:#fff}
+.wa1.pick[aria-pressed="true"] .ck{border-color:#fff;background:#fff;color:#1FA855}
+.wa1.pick[aria-pressed="true"] .ck::after{content:'✓';font-weight:800}
+.wa1.pick.sent{background:transparent;color:#5FD08F;border-color:#1FA855}
+.wa1.pick.sent .ck{background:#1FA855;border-color:#1FA855;color:#fff}
+.wa1.pick.sent::before{content:none}
+.notifym .sendrow{margin-top:14px}
+.nbtn.big{padding:15px;font-size:17px}
+.nbtn.off{opacity:.45;pointer-events:auto;filter:saturate(.4)}
+.nbtn.ghosty{background:transparent;color:#5FD08F;border:1.5px solid #1FA855}
+.sendnote{font-size:12.5px;color:var(--muted);margin:8px 2px 0;line-height:1.7}
+.sendnote:empty{display:none}
+
+.nm-open{width:100%;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;color:var(--gold-hi)!important}
+.nm-open svg{width:18px;height:18px}
+.newsmodal .nc-h,.newsmodal .nc-sum{cursor:pointer}
+.modal.sheet{touch-action:pan-y;will-change:transform}
+.modal.sheet .sheet-grip{width:52px;height:6px;cursor:grab}
 </style>
 </head>
 <body>
@@ -691,7 +713,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='6.9';
+const APP_VER='7.1';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -959,7 +981,7 @@ function go(v,p={}){
   const idx=state.stack.findIndex(same);
   if(idx>=0){state.stack=state.stack.slice(0,idx+1);}          // الصفحة مفتوحة قبل: ارجع لها بدل ما تنفتح مرة ثانية
   else if(['tx','heir','month'].includes(v)&&cur().v===v){state.stack[state.stack.length-1]=nxt;} // نفس النوع: استبدال
-  else{state.stack.push(nxt);if(state.stack.length>3)state.stack.splice(1,state.stack.length-3);} // أقصى عمق 3 صفحات
+  else{state.stack.push(nxt);if(state.stack.length>5)state.stack.splice(1,state.stack.length-5);} // أقصى عمق 5 صفحات، والرجوع يمشي بنفس الترتيب
   render();scrollTop0();
 }
 function homeOfTab(){state.stack=[state.stack[0]];state.form=null;render();scrollTop0();}
@@ -1172,6 +1194,28 @@ function heirExport(id){const d={id};
         rows:[['البناية',ACCTS.bld.shares[d.id]+'%',fmt(nb)],['المزارع',ACCTS.farm.shares[d.id]+'%',fmt(nf)]],foot:['المجموع','',fmt(nb+nf)]}],
       note:'حصته من التوزيعات المسجلة في الحسابين حسب السند: '+fmt(r.entitled[d.id])+' د.إ، واستلم منها '+fmt(r.recvLedger[d.id])+' د.إ.'},pdfName('كشف '+h.n));
 }
+/* سحب النافذة لفوق أو لتحت يسكّرها (مثل تطبيقات الجوال) */
+function sheetSwipe(sh,close,list){
+  if(!sh)return;let y0=null,dy=0,t0=0,inList=false,mode='';
+  sh.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;y0=e.touches[0].clientY;dy=0;t0=Date.now();inList=!!(list&&list.contains(e.target));mode='';sh.style.transition='none';},{passive:true});
+  sh.addEventListener('touchmove',e=>{
+    if(y0==null)return;const d=e.touches[0].clientY-y0;
+    if(!mode){if(Math.abs(d)<6)return;
+      if(inList){const top=list.scrollTop<=0,bot=list.scrollTop+list.clientHeight>=list.scrollHeight-1;
+        if((d>0&&top)||(d<0&&bot))mode='drag';else{mode='scroll';return;}}
+      else mode='drag';}
+    if(mode!=='drag')return;
+    dy=d;sh.style.transform=`translateY(${dy}px)`;sh.style.opacity=String(Math.max(.4,1-Math.abs(dy)/520));
+    if(e.cancelable)e.preventDefault();
+  },{passive:false});
+  const end=()=>{
+    if(y0==null)return;const v=Math.abs(dy)/Math.max(1,Date.now()-t0);
+    if(mode==='drag'&&(Math.abs(dy)>80||(v>0.5&&Math.abs(dy)>24))){
+      sh.style.transition='transform .18s ease-in,opacity .18s ease-in';sh.style.transform=`translateY(${dy>0?'110vh':'-110vh'})`;sh.style.opacity='0';setTimeout(close,170);}
+    else{sh.style.transition='transform .22s cubic-bezier(.2,.8,.2,1),opacity .22s';sh.style.transform='';sh.style.opacity='';}
+    y0=null;mode='';dy=0;};
+  sh.addEventListener('touchend',end);sh.addEventListener('touchcancel',end);
+}
 /* بطاقة الوريث: تطلع فوق الصفحة بدون ما تفتح صفحة جديدة */
 function heirCard(id){
   const h=H[id];if(!h)return;const r=calc(),rc=receipts(id),n=rc.length,share=r.bal.bld*W.bld[id]+r.bal.farm*W.farm[id];
@@ -1191,6 +1235,7 @@ function heirCard(id){
   bg.addEventListener('click',e=>{e.stopPropagation();if(e.target===bg){close();return;}const b=e.target.closest('[data-hc]');if(!b)return;
     if(b.dataset.hc==='close')close();else if(b.dataset.hc==='pdf'){close();heirExport(id);}});
   document.addEventListener('keydown',onKey);document.body.appendChild(bg);
+  sheetSwipe(bg.querySelector('.modal.sheet'),close,bg.querySelector('.hc-list'));
 }
 V.heirs=()=>{
   const r=calc();
@@ -2387,13 +2432,41 @@ function maybeNewsPopup(){
     <button class="iconbtn nm-x" data-nm="later" aria-label="إغلاق">✕</button>
     ${n?newsCard():''}
     ${hot?`<button class="reqline" data-go="reqs"><span class="dotp"></span><span>${esc(q.text)}</span><b class="num">${q.n}</b>${I.chev}</button>`:''}
+    ${n?`<button class="ghost nm-open" data-nm="open">${I.list}<span>شوف اللي صار</span></button>`:''}
     <div class="actions nm-acts">${n?`<button class="primary nm-ok" data-act="news-ok">تم الاطلاع</button>`:''}<button class="ghost" data-nm="later">لاحقاً</button></div></div>`;
   bg.addEventListener('click',e=>{
     if(e.target===bg||e.target.closest('[data-nm="later"]')){e.stopPropagation();NEWS.dismissed=sig;bg.remove();return;}
+    if(e.target.closest('[data-nm="open"],.nc-h,.nc-sum,.nc-list .nc-more')){e.stopPropagation();e.preventDefault();NEWS.dismissed=sig;bg.remove();openNews();return;}
     if(e.target.closest('[data-go],[data-act]'))setTimeout(()=>bg.remove(),0);   // الزر يشتغل عادي، والنافذة تتسكّر
   });
   document.body.appendChild(bg);
+  sheetSwipe(bg.querySelector('.newsmodal'),()=>{NEWS.dismissed=sig;bg.remove();},bg.querySelector('.newsmodal'));
 }
+/* فتح اللي تغيّر: حركة وحدة تنفتح على طول، أكثر من وحدة تطلع قائمة الجديد */
+function openNews(){
+  const n=NEWS.cache;if(!n)return;
+  const txs=n.txNew.concat(n.txEdit);
+  if(txs.length===1&&!n.prNew.length&&!n.prEdit.length){state.stack=[{v:'home'}];go('tx',{id:txs[0].id});return;}
+  if(!txs.length&&(n.prNew.length||n.prEdit.length||n.prDel)){tab('props');return;}
+  if(!txs.length&&n.clNew.length){state.stack=[{v:'home'}];go('close');return;}
+  state.stack=[{v:'home'}];go('news');
+}
+V.news=()=>{
+  const n=NEWS.cache,b=NEWS.base;
+  if(!n)return {title:'الجديد',html:'<p class="empty">ما فيه جديد. كل شي شفته.</p>'};
+  const txs=n.txNew.concat(n.txEdit).sort((a,c)=>stampTx(c)-stampTx(a));
+  const props=n.prNew.concat(n.prEdit).map(id=>P[id]).filter(Boolean);
+  return {title:'الجديد',html:`
+  <p class="note" style="margin-top:0">كل اللي تغيّر من بعد آخر زيارة${b&&b.at?' ('+esc(fmtDT(new Date(b.at)))+')':''}. اضغط على أي حركة تفتح تفاصيلها.</p>
+  ${txs.length?`<h3 class="sec">الحركات <small class="num" style="color:var(--muted);font-weight:500">(${txs.length})</small></h3><div class="rows">${txs.map(txRow).join('')}</div>`:''}
+  ${n.txDel?`<p class="note">🗑️ انحذفت ${n.txDel} ${n.txDel>2&&n.txDel<11?'حركات':'حركة'}.</p>`:''}
+  ${props.length?`<h3 class="sec">العقارات</h3><div class="rows">${props.map(p=>`<button class="row" data-tab="props"><span>${esc(p.name)}${newsTag('p:'+p.id)}<div class="m">${esc(ACCTS[p.acct]?ACCTS[p.acct].name:'')}</div></span>${I.chev}</button>`).join('')}</div>`:''}
+  ${n.prDel?`<p class="note">انخفى أو انحذف ${n.prDel} عقار.</p>`:''}
+  ${n.clNew.map(c=>`<button class="row" data-go="close" style="margin-top:8px"><span>🔒 ${c.trial?'إقفال تجريبي':'إقفال'} سنة ${esc(c.year||'')}</span>${I.chev}</button>`).join('')}
+  ${n.share?`<div class="card" style="margin-top:12px"><div class="kv"><span>نصيبك من الرصيد</span><b><span class="num">${fmt(n.share[0])}</span> ← <span class="num">${fmt(n.share[1])}</span></b></div></div>`
+    :n.bal?`<div class="card" style="margin-top:12px"><div class="kv"><span>الرصيد المتاح</span><b><span class="num">${fmt(n.bal[0])}</span> ← <span class="num">${fmt(n.bal[1])}</span></b></div></div>`:''}
+  <button class="primary" data-act="news-ok">تم الاطلاع</button>`};
+};
 function closeNewsPopup(){const b=document.querySelector('.modal-bg.newsbg');if(b)b.remove();}
 
 /* ===== الدخول ببصمة الوجه أو الإصبع (مثل تطبيقات البنوك) =====
@@ -3023,7 +3096,7 @@ document.addEventListener('click',async e=>{
     catch(e){done();err.textContent='ما قدرت أحفظ: '+apiErr(e);}
     return;
   }
-  if(d.act==='notify'){const t=state.txs.find(x=>x.id===d.id);if(t)openNotify(notifyMsg('new',t,state.txs));return;}
+  if(d.act==='notify'){const t=state.txs.find(x=>x.id===d.id);if(t)openNotify(notifyMsg('new',t,state.txs),null,waPayload('new',t,state.txs));return;}
   if(d.act==='sync'){clearTimeout(sheet.timer);syncSheet();return;}
   if(d.themeSet){prefs.theme=d.themeSet;savePrefs();render();return;}
   if(d.act==='reset-prefs'){Object.assign(prefs,{fs:1,ns:1,swipe:true,lock:false,notify:true,theme:'auto'});savePrefs();render();toast('رجعت الإعدادات الافتراضية');return;}
@@ -3065,7 +3138,7 @@ document.addEventListener('click',async e=>{
   if(d.heirCard){heirCard(d.heirCard);return;}
   if(d.dtNow){dtNow(d.dtNow,d.dtTime==='1');return;}
   if(d.act==='bio-toggle'){if(BIO.on){bioClear();toast('تم إيقاف الدخول بالبصمة على هذا الجهاز');render();}else{await bioEnable();render();}return;}
-  if(d.act==='news-ok'){seenAll();NEWS.cache=newsCalc();NEWS.dismissed=newsSig();closeNewsPopup();render();toast('تمام، تم الاطلاع');return;}
+  if(d.act==='news-ok'){seenAll();NEWS.cache=newsCalc();NEWS.dismissed=newsSig();closeNewsPopup();if(cur().v==='news')state.stack=[{v:'home'}];render();toast('تمام، تم الاطلاع');return;}
   if(d.act&&(d.act.indexOf('user-')===0||d.act==='uf-off')){await userAction(d.act,b);return;}
   if(d.ufScope){readUF();state.uf.scope=d.ufScope;render();return;}
   if(d.ufPin){readUF();state.uf.pinMode=d.ufPin;render();return;}
@@ -3146,23 +3219,46 @@ function normPhone(x){
 }
 function showPhone(d){return d?'+'+d:'';}
 function heirPhones(){const p=(notif.cfg&&notif.cfg.phones)||{};return HEIRS.filter(h=>p[h.id]).map(h=>({id:h.id,n:h.n,ph:p[h.id]}));}
-function openNotify(text,only){
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function waApiReady(){const w=notif.cfg&&notif.cfg.wa;return !!(w&&w.ready&&w.tpl==='APPROVED');}
+/* نافذة الإشعار: تحدد الورثة اللي تبيهم، وترسل لهم مرة وحدة */
+function openNotify(text,only,waP){
   const list=heirPhones().filter(h=>!only||only.includes(h.id));
+  const api1=!!(waP&&waApiReady()&&store.ver>=6);
+  const sel=new Set(only?list.map(h=>h.id):[]),sent=new Set();
   const bg=document.createElement('div');bg.className='modal-bg';
-  bg.innerHTML=`<div class="modal tall" role="dialog" aria-modal="true" aria-labelledby="nT">
-    <h4 id="nT">${only?'ما وصلت الرسالة التلقائية لهؤلاء':'إشعار الورثة بالواتساب'}</h4>
-    <p>${only?'أرسلها لهم يدوي: ':''}${list.length?'اضغط على اسم كل وارث، ينفتح الواتساب على محادثته والرسالة جاهزة، اضغط إرسال وارجع للتطبيق.':'ما حطيت أرقام الورثة للحين. حطها مرة وحدة من الإعدادات وبعدها ترسل لكل وارث بضغطة.'}</p>
-    ${list.length?`<div class="wahead"><b>الورثة</b><span id="waCount"><span class="num">0</span> من <span class="num">${list.length}</span></span></div>
-    <div class="wagrid">${list.map(h=>`<a class="wa1" data-wa="${h.id}" target="_blank" rel="noopener">${waIcon}${esc(h.n)}</a>`).join('')}</div>`
-      :`<div class="actions" style="margin-top:12px"><button class="ghost" data-n="phones">حط أرقام الورثة</button></div>`}
+  bg.innerHTML=`<div class="modal tall notifym" role="dialog" aria-modal="true" aria-labelledby="nT">
+    <h4 id="nT">${only?'ما وصلت الرسالة التلقائية لهؤلاء':'إشعار الورثة'}</h4>
+    ${list.length?`<p>اختر الورثة اللي تبي ترسل لهم، وبعدها اضغط إرسال.</p>
+    <div class="wahead"><b>الورثة</b><button class="linkbtn" data-n="all">تحديد الكل</button></div>
+    <div class="wagrid">${list.map(h=>`<button class="wa1 pick" data-pick="${h.id}" aria-pressed="false"><span class="ck"></span>${esc(h.n)}</button>`).join('')}</div>
+    <div class="actions sendrow"><a class="nbtn wa big" data-n="send" target="_blank" rel="noopener">${waIcon}<span class="lbl">واتساب للمحددين</span></a></div>
+    <p class="m sendnote"></p>
+    <div class="actions"><a class="nbtn sms" data-n="smsall" target="_blank" rel="noopener">${smsIcon}<span class="lbl">SMS للمحددين</span></a><a class="nbtn wa ghosty" data-n="group" target="_blank" rel="noopener">${waIcon}قروب</a></div>`
+    :`<p>ما حطيت أرقام الورثة للحين. حطها مرة وحدة من الإعدادات، أو أرسل الرسالة لقروب العائلة.</p>
+    <div class="actions" style="margin-top:12px"><button class="ghost" data-n="phones">حط أرقام الورثة</button></div>
+    <div class="actions"><a class="nbtn wa" data-n="group" target="_blank" rel="noopener">${waIcon}قروب</a><a class="nbtn sms" data-n="smsall" target="_blank" rel="noopener">${smsIcon}SMS</a></div>`}
     <details style="margin-top:14px"><summary style="cursor:pointer;color:var(--muted);font-size:14px">نص الرسالة (تقدر تعدّله قبل الإرسال)</summary>
     <textarea id="nTxt" dir="rtl" style="margin-top:10px;min-height:160px;font-size:14px;line-height:1.6"></textarea></details>
-    <div class="actions" style="margin-top:12px"><a class="nbtn wa" target="_blank" rel="noopener">${waIcon}قروب</a><a class="nbtn sms" target="_blank" rel="noopener">${smsIcon}SMS</a></div>
     <div class="actions" style="margin-top:8px"><button class="ghost" data-n="copy">نسخ الرسالة</button><button class="ghost" data-n="close">${list.length?'خلصت':'تخطي'}</button></div></div>`;
-  const ta=bg.querySelector('#nTxt'),wa=bg.querySelector('.nbtn.wa'),sms=bg.querySelector('.nbtn.sms');
-  const sent=new Set();
-  const upd=()=>{const v=encodeURIComponent(ta.value);wa.href='https://wa.me/?text='+v;sms.href='sms:?&body='+v;
-    list.forEach(h=>{const a=bg.querySelector(`[data-wa="${h.id}"]`);if(a)a.href='https://wa.me/'+h.ph+'?text='+v;});};
+  const ta=bg.querySelector('#nTxt'),q=s=>bg.querySelector(s);
+  const pending=()=>list.filter(h=>sel.has(h.id)&&!sent.has(h.id));
+  const upd=()=>{
+    const v=encodeURIComponent(ta.value),grp=q('[data-n="group"]'),sms=q('[data-n="smsall"]'),send=q('[data-n="send"]'),note=q('.sendnote');
+    if(grp)grp.href='https://wa.me/?text='+v;
+    list.forEach(h=>{const b=q(`[data-pick="${h.id}"]`);if(b){b.setAttribute('aria-pressed',sel.has(h.id));b.classList.toggle('sent',sent.has(h.id));}});
+    const chosen=list.filter(h=>sel.has(h.id)),nums=chosen.map(h=>h.ph);
+    if(sms){const to=list.length?nums:[];sms.href=to.length?(isIOS?'sms:/open?addresses='+to.map(n=>'+'+n).join(',')+'&body='+v:'sms:'+to.map(n=>'+'+n).join(',')+'?body='+v):'sms:?&body='+v;
+      sms.classList.toggle('off',!!list.length&&!to.length);const l=sms.querySelector('.lbl');if(l&&list.length)l.textContent=to.length?`SMS لـ ${to.length}`:'SMS للمحددين';}
+    if(send){const p=pending(),l=send.querySelector('.lbl');
+      if(!chosen.length){send.removeAttribute('href');send.classList.add('off');l.textContent='اختر الورثة أول';note.textContent='';}
+      else if(api1){send.removeAttribute('href');send.classList.remove('off');l.textContent=`إرسال لـ ${chosen.length} مرة وحدة`;note.textContent='ترسل من رقم واتساب الأعمال حق التطبيق، لكل واحد رسالته، بدون ما ينفتح الواتساب.';}
+      else if(p.length){send.href='https://wa.me/'+p[0].ph+'?text='+v;send.classList.remove('off');
+        l.textContent=sent.size?`التالي: ${p[0].n} (${sent.size+1} من ${chosen.length})`:(chosen.length===1?`واتساب لـ ${p[0].n}`:`ابدأ الإرسال لـ ${chosen.length}`);
+        note.textContent=chosen.length>1?'الواتساب يفتح محادثة وحدة كل مرة: اضغط إرسال فيه وارجع، وبعدها اضغط "التالي". أو استخدم SMS يوصل للكل بضغطة وحدة.':'';}
+      else{send.removeAttribute('href');send.classList.add('off');l.textContent='✓ انرسلت للكل';note.textContent='';}}
+    const c=q('[data-n="all"]');if(c)c.textContent=sel.size===list.length?'إلغاء التحديد':'تحديد الكل';
+  };
   ta.value=text;upd();ta.addEventListener('input',upd);
   if(!list.length)bg.querySelector('details').open=true;
   const close=()=>{bg.remove();document.removeEventListener('keydown',onKey);};
@@ -3170,16 +3266,28 @@ function openNotify(text,only){
   bg.addEventListener('click',async e=>{
     e.stopPropagation();
     if(e.target===bg){close();return;}
-    const one=e.target.closest('[data-wa]');
-    if(one){sent.add(one.dataset.wa);one.classList.add('sent');const c=bg.querySelector('#waCount .num');if(c)c.textContent=String(sent.size);
-      if(sent.size===list.length)setTimeout(()=>toast('انرسلت لكل الورثة'),600);return;}
-    if(e.target.closest('.nbtn')){if(!list.length)setTimeout(close,400);return;}
-    const b=e.target.closest('[data-n]');if(!b)return;
-    if(b.dataset.n==='close'){close();return;}
-    if(b.dataset.n==='phones'){close();go('settings');setTimeout(()=>{const x=document.getElementById('phonesSec');if(x)x.scrollIntoView({block:'start'});},120);return;}
-    let ok=false;
-    try{await navigator.clipboard.writeText(ta.value);ok=true;}catch(x){try{ta.select();ok=document.execCommand('copy');}catch(y){}}
-    toast(ok?'تم نسخ الرسالة':'ما قدرت أنسخ. حدّد النص وانسخه يدوياً');
+    const pk=e.target.closest('[data-pick]');
+    if(pk){const id=pk.dataset.pick;if(sel.has(id))sel.delete(id);else sel.add(id);upd();return;}
+    const b=e.target.closest('[data-n]');if(!b)return;const n=b.dataset.n;
+    if(n==='all'){if(sel.size===list.length)sel.clear();else list.forEach(h=>sel.add(h.id));upd();return;}
+    if(n==='send'){
+      if(b.classList.contains('off')){e.preventDefault();return;}
+      if(api1){e.preventDefault();const to=list.filter(h=>sel.has(h.id)).map(h=>h.id);b.classList.add('off');b.querySelector('.lbl').textContent='جاري الإرسال…';
+        try{const j=await api('wa',Object.assign({},waP,{to,manual:true}));const bad=j.failed||[];
+          to.filter(id=>!bad.some(x=>x.id===id)).forEach(id=>sent.add(id));
+          toast(bad.length?`وصل لـ ${j.sent||0}، وما وصل لـ ${bad.length}: ${bad[0].why}`:`✓ وصل الواتساب لـ ${j.sent||0}`);
+          if(!bad.length)setTimeout(close,700);}
+        catch(x){toast('ما انرسل: '+apiErr(x));}
+        b.classList.remove('off');upd();return;}
+      const p=pending();if(p.length){sent.add(p[0].id);setTimeout(()=>{upd();if(!pending().length)toast('انرسلت لكل المحددين');},400);}
+      return;}
+    if(n==='smsall'){if(b.classList.contains('off')){e.preventDefault();toast('اختر الورثة أول');return;}list.filter(h=>sel.has(h.id)).forEach(h=>sent.add(h.id));setTimeout(upd,400);if(!list.length)setTimeout(close,400);return;}
+    if(n==='group'){if(!list.length)setTimeout(close,400);return;}
+    if(n==='close'){close();return;}
+    if(n==='phones'){close();go('settings');setTimeout(()=>{const x=document.getElementById('phonesSec');if(x)x.scrollIntoView({block:'start'});},120);return;}
+    if(n==='copy'){let ok=false;
+      try{await navigator.clipboard.writeText(ta.value);ok=true;}catch(x){try{ta.select();ok=document.execCommand('copy');}catch(y){}}
+      toast(ok?'تم نسخ الرسالة':'ما قدرت أنسخ. حدّد النص وانسخه يدوياً');}
   });
   document.addEventListener('keydown',onKey);
   document.body.appendChild(bg);
@@ -3228,7 +3336,7 @@ async function afterChange(action,t,list,quiet){
         else{toast((j.sent?'وصل لـ '+j.sent+'، و':'')+'ما وصل لـ '+bad.length+': '+bad[0].why);only=bad.map(x=>x.id);manual=prefs.notify;}}
     }catch(e){toast('ما انرسل الواتساب التلقائي: '+apiErr(e));manual=prefs.notify;}
   }
-  if(manual)setTimeout(()=>openNotify(text,only),350);
+  if(manual)setTimeout(()=>openNotify(text,only,waPayload(action,t,list)),350);
 }
 /* إعداد الواتساب التلقائي (للمدير) */
 function waCard(){
