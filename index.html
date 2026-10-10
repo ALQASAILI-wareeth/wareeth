@@ -648,6 +648,17 @@ html,body{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%}
 .modal.sheet.zbig .stat3>div{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .modal.sheet.zbig .rcl{grid-template-columns:1fr auto;grid-template-areas:"o b" "d d";row-gap:2px}
 .modal.sheet.zbig .rcl .o{grid-area:o;min-width:0}.modal.sheet.zbig .rcl b{grid-area:b}.modal.sheet.zbig .rcl .d{grid-area:d}
+
+/* تكبير البطاقة مثل الصفحة */
+.modal.sheet{touch-action:pan-x pan-y}
+.hc-vp{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;direction:ltr;touch-action:pan-x pan-y;margin:0;padding:0}
+.hc-sizer{position:relative}
+.hc-body{position:absolute;top:0;left:0;direction:rtl;transform-origin:0 0}
+.hc-body .hc-list{overflow:visible;flex:none}
+.modal.sheet .stat3 span{font-size:11px!important}.modal.sheet .stat3 b{font-size:14px!important}
+.modal.sheet .rcl{font-size:13px!important}.modal.sheet .rcl b{font-size:14px!important}
+.zreset{margin-inline-start:auto;margin-inline-end:4px;border:1px solid var(--hair);background:var(--card2);color:var(--gold-hi);border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+.zreset[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -733,7 +744,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='7.3';
+const APP_VER='7.4';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1217,10 +1228,10 @@ function heirExport(id){const d={id};
 /* سحب النافذة لفوق أو لتحت يسكّرها (مثل تطبيقات الجوال) */
 function sheetSwipe(sh,close,list){
   if(!sh)return;let y0=null,dy=0,t0=0,inList=false,mode='';
-  sh.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;y0=e.touches[0].clientY;dy=0;t0=Date.now();inList=!!(list&&list.contains(e.target));mode='';sh.style.transition='none';},{passive:true});
+  sh.addEventListener('touchstart',e=>{if(e.touches.length!==1||sh.dataset.zoomed==='1'){if(y0!=null){sh.style.transform='';sh.style.opacity='';}y0=null;return;}y0=e.touches[0].clientY;dy=0;t0=Date.now();inList=!!(list&&list.contains(e.target));mode='';sh.style.transition='none';},{passive:true});
   sh.addEventListener('touchmove',e=>{
     if(y0==null)return;
-    if(e.touches.length>1){y0=null;mode='';dy=0;sh.style.transition='transform .2s';sh.style.transform='';sh.style.opacity='';return;}
+    if(e.touches.length>1||sh.dataset.zoomed==='1'){y0=null;mode='';dy=0;sh.style.transition='transform .2s';sh.style.transform='';sh.style.opacity='';return;}
     const d=e.touches[0].clientY-y0;
     if(!mode){if(Math.abs(d)<6)return;
       if(inList){const top=list.scrollTop<=0,bot=list.scrollTop+list.clientHeight>=list.scrollHeight-1;
@@ -1239,19 +1250,39 @@ function sheetSwipe(sh,close,list){
   sh.addEventListener('touchend',end);sh.addEventListener('touchcancel',end);
 }
 /* تكبير بإصبعين داخل البطاقة بس: يكبّر محتواها وهو داخل حدودها، والشاشة ما تتأثر */
-function sheetPinch(sh,targets,key){
-  if(!sh||!targets.length)return;
-  let z=+(sessionStorage.getItem('zoom:'+key)||1)||1,d0=0,z0=1;
-  // نكبّر الخط نفسه، والترتيب يتعدّل لما يكبر (سطرين بدل سطر) عشان ما يطلع شي برّا البطاقة
-  const apply=()=>{sh.style.setProperty('--hz',z);sh.classList.toggle('zbig',z>=1.3);const b=sh.querySelector('.zoomlbl');if(b)b.textContent=Math.round(z*100)+'%';};
-  const dist=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-  sh.addEventListener('touchstart',e=>{if(e.touches.length===2){d0=dist(e);z0=z;}},{passive:true});
-  sh.addEventListener('touchmove',e=>{if(e.touches.length!==2||!d0)return;if(e.cancelable)e.preventDefault();
-    z=Math.min(1.8,Math.max(1,z0*dist(e)/d0));apply();},{passive:false});
-  sh.addEventListener('touchend',e=>{if(e.touches.length<2&&d0){d0=0;try{sessionStorage.setItem('zoom:'+key,String(z));}catch(x){}}});
-  sh.addEventListener('click',e=>{const b=e.target.closest('[data-zoom]');if(!b)return;e.stopPropagation();
-    z=b.dataset.zoom==='in'?Math.min(1.8,+(z+0.2).toFixed(2)):Math.max(1,+(z-0.2).toFixed(2));apply();try{sessionStorage.setItem('zoom:'+key,String(z));}catch(x){}});
-  apply();
+/* تكبير البطاقة مثل تكبير الصفحة: بإصبعين أو ضغطتين، وبعدها تتحرك فيها بإصبع */
+function pageZoom(sh){
+  const vp=sh&&sh.querySelector('.hc-vp'),sz=vp&&vp.querySelector('.hc-sizer'),bd=sz&&sz.querySelector('.hc-body'),rs=sh&&sh.querySelector('[data-zr]');
+  if(!bd)return;
+  let z=1,Wd=0,Ht=0;
+  const measure=()=>{bd.style.width=vp.clientWidth+'px';Wd=bd.offsetWidth;Ht=bd.offsetHeight;};
+  const apply=()=>{bd.style.transform=z>1.001?`scale(${z})`:'';sz.style.width=(Wd*z)+'px';sz.style.height=(Ht*z)+'px';
+    const on=z>1.01;sh.dataset.zoomed=on?'1':'';vp.style.overflowX=on?'auto':'hidden';if(rs){rs.hidden=!on;rs.textContent=Math.round(z*100)+'%';}};
+  measure();apply();
+  const rel=t=>{const r=vp.getBoundingClientRect();return [t.clientX-r.left,t.clientY-r.top];};
+  const setZ=(nz,fx,fy)=>{nz=Math.min(3,Math.max(1,nz));const cx=(vp.scrollLeft+fx)/z,cy=(vp.scrollTop+fy)/z;z=nz;apply();vp.scrollLeft=cx*z-fx;vp.scrollTop=cy*z-fy;};
+  let d0=0,z0=1,cx0=0,cy0=0,last=0,tx=0,ty=0,moved=false;
+  vp.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){const a=rel(e.touches[0]),b=rel(e.touches[1]);d0=Math.hypot(a[0]-b[0],a[1]-b[1])||1;z0=z;
+      const fx=(a[0]+b[0])/2,fy=(a[1]+b[1])/2;cx0=(vp.scrollLeft+fx)/z;cy0=(vp.scrollTop+fy)/z;moved=true;}
+    else if(e.touches.length===1)moved=false;
+  },{passive:true});
+  vp.addEventListener('touchmove',e=>{
+    if(e.touches.length===2&&d0){if(e.cancelable)e.preventDefault();
+      const a=rel(e.touches[0]),b=rel(e.touches[1]),d=Math.hypot(a[0]-b[0],a[1]-b[1]),fx=(a[0]+b[0])/2,fy=(a[1]+b[1])/2;
+      z=Math.min(3,Math.max(1,z0*d/d0));apply();vp.scrollLeft=cx0*z-fx;vp.scrollTop=cy0*z-fy;}
+    else moved=true;
+  },{passive:false});
+  vp.addEventListener('touchend',e=>{
+    if(d0){if(e.touches.length<2){d0=0;if(z<1.06)setZ(1,0,0);}return;}
+    if(e.touches.length||moved||e.changedTouches.length!==1)return;
+    const now=Date.now(),[x,y]=rel(e.changedTouches[0]);
+    if(now-last<320&&Math.hypot(x-tx,y-ty)<34){if(e.cancelable)e.preventDefault();setZ(z>1.01?1:2.2,x,y);last=0;}   // ضغطتين: تكبير أو رجوع
+    else{last=now;tx=x;ty=y;}
+  });
+  if(rs)rs.addEventListener('click',e=>{e.stopPropagation();setZ(1,0,0);vp.scrollLeft=0;vp.scrollTop=0;});
+  const onR=()=>{if(!sh.isConnected){removeEventListener('resize',onR);return;}const k=z;z=1;apply();measure();z=k;apply();};
+  addEventListener('resize',onR);
 }
 /* الشاشة نفسها ما تتكبّر بالإصبعين (كانت تخرب ترتيب التطبيق) */
 ['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();},{passive:false}));
@@ -1262,21 +1293,22 @@ function heirCard(id){
   const bg=document.createElement('div');bg.className='modal-bg';
   bg.innerHTML=`<div class="modal sheet" role="dialog" aria-modal="true" aria-labelledby="hcT">
     <div class="sheet-grip"></div>
-    <div class="hc-head"><h4 id="hcT">${esc(h.full||h.n)}</h4><span class="zoomctl"><button class="zbtn" data-zoom="out" aria-label="تصغير">−</button><span class="zoomlbl num">100%</span><button class="zbtn" data-zoom="in" aria-label="تكبير">+</button></span><button class="iconbtn hc-x" data-hc="close" aria-label="إغلاق">✕</button></div>
+    <div class="hc-head"><h4 id="hcT">${esc(h.full||h.n)}</h4><button class="zreset num" data-zr hidden aria-label="رجوع للحجم العادي">100%</button><button class="iconbtn hc-x" data-hc="close" aria-label="إغلاق">✕</button></div>
+    <div class="hc-vp"><div class="hc-sizer"><div class="hc-body">
     <div class="stat3">
       <div><span>عدد الاستلامات</span><b class="num">${n}</b></div>
       <div><span>مجموع المستلم</span><b class="num">${fmt(r.received[id])}</b></div>
       <div><span>نصيبه من الرصيد الآن</span><b class="num">${fmt(share)}</b></div>
     </div>
-    <div class="hc-list">${n?`<div class="rclist">${rc.map((x,i)=>({x,i})).reverse().map(({x,i})=>`<div class="rcl"><span class="o">${ord(i)}</span><span class="d">${esc(dShort(x.t.date))} · ${esc(ACCTS[x.t.acct]?ACCTS[x.t.acct].short:'')}</span><b class="num">${fmt(x.amt)}</b></div>`).join('')}</div>`:'<p class="empty" style="padding:14px">ما استلم أي مبلغ بعد.</p>'}</div>
+    <div class="hc-list">${n?`<div class="rclist">${rc.map((x,i)=>({x,i})).reverse().map(({x,i})=>`<div class="rcl"><span class="o">${ord(i)}</span><span class="d">${esc(dShort(x.t.date))} · ${esc(ACCTS[x.t.acct]?ACCTS[x.t.acct].short:'')}</span><b class="num">${fmt(x.amt)}</b></div>`).join('')}</div>`:'<p class="empty" style="padding:14px">ما استلم أي مبلغ بعد.</p>'}</div></div></div></div>
     <div class="actions">${downloadsApi?`<button class="ghost" data-hc="pdf">كشف ${esc(h.n)} PDF</button>`:''}<button class="ghost" data-hc="close">إغلاق</button></div></div>`;
   const close=()=>{bg.remove();document.removeEventListener('keydown',onKey);};
   const onKey=e=>{if(e.key==='Escape')close();};
   bg.addEventListener('click',e=>{e.stopPropagation();if(e.target===bg){close();return;}const b=e.target.closest('[data-hc]');if(!b)return;
     if(b.dataset.hc==='close')close();else if(b.dataset.hc==='pdf'){close();heirExport(id);}});
   document.addEventListener('keydown',onKey);document.body.appendChild(bg);
-  sheetSwipe(bg.querySelector('.modal.sheet'),close,bg.querySelector('.hc-list'));
-  sheetPinch(bg.querySelector('.modal.sheet'),[...bg.querySelectorAll('.modal.sheet .stat3,.modal.sheet .hc-list')],'heir');
+  sheetSwipe(bg.querySelector('.modal.sheet'),close,bg.querySelector('.hc-vp'));
+  pageZoom(bg.querySelector('.modal.sheet'));
 }
 V.heirs=()=>{
   const r=calc();
