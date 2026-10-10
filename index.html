@@ -748,6 +748,12 @@ label.docup input,.dpage.add input{position:absolute;inset:0;opacity:0;cursor:po
 .dw-row small{color:var(--muted);font-size:12px}
 .dw-row em{font-style:normal;font-weight:800;color:#F2C46B;white-space:nowrap}
 .dw-row.exp em{color:var(--neg)}
+.dpn{position:absolute;bottom:5px;right:5px;background:rgba(5,9,22,.8);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:8px}
+.doc-name{border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.doc-name b{font-size:16px}.doc-name small{font-size:13px;line-height:1.7;color:var(--muted)}
+.doc-name.ok{border-color:rgba(110,200,150,.5)}.doc-name.ok small{color:var(--pos)}
+.doc-name.diff{border-color:rgba(242,141,125,.6)}.doc-name.diff small{color:var(--neg)}
+.doc-name.unk{border-color:rgba(242,196,107,.55)}.doc-name.unk small{color:#F2C46B}
 .doc-raw{margin:0 0 8px;font-size:12.5px;color:var(--muted)}.doc-raw summary{cursor:pointer;padding:4px 0}
 .doc-raw pre{white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:4px 0 0;font-size:12px;line-height:1.6}
 .docwarn .actions .primary{width:auto;flex:1.4}.docwarn .actions .ghost{flex:1}
@@ -841,7 +847,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='7.7';
+const APP_VER='7.8';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -3122,7 +3128,9 @@ function parseIdDoc(lines,type){
   if(type==='eid'&&r.no&&/^784\d{12}$/.test(r.no))r.no=r.no.replace(/^(\d{3})(\d{4})(\d{7})(\d)$/,'$1-$2-$3-$4');
   if(type==='passport'&&!r.no){const m=/(?:passport\s*no\.?|رقم\s*الجواز)[^A-Z0-9]{0,12}([A-Z]?\d{6,9})/i.exec(txt);if(m)r.no=m[1].toUpperCase();}
   if(type==='family'){const m=/(?:رقم\s*(?:الخلاصة|خلاصة\s*القيد|القيد|العائلة)|family\s*(?:book\s*)?no\.?|khulasat[^\n]*no\.?)[^\d\n]{0,14}(\d{2,12})/i.exec(txt);if(m)r.no=m[1];}
+  if(r.name&&!looksName(r.name))r.name='';
   if(!r.name){const m=/(?:^|\n)\s*(?:الاسم|name)[ \t]*[:：]?[ \t]*([^\n:]{4,60})/i.exec(txt);if(m)r.name=m[1].replace(/[|_]+/g,' ').replace(/\s+/g,' ').trim();}
+  if(r.name&&!looksName(r.name))r.name='';
   return r;
 }
 
@@ -3132,7 +3140,7 @@ function parseIdDoc(lines,type){
 const DOC_T={
   eid:{n:'الهوية الإماراتية',s:'الهوية',hint:'صوّر الوجه الأمامي والخلفي (الخلفي فيه الرمز اللي يتأكد منه التطبيق)',more:'إضافة الوجه الخلفي'},
   passport:{n:'جواز السفر',s:'الجواز',hint:'صوّر صفحة البيانات اللي فيها صورتك والسطرين اللي تحتها',more:'إضافة صفحة ثانية'},
-  family:{n:'خلاصة القيد',s:'خلاصة القيد',hint:'صوّر الصفحات أو اختر ملف PDF',more:'إضافة صفحة ثانية'}};
+  family:{n:'خلاصة القيد',s:'خلاصة القيد',hint:'صوّر الصفحات كلها (تقدر تختار أكثر من صورة مرة وحدة) أو اختر ملف PDF',more:'إضافة صفحات'}};
 const DOC_ORDER=['eid','passport','family'],DOC_WARN=60,DOCW_KEY='wareeth-docwarn',DOCSEEN_KEY='wareeth-docseen';
 const docsOn=()=>store.mode==='api'&&Array.isArray(store.docs)&&(store.canWrite||store.isAgent||(isHeirUser()&&!!H[store.user.heir]));
 const docsAll=()=>store.canWrite||store.isAgent;
@@ -3192,7 +3200,7 @@ V.docheir=({id})=>{
     if(!d)return `<div class="card doc none"><div class="doc-h"><span class="doc-ic">${DOC_IC[t]()}</span><div><h4>${DOC_T[t].n}</h4><div class="m">ما أضيف للحين</div></div>${docPill(null)}</div>
       <p class="m doc-hint">${DOC_T[t].hint}</p>
       <div class="actions">${up(I.cam+'<span>تصوير أو اختيار ملف</span>','primary docup-main')}</div></div>`;
-    const dl=[['تاريخ الانتهاء',d.noExp?'بدون تاريخ انتهاء':docDate(d.expiry)],['تاريخ الإصدار',docDate(d.issue)],['رقم المستند',d.no,1],['الاسم',d.name]].filter(x=>x[1]);
+    const dl=[['تاريخ الانتهاء',d.noExp?'بدون تاريخ انتهاء':docDate(d.expiry)],['تاريخ الإصدار',docDate(d.issue)],['رقم المستند',d.no,1],['الاسم',H[d.heir].full||H[d.heir].n]].filter(x=>x[1]);
     return `<div class="card doc ${st}"><div class="doc-h"><span class="doc-ic">${DOC_IC[t]()}</span><div><h4>${DOC_T[t].n}${docIsNew(d)?' <span class="ntag">جديد</span>':''}</h4><div class="m">${esc(docLeft(n))}</div></div>${docPill(d)}</div>
       ${st==='exp'?`<div class="doc-warn exp">⛔ هذي الوثيقة منتهية. جدّدها وصوّر الجديدة.</div>`:st==='soon'?`<div class="doc-warn soon">⚠️ تنتهي ${n===0?'اليوم':'بعد '+n+' يوم'}. لا تنسى تجددها.</div>`:''}
       <dl>${dl.map(([k,v,num])=>`<dt>${k}</dt><dd${num?' class="num"':''}>${esc(v)}</dd>`).join('')}</dl>
@@ -3232,22 +3240,28 @@ async function ocrEng(img,wl,prog){
 /* تجهيز الصورة للقراءة: رمادي وتباين أعلى، وتكبير الصور الصغيرة */
 function cvPrep(c,minW){const k=Math.min(3,Math.max(1,(minW||2000)/c.width)),o=document.createElement('canvas');o.width=Math.round(c.width*k);o.height=Math.round(c.height*k);
   const g=o.getContext('2d');g.filter='grayscale(1) contrast(1.4)';g.drawImage(c,0,0,o.width,o.height);return o;}
-/* صفحات PDF: النص المكتوب فيه + صورة كل صفحة (عشان نقرأ الهوية أو الجواز اللي داخله كصورة) */
-async function pdfDoc(u8,prog){
-  await loadScript(PDFJS);const L=window.pdfjsLib;L.GlobalWorkerOptions.workerSrc=PDFJS_W;
-  const doc=await L.getDocument({data:u8.slice()}).promise,lines=[],cvs=[];
-  for(let p=1;p<=Math.min(doc.numPages,4);p++){
-    prog('أفتح الصفحة '+p+' من '+Math.min(doc.numPages,4));
+/* صفحات PDF: النص المكتوب فيه + صورة كل صفحة (عشان نقرأ الهوية أو الجواز اللي داخله كصورة)
+   o.max: أكثر عدد صفحات، o.ocr: كم صفحة نقرأها بدقة عالية، o.imgs: نحتاج صور كل الصفحات للحفظ */
+const DOC_MAXP=t=>t==='family'?20:6;
+async function pdfDoc(u8,prog,o){
+  o=o||{};await loadScript(PDFJS);const L=window.pdfjsLib;L.GlobalWorkerOptions.workerSrc=PDFJS_W;
+  const doc=await L.getDocument({data:u8.slice()}).promise,lines=[],cvs=[],imgs=[];
+  const N=Math.min(doc.numPages,o.max||4),ocrN=o.ocr==null?N:o.ocr;
+  const draw=async(pg,maxSide)=>{const v1=pg.getViewport({scale:1}),sc=Math.min(5,maxSide/Math.max(v1.width,v1.height)),vp=pg.getViewport({scale:sc}),cv=document.createElement('canvas');
+    cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,cv.width,cv.height);
+    await pg.render({canvasContext:g,viewport:vp}).promise;return cvTrim(cv);};
+  for(let p=1;p<=N;p++){
+    prog('أفتح الصفحة '+p+' من '+N);
     const pg=await doc.getPage(p),tc=await pg.getTextContent();
     const items=tc.items.filter(i=>i.str&&i.str.trim()).map(i=>({s:i.str,x:i.transform[4],y:i.transform[5]}));
     items.sort((a,b)=>b.y-a.y||a.x-b.x);const rows=[];let cur=null;
     items.forEach(i=>{if(cur&&Math.abs(cur.y-i.y)<=3)cur.items.push(i);else{cur={y:i.y,items:[i]};rows.push(cur);}});
     rows.forEach(r=>lines.push(r.items.sort((a,b)=>a.x-b.x).map(i=>i.s.trim()).join('   ')));
-    const v1=pg.getViewport({scale:1}),sc=Math.min(5,3200/Math.max(v1.width,v1.height)),vp=pg.getViewport({scale:sc}),cv=document.createElement('canvas');
-    cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,cv.width,cv.height);
-    await pg.render({canvasContext:g,viewport:vp}).promise;cvs.push(cvTrim(cv));
+    if(p<=ocrN){const c=await draw(pg,3200);cvs.push(c);if(o.imgs)imgs.push({data:cvJpeg(c,2200),thumb:cvThumb(c)});}
+    else if(o.imgs){const c=await draw(pg,2200);imgs.push({data:cvJpeg(c,2200),thumb:cvThumb(c)});c.width=c.height=1;}
+    else if(p===1){const c=await draw(pg,800);imgs.push({thumb:cvThumb(c)});}
   }
-  return {lines,cvs};
+  return {lines,cvs,imgs,total:doc.numPages,n:N};
 }
 /* يشيل الهوامش البيضاء حول المستند (ملفات الهوية الرقمية تكون البطاقة صغيرة وسط صفحة كبيرة) */
 function cvTrim(c){
@@ -3265,21 +3279,25 @@ function cvJpeg(c,max){const k=Math.min(1,max/Math.max(c.width,c.height));if(k==
 function cvThumb(c){const k=240/Math.max(c.width,c.height),o=document.createElement('canvas');o.width=Math.round(c.width*k);o.height=Math.round(c.height*k);o.getContext('2d').drawImage(c,0,0,o.width,o.height);return o.toDataURL('image/jpeg',.7);}
 const docGood=(r,type)=>!!(r&&r.expiry&&((r.how==='mrz'&&r.sure)||(r.how==='label'&&(type==='family'||r.sure!==false))));
 /* يجهّز الصفحة: نسخة للحفظ + النص المقروء */
-async function docPage(f,prog,type){
-  const isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name||'');
+async function docPage(f,prog,type,o){
+  o=o||{};const room=o.room||1,doOcr=o.ocr!==false,isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name||'');
   if(isPdf){if(f.size>60*1024*1024)throw new Error('ملف PDF كبير جداً (أكثر من 60 ميجا). صوّر المستند بدل الملف.');
-    const u8=new Uint8Array(await f.arrayBuffer());
-    const {lines,cvs}=await pdfDoc(u8,prog);if(!cvs.length)throw new Error('ملف PDF فاضي.');
-    // الملف الصغير ينحفظ مثل ما هو، والكبير (أكثر من 5 ميجا) تنحفظ صفحاته كصور واضحة بحجم أصغر
+    const u8=new Uint8Array(await f.arrayBuffer()),small=f.size<=5*1024*1024;
+    // الملف الصغير ينحفظ مثل ما هو بكل صفحاته، والكبير تنحفظ صفحاته كصور واضحة بحجم أصغر
+    const ocrN=!doOcr?0:type==='family'?2:4;
+    const R=await pdfDoc(u8,prog,{max:small?Math.min(DOC_MAXP(type),ocrN||1):room,ocr:ocrN,imgs:!small});
+    if(!R.n)throw new Error('ملف PDF فاضي.');
     let pg;
-    if(f.size<=5*1024*1024){let bin='';for(let i=0;i<u8.length;i+=0x8000)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));
-      pg={mime:'application/pdf',data:btoa(bin),thumb:cvThumb(cvs[0]),lines:lines.slice(),cvs};}
-    else pg={mime:'image/jpeg',data:cvJpeg(cvs[0],2200),thumb:cvThumb(cvs[0]),lines:lines.slice(),cvs,extra:cvs.slice(1).map(c=>({mime:'image/jpeg',data:cvJpeg(c,2200),thumb:cvThumb(c),lines:[],cvs:[c]}))};
+    if(small){let bin='';for(let i=0;i<u8.length;i+=0x8000)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));
+      pg={mime:'application/pdf',data:btoa(bin),thumb:R.cvs[0]?cvThumb(R.cvs[0]):(R.imgs[0]||{}).thumb||'',lines:R.lines.slice(),cvs:R.cvs,npages:R.total};}
+    else{pg={mime:'image/jpeg',data:R.imgs[0].data,thumb:R.imgs[0].thumb,lines:R.lines.slice(),cvs:R.cvs,extra:R.imgs.slice(1).map((x,i)=>({mime:'image/jpeg',data:x.data,thumb:x.thumb,lines:[],cvs:[]}))};
+      if(R.total>R.n)pg.cut=R.total-R.n;}
     // النص المكتوب في الملف ما فيه التاريخ (مثلاً ملف من الهوية الرقمية): نقرأ صورة الصفحة نفسها
-    if(!docGood(parseIdDoc(pg.lines,type),type))for(const [i,cv] of cvs.entries())pg.lines=pg.lines.concat(await ocrLines(cv,m=>prog((cvs.length>1?'صفحة '+(i+1)+': ':'')+m)));
+    if(doOcr&&!docGood(parseIdDoc(pg.lines,type),type))for(const [i,cv] of R.cvs.entries())pg.lines=pg.lines.concat(await ocrLines(cv,m=>prog((R.cvs.length>1?'صفحة '+(i+1)+': ':'')+m)));
     return pg;}
   const cv=await imgCanvas(f,2000),thumb=cvThumb(cv);
   const data=b64of(cv.toDataURL('image/jpeg',.85));
+  if(!doOcr){cv.width=cv.height=1;return {mime:'image/jpeg',data,thumb,lines:[],cvs:[]};}
   const lines=await ocrLines(cv,prog);
   return {mime:'image/jpeg',data,thumb,lines,cvs:[cv]};
 }
@@ -3305,27 +3323,70 @@ async function docDeepen(df,prog){
     if(t2.expiry){add(pg,L.concat(L2));return;}
   }
 }
+/* الاسم: ناخذه من بيانات الوريث نفسه (مضمون)، ونتأكد من المستند إنه باسمه.
+   إذا ما قدر التطبيق يتأكد، صاحب المستند يأكد بنفسه قبل الحفظ */
+const AR_EN={'مي':['MAY','MAI','MAYY','MAYA'],'راشد':['RASHED','RASHID','RASHEED'],'مبارك':['MUBARAK','MOBARAK','MUBARK'],'علي':['ALI','ALY'],
+  'سعيد':['SAEED','SAID','SAEID','SAIED','SAEEID'],'عيد':['EID','EAID','EED'],'محمد':['MOHAMED','MOHAMMED','MUHAMMAD','MOHAMMAD','MOHAMAD','MUHAMMED','MOHD'],
+  'ناصر':['NASER','NASSER','NASIR','NASSIR'],'بخيتة':['BAKHEETA','BKHEETA','BAKHITA','BUKHAITA','BAKHEETAH','BKHITA'],'حمدة':['HAMDA','HAMDAH'],
+  'شمة':['SHAMMA','SHAMA','SHAMMAH'],'مضحية':['MADHHEYA','MUDHIYA','MADHIYA','MUDHHIYA','MADHEYA','MUDHIA','MUDHHIA'],'نورة':['NOURA','NORA','NOORA','NOURAH']};
+const arN=s=>String(s||'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[ً-ْـ]/g,'');
+const nSk=x=>String(x).toLowerCase().replace(/[^a-z]/g,'').replace(/[aeiouyw]/g,'').replace(/(.)\1+/g,'$1');
+function near1(a,b){if(a===b)return true;if(Math.min(a.length,b.length)<4||Math.abs(a.length-b.length)>1)return false;let i=0,j=0,e=0;
+  while(i<a.length&&j<b.length){if(a[i]===b[j]){i++;j++;continue;}if(++e>1)return false;if(a.length>b.length)i++;else if(b.length>a.length)j++;else{i++;j++;}}return e+(a.length-i)+(b.length-j)<=1;}
+function looksName(s){s=String(s||'').trim();if(/\d/.test(s))return false;
+  const w=s.split(/\s+/).filter(Boolean);if(w.length<2||w.length>8)return false;
+  return /^[A-Za-z' .-]+$/.test(s)?w.every(x=>x.replace(/[^A-Za-z]/g,'').length>=2):/^[ء-ي\s]+$/.test(s);}
+function nameCheck(df){
+  const h=H[df.heir],full=String(h.full||h.n).split(/\s+/),first=full[0],father=full[1]||'';
+  const txt=df.pages.flatMap(p=>p.lines||[]).join(' \n ');
+  const arT=arN(txt).split(/[^ء-ي]+/);
+  const arOk=arT.includes(arN(first))&&(!father||arT.includes(arN(father)));
+  const toks=txt.toUpperCase().split(/[^A-Z]+/).filter(w=>w.length>=2).map(nSk).filter(Boolean);
+  const has=ar=>{const v=(AR_EN[ar]||[]).map(nSk);return toks.some(t=>v.some(x=>near1(t,x)));};
+  const enOk=has(first)&&(!father||has(father));
+  const seen=df.ocr&&looksName(df.ocr.name)?df.ocr.name:'';
+  if(arOk||enOk)return {st:'ok',seen};
+  if(seen){const fw=seen.split(/\s+/);const v=(AR_EN[first]||[]).map(nSk);
+    const match=/[A-Za-z]/.test(seen)?fw.some(w=>v.some(x=>near1(nSk(w),x))):fw.map(arN).includes(arN(first));
+    if(!match)return {st:'diff',seen};}
+  return {st:'unk',seen};
+}
+function docNameOk(df){return df.keep||nameCheck(df).st==='ok'||!!df.nameConfirm;}
+function docNameBox(df){
+  const h=H[df.heir],full=h.full||h.n;
+  if(df.keep)return `<label class="k">صاحب المستند</label><div class="doc-name ok"><b>${esc(full)}</b></div>`;
+  const c=nameCheck(df);
+  const msg=c.st==='ok'?`✓ تأكدت من المستند إنه باسم ${esc(h.n)}${c.seen?` <bdi dir="auto">(${esc(c.seen)})</bdi>`:''}`
+    :c.st==='diff'?`⚠️ الاسم المكتوب في المستند <bdi dir="auto">(${esc(c.seen)})</bdi> ما يطابق اسم ${esc(h.n)}. تأكد إنك اخترت المستند الصحيح.`
+    :`ما قدرت أتأكد من الاسم من ${df.pages.length>1?'الصور':'الصورة'}. شيّك عليه بنفسك.`;
+  return `<label class="k">صاحب المستند</label><div class="doc-name ${c.st}"><b>${esc(full)}</b><small>${msg}</small></div>
+  ${c.st==='ok'?'':`<button class="toggle" role="switch" aria-checked="${!!df.nameConfirm}" data-act="doc-nameok" style="margin-top:8px"><span>أأكد إن هذا المستند باسم ${esc(full)}<small>لازم تأكد قبل الحفظ</small></span><span class="sw"></span></button>`}`;
+}
 function docApplyParse(df){
   const r=parseIdDoc(df.pages.flatMap(p=>p.lines||[]),df.type);df.ocr=r;
   if(r.expiry&&!df.manualExp)df.expiry=r.expiry;
   if(r.issue&&!df.issue)df.issue=r.issue;
   if(r.no&&!df.no)df.no=r.no;
-  if(r.name&&!df.name)df.name=r.name;
+  if(df.type==='family'&&!df.noExpTouched){df.noExp=!(r.expiry&&r.how==='label');}
+  df.name=H[df.heir].full||H[df.heir].n;
   df.src=df.expiry&&df.expiry===r.expiry?'ocr':'manual';
 }
 async function docScan(files,heir,type,add){
-  files=[...files].slice(0,4);if(!files.length)return;
+  files=[...files].slice(0,DOC_MAXP(type));if(!files.length)return;
   if(store.ver<7){toast('حدّث كود الخادم (Code) للإصدار الجديد عشان تقدر تضيف مستندات.');return;}
   let df=add&&state.df&&state.df.heir===heir&&state.df.type===type?state.df:null;
   if(!df){const old=docsOf(heir).find(d=>d.type===type);
-    df={heir,type,pages:[],no:'',name:'',issue:'',expiry:'',noExp:false,src:'manual',manualExp:false,renew:!!old,ocr:null};}
-  if(df.pages.length+files.length>4){toast('أكثر شي 4 صفحات للمستند.');files=files.slice(0,4-df.pages.length);if(!files.length)return;}
+    df={heir,type,pages:[],no:'',name:'',issue:'',expiry:'',noExp:type==='family',src:'manual',manualExp:false,renew:!!old,ocr:null};}
+  const MX=DOC_MAXP(type);let cut=0;
+  if(df.pages.length+files.length>MX){toast('أكثر شي '+MX+' صفحات للمستند.');files=files.slice(0,MX-df.pages.length);if(!files.length)return;}
   const done=busy('جاري قراءة '+DOC_T[type].n+'…','أول مرة تاخذ وقت أطول');const prog=m=>{const s=document.querySelector('#busy small');if(s)s.textContent=m;};
-  try{for(const [i,f] of files.entries()){const pre=files.length>1?`صفحة ${i+1} من ${files.length}: `:'';const pg=await docPage(f,m=>prog(pre+m),type);df.pages.push(pg);
-      if(pg.extra){df.pages.push(...pg.extra.slice(0,Math.max(0,4-df.pages.length)));delete pg.extra;}}
+  try{for(const [i,f] of files.entries()){const pre=files.length>1?`صفحة ${i+1} من ${files.length}: `:'';const pg=await docPage(f,m=>prog(pre+m),type,{room:MX-df.pages.length,ocr:type!=='family'||df.pages.length<2});df.pages.push(pg);
+      if(pg.extra){const room=Math.max(0,MX-df.pages.length);cut+=Math.max(0,pg.extra.length-room);df.pages.push(...pg.extra.slice(0,room));delete pg.extra;}
+      if(pg.cut){cut+=pg.cut;delete pg.cut;}}
     await docDeepen(df,prog);}
   catch(e){done();toast((e&&e.message)||'ما قدرت أقرأ المستند.');if(!df.pages.length)return;}
   done();
+  if(cut)toast('انحفظت أول '+MX+' صفحات بس من الملف.');
   docApplyParse(df);state.df=df;
   if(cur().v==='docform')render();else go('docform');
 }
@@ -3346,34 +3407,34 @@ function docOcrText(df){
 }
 function docOcrNote(df){
   const r=df.ocr;if(!df.pages.length)return '';
+  if(df.type==='family'&&(!r||!r.expiry||df.noExp))return `<div class="doc-ocr ok">📄 خلاصة القيد تنحفظ بدون تاريخ انتهاء (${df.pages.reduce((a,p)=>a+(p.npages||1),0)} صفحة). إذا كان فيها تاريخ انتهاء، طفّ الخيار اللي تحت واختر التاريخ.</div>`;
   const raw=()=>{const t=df.pages.flatMap(p=>p.lines||[]).join('\n').slice(0,3000);return t?`<details class="ocrraw"><summary>النص اللي قرأه التطبيق</summary><pre dir="auto">${esc(t)}</pre></details>`:'';};
   if(!r||!r.expiry)return `<div class="doc-ocr none">ما قدرت أقرأ تاريخ الانتهاء. صوّر المستند من قريب وبإضاءة واضحة بدون انعكاس${df.type==='passport'?'، وخلّ السطرين اللي تحت الصفحة يبينون كاملين':df.type==='eid'?'، وأضف الوجه الخلفي للهوية (فيه الرمز اللي يقرأه التطبيق)':''}، أو اختر التاريخ تحت.${raw()}</div>`;
   const how=r.how==='mrz'?(r.sure?'من الرمز اللي '+(df.type==='passport'?'أسفل الجواز':'خلف الهوية')+'، وتأكدت منه بأرقام التحقق':'من الرمز اللي أسفل المستند'):r.how==='label'?'من خانة تاريخ الانتهاء':'من أبعد تاريخ مكتوب في المستند';
   const en=(HEIR_EN[df.heir]||'').toLowerCase(),nm=String(r.name||'').toLowerCase(),ar=H[df.heir].n;
   const sk=x=>x.replace(/[^a-z]/g,'').replace(/[aeiouyw]/g,'').replace(/(.)\1+/g,'$1');
   const mism=nm&&(/[a-z]/.test(nm)?en&&!nm.split(/\s+/).some(w=>sk(w)===sk(en)):nm.indexOf(ar)<0);
-  return `${mism?`<div class="doc-ocr none">⚠️ الاسم المقروء (${esc(r.name)}) ما يشبه اسم ${esc(ar)}. تأكد إن المستند له.</div>`:''}<div class="doc-ocr ${r.sure?'ok':'mid'}">📄 قرأت تاريخ الانتهاء <b>${esc(docDate(r.expiry))}</b> ${how}.${r.sure?'':' تأكد منه قبل الحفظ.'+raw()}${df.manualExp&&df.expiry!==r.expiry?'<br>غيّرته يدوي، فينحفظ كتاريخ مكتوب يدوي.':''}</div>`;
+  return `<div class="doc-ocr ${r.sure?'ok':'mid'}">📄 قرأت تاريخ الانتهاء <b>${esc(docDate(r.expiry))}</b> ${how}.${r.sure?'':' تأكد منه قبل الحفظ.'+raw()}${df.manualExp&&df.expiry!==r.expiry?'<br>غيّرته يدوي، فينحفظ كتاريخ مكتوب يدوي.':''}</div>`;
 }
 V.docform=()=>{
   const df=state.df;if(!df)return {title:'المستندات',html:''};
   const t=DOC_T[df.type],c=docCheck(df),y=new Date().getFullYear();
-  const pages=df.pages.map((p,i)=>`<div class="dpage">${p.thumb?`<img src="${p.thumb}" alt="صفحة ${i+1}">`:`<div class="dpdf">PDF</div>`}<button class="dpx" data-act="doc-pg-del" data-i="${i}" aria-label="شيل الصفحة ${i+1}">✕</button></div>`).join('');
+  const pages=df.pages.map((p,i)=>`<div class="dpage">${p.thumb?`<img src="${p.thumb}" alt="صفحة ${i+1}">`:`<div class="dpdf">PDF</div>`}${p.npages>1?`<span class="dpn">${p.npages} صفحة</span>`:''}<button class="dpx" data-act="doc-pg-del" data-i="${i}" aria-label="شيل الصفحة ${i+1}">✕</button></div>`).join('');
   return {title:(df.renew?'تجديد ':df.keep?'تعديل ':'إضافة ')+t.n,html:`
   <p class="doc-who">${esc(H[df.heir].full||H[df.heir].n)}</p>
-  ${df.keep?`<p class="note" style="margin-top:0">تعدّل البيانات بس، والصور المحفوظة تبقى مثل ما هي. إذا تبي تغيّر الصور اختر "تجديد" أو "تحديث" من صفحة المستندات.</p>`:`<div class="dpages">${pages}${df.pages.length<4?`<label class="dpage add">${I.plus}<span>${df.pages.length?t.more:'صوّر المستند'}</span><input type="file" accept="image/*,application/pdf" multiple data-doc-add="${df.type}" data-heir="${df.heir}"></label>`:''}</div>
+  ${df.keep?`<p class="note" style="margin-top:0">تعدّل البيانات بس، والصور المحفوظة تبقى مثل ما هي. إذا تبي تغيّر الصور اختر "تجديد" أو "تحديث" من صفحة المستندات.</p>`:`<div class="dpages">${pages}${df.pages.length<DOC_MAXP(df.type)?`<label class="dpage add">${I.plus}<span>${df.pages.length?t.more:'صوّر المستند'}</span><input type="file" accept="image/*,application/pdf" multiple data-doc-add="${df.type}" data-heir="${df.heir}"></label>`:''}</div>
   ${docOcrNote(df)}${df.ocr&&docGood(df.ocr,df.type)?'':docOcrText(df)}`}
   <label class="k">تاريخ الانتهاء *</label>
-  ${df.type==='family'?`<button class="toggle" role="switch" aria-checked="${!!df.noExp}" data-act="doc-noexp" style="margin-bottom:8px"><span>ما لها تاريخ انتهاء<small>بعض نسخ خلاصة القيد ما فيها تاريخ انتهاء</small></span><span class="sw"></span></button>`:''}
+  ${df.type==='family'?`<button class="toggle" role="switch" aria-checked="${!!df.noExp}" data-act="doc-noexp" style="margin-bottom:8px"><span>بدون تاريخ انتهاء<small>خلاصة القيد عادةً ما لها تاريخ انتهاء</small></span><span class="sw"></span></button>`:''}
   ${df.noExp?'':dtPicker('df_exp',df.expiry,{empty:true,noNow:true,yMin:y-12,yMax:y+15})}
   <div id="dfState" class="doc-check ${c.cls}">${c.msg}</div>
   <label class="k" for="df_no">رقم المستند</label>
   <input id="df_no" value="${esc(df.no)}" maxlength="40" autocomplete="off" dir="ltr" style="text-align:right" placeholder="${df.type==='eid'?'784-XXXX-XXXXXXX-X':df.type==='passport'?'رقم الجواز':'رقم خلاصة القيد'}">
-  <label class="k" for="df_name">الاسم في المستند</label>
-  <input id="df_name" value="${esc(df.name)}" maxlength="120" autocomplete="off">
+  ${docNameBox(df)}
   <label class="k">تاريخ الإصدار (اختياري)</label>
   ${dtPicker('df_iss',df.issue,{empty:true,noNow:true,yMin:y-15,yMax:y})}
   <div class="err" id="dfErr"></div>
-  <button class="primary" data-act="doc-save" id="dfSave"${c.ok&&(df.pages.length||df.keep)?'':' disabled'}>${df.keep?'حفظ التعديل':'حفظ المستند'}</button>
+  <button class="primary" data-act="doc-save" id="dfSave"${c.ok&&docNameOk(df)&&(df.pages.length||df.keep)?'':' disabled'}>${df.keep?'حفظ التعديل':'حفظ المستند'}</button>
   ${docPrivacy()}`};
 };
 function readDF(){const df=state.df;if(!df)return;const v=id=>{const e=document.getElementById(id);return e?e.value:null;};
@@ -3382,13 +3443,14 @@ function readDF(){const df=state.df;if(!df)return;const v=id=>{const e=document.
   if(v('df_iss')!=null)df.issue=v('df_iss');
   df.src=!df.noExp&&df.expiry&&df.ocr&&df.ocr.expiry===df.expiry?'ocr':'manual';}
 function updDF(){const df=state.df,el=document.getElementById('dfState'),b=document.getElementById('dfSave');if(!df||!el)return;
-  const c=docCheck(df);el.className='doc-check '+c.cls;el.textContent=c.msg;if(b)b.disabled=!(c.ok&&(df.pages.length||df.keep));
+  const c=docCheck(df);el.className='doc-check '+c.cls;el.textContent=c.msg;if(b)b.disabled=!(c.ok&&docNameOk(df)&&(df.pages.length||df.keep));
   const o=document.querySelector('.doc-ocr');if(o&&df.ocr&&df.ocr.expiry){const t=document.createElement('div');t.innerHTML=docOcrNote(df);o.replaceWith(t.firstElementChild);}}
 async function docAction(act,b){
-  if(act==='doc-noexp'){readDF();state.df.noExp=!state.df.noExp;render();return;}
+  if(act==='doc-noexp'){readDF();state.df.noExp=!state.df.noExp;state.df.noExpTouched=true;render();return;}
+  if(act==='doc-nameok'){readDF();state.df.nameConfirm=!state.df.nameConfirm;render();return;}
   if(act==='doc-pg-del'){readDF();state.df.pages.splice(+b.dataset.i,1);docApplyParse(state.df);render();return;}
   if(act==='doc-edit'){const d=(store.docs||[]).find(x=>x.id===b.dataset.id);if(!d)return;
-    state.df={heir:d.heir,type:d.type,pages:[],keep:true,no:d.no||'',name:d.name||'',issue:d.issue||'',expiry:d.expiry||'',noExp:!!d.noExp,src:d.src,manualExp:false,ocr:d.src==='ocr'?{expiry:d.expiry,sure:true}:null};go('docform');return;}
+    state.df={heir:d.heir,type:d.type,pages:[],keep:true,no:d.no||'',name:H[d.heir].full||H[d.heir].n,issue:d.issue||'',expiry:d.expiry||'',noExp:!!d.noExp,src:d.src,manualExp:false,ocr:d.src==='ocr'?{expiry:d.expiry,sure:true}:null};go('docform');return;}
   if(act==='doc-view'){docView(b.dataset.id);return;}
   if(act==='doc-del'){const d=(store.docs||[]).find(x=>x.id===b.dataset.id);if(!d)return;
     if(!await ask('حذف '+DOC_T[d.type].n,'ينحذف المستند وصوره من '+H[d.heir].n+'. تقدر تضيفه من جديد بعدين.','حذف'))return;
@@ -3398,8 +3460,9 @@ async function docAction(act,b){
   if(act==='doc-save'){
     readDF();const df=state.df,err=document.getElementById('dfErr'),c=docCheck(df);
     if(!c.ok){err.textContent=c.msg;return;}
+    if(!docNameOk(df)){err.textContent='أكّد إن المستند باسم '+(H[df.heir].full||H[df.heir].n)+'.';return;}
     if(!df.keep&&!df.pages.length){err.textContent='صوّر المستند أو اختر ملف.';return;}
-    const doc={heir:df.heir,type:df.type,no:df.no,name:df.name,issue:df.issue||'',expiry:df.noExp?'':df.expiry,noExp:!!df.noExp,src:df.src};
+    const doc={heir:df.heir,type:df.type,no:df.no,name:H[df.heir].full||H[df.heir].n,issue:df.issue||'',expiry:df.noExp?'':df.expiry,noExp:!!df.noExp,src:df.src};
     const files=df.keep?[]:df.pages.map(p=>({mime:p.mime,data:p.data}));
     const done=busy('جاري حفظ '+DOC_T[df.type].n+'…',files.length?'يرفع الصور بأمان':'');
     try{const r=await api('doc-put',{doc,files});done();
@@ -3418,7 +3481,7 @@ async function docView(id){
       const bin=atob(p.data),u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);blobs.push(new Blob([u8],{type:p.mime}));
       if(p.mime==='application/pdf'){await loadScript(PDFJS);const L=window.pdfjsLib;L.GlobalWorkerOptions.workerSrc=PDFJS_W;
         const doc=await L.getDocument({data:u8}).promise;
-        for(let k=1;k<=Math.min(doc.numPages,6);k++){const pg=await doc.getPage(k),vp=pg.getViewport({scale:2}),cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+        for(let k=1;k<=Math.min(doc.numPages,30);k++){const pg=await doc.getPage(k),vp=pg.getViewport({scale:doc.numPages>6?1.5:2}),cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
           await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;imgs.push(cv.toDataURL('image/jpeg',.88));}}
       else imgs.push('data:'+p.mime+';base64,'+p.data);}}
   catch(e){done();toast('ما قدرت أعرض الملف.');return;}
