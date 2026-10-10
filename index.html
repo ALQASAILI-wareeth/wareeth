@@ -748,6 +748,26 @@ label.docup input,.dpage.add input{position:absolute;inset:0;opacity:0;cursor:po
 .dw-row small{color:var(--muted);font-size:12px}
 .dw-row em{font-style:normal;font-weight:800;color:#F2C46B;white-space:nowrap}
 .dw-row.exp em{color:var(--neg)}
+.doclist{padding:0;overflow:hidden}
+.doclist .dl-h{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(214,178,102,.08),rgba(214,178,102,0))}
+.doclist .dl-h>span{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(214,178,102,.12);color:var(--gold);flex:none}
+.doclist .dl-h svg{width:22px;height:22px}
+.doclist .dl-h div{display:flex;flex-direction:column;gap:2px;min-width:0}.doclist .dl-h b{font-size:16px}.doclist .dl-h small{color:var(--muted);font-size:12.5px}
+.drow{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);text-align:start;cursor:pointer}
+.drow:last-child{border-bottom:0}
+.drow .doc-ic{width:42px;height:42px;border-radius:12px}
+.drow.none .doc-ic{background:var(--card2);color:var(--gold);border:1px solid var(--line)}
+.drow .dr-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.drow .dr-t b{font-size:16px}.drow .dr-t small{font-size:12.5px;color:var(--muted)}
+.drow.soon .dr-t small{color:#F2C46B}.drow.exp .dr-t small{color:var(--neg)}
+.drow>svg{flex:none}
+.sharebanner{position:relative;overflow:hidden;margin:0 0 16px;padding:18px 18px 14px;border-radius:20px;border:1px solid rgba(214,178,102,.55);background:var(--lacq);color:#fff;box-shadow:0 12px 28px rgba(3,8,24,.35)}
+.sharebanner::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.45;background:var(--lattice)}
+.sharebanner>*{position:relative}
+.sb-l{color:#E3C27A;font-size:13.5px;letter-spacing:.02em}
+.sb-big{font-size:34px;font-weight:800;margin:4px 0 12px;direction:ltr;text-align:right}.sb-big small{font-size:15px;font-weight:600;color:#E3C27A}
+.sb-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sb-row>div{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(214,178,102,.28)}
+.sb-row span{font-size:12.5px;color:#C9D2EA}.sb-row b{font-size:17px;direction:ltr;text-align:right}
 .balchg{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
 .balchg>div{display:flex;flex-direction:column;gap:2px}
 .balchg span{font-size:12.5px;color:var(--muted)}
@@ -865,7 +885,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='8.0';
+const APP_VER='8.1';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1446,17 +1466,20 @@ V.heir=({id})=>{
   if(Math.abs(diff)<1) fair=`<div class="fair"><span class="dot" style="background:var(--pos)"></span>اللي استلمه مطابق لحصته من التوزيعات.</div>`;
   else if(diff<0) fair=`<div class="fair"><span class="dot" style="background:var(--neg)"></span>استلم أقل من حصته بـ ${money(-diff)}</div>`;
   else fair=`<div class="fair"><span class="dot" style="background:var(--gold)"></span>استلم أكثر من حصته بـ ${money(diff)}</div>`;
-  return {title:h.n,html:`
+  const own=isHeirUser()&&store.user.heir===id;
+  const shareBanner=`<div class="sharebanner"><div class="sb-l">${own?'نصيبك':'نصيبه'} من الرصيد الحالي</div><div class="sb-big"><span class="num">${fmt(nb+nf)}</span> <small>د.إ</small></div>
+    <div class="sb-row"><div><span>البناية <bdi class="num">${ACCTS.bld.shares[id]}%</bdi></span><b class="num">${fmt(nb)}</b></div><div><span>المزارع <bdi class="num">${ACCTS.farm.shares[id]}%</bdi></span><b class="num">${fmt(nf)}</b></div></div></div>`;
+  return {title:own?'حسابي':h.n,html:`${own?shareBanner:''}
   <div class="total-line"><span class="t">المبالغ المستلمة</span><span class="v">${money(r.received[id])}</span></div>
   ${rc.length?(()=>{const all=cur().all,items=rc.map((x,i)=>({x,i})).reverse(),shown=all?items:items.slice(0,3);
     return `<div class="rows">${shown.map(({x,i})=>`<button class="row" data-go="tx" data-id="${esc(x.t.id)}"><span>الاستلام ${ord(i)}<div class="m">${esc(dShort(x.t.date))} · ${ACCTS[x.t.acct].short}</div></span><span class="a num">${fmt(x.amt)}</span></button>`).join('')}</div>
     ${items.length>3?`<div class="actions" style="margin-top:8px"><button class="ghost" data-act="rc-all">${all?'عرض آخر 3 فقط':'عرض كل الاستلامات ('+items.length+')'}</button></div>`:''}`})()
     :'<p class="empty">ما استلم أي مبلغ بعد.</p>'}
-  <h3 class="sec">نصيبه من الرصيد الحالي</h3>
+  ${own?'':`<h3 class="sec">نصيبه من الرصيد الحالي</h3>
   <div class="rows">
     <div class="row static"><span>البناية <span class="m num">${ACCTS.bld.shares[id]}%</span></span><span class="a">${money(nb)}</span></div>
     <div class="row static"><span>المزارع <span class="m num">${ACCTS.farm.shares[id]}%</span></span><span class="a">${money(nf)}</span></div>
-    <div class="row sum"><span>المجموع</span><span>${money(nb+nf)}</span></div></div>
+    <div class="row sum"><span>المجموع</span><span>${money(nb+nf)}</span></div></div>`}
   <h3 class="sec">مقارنة التوزيعات بحصته</h3>
   <div class="card">${fair}<p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">المقارنة تشمل التوزيعات المسجلة من حساب البناية والمزارع فقط، بدون التوزيعات السابقة. حصته منها حسب السند ${money(r.entitled[id])}، واستلم ${money(r.recvLedger[id])}.</p></div>
   ${downloadsApi?`<div class="actions"><button class="ghost" data-act="heir-export" data-id="${id}">تصدير كشف ${h.n} PDF</button></div>`:''}`};
@@ -3277,10 +3300,24 @@ V.docs=()=>{
   return {title:'مستندات الورثة',html};
 };
 function docPrivacy(){return `<p class="note docpriv">${I.lock}<span>المستندات ما يشوفها إلا صاحبها والمدير و${esc(store.agent||'الوكيل')}. تنحفظ في مجلد خاص في Google Drive حق المدير، وما تنحفظ على الجوال. التطبيق يرسل تنبيه قبل انتهاء أي مستند بشهرين، وما يقبل مستند منتهي.</span></p>`;}
+/* صفحة المستندات: بطاقة وحدة فيها كل المستندات، وكل مستند يفتح صفحته */
 V.docheir=({id})=>{
   const h=H[id];if(!h||!docsOn()||(!docsAll()&&id!==store.user.heir))return {title:'المستندات',html:'<p class="empty">ما عندك صلاحية تشوف هذي المستندات.</p>'};
   const L=docsOf(id),mine=isHeirUser()&&store.user.heir===id;
-  const cards=DOC_ORDER.map(t=>{
+  const rows=DOC_ORDER.map(t=>{const d=L.find(x=>x.type===t),st=docState(d),n=docDays(d);
+    const sub=!d?'ما أضيف للحين، اضغط وأضفه':st==='exp'?'منتهية، جدّدها':d.noExp?'بدون تاريخ انتهاء':'تنتهي '+docDate(d.expiry);
+    return `<button class="drow ${st}" data-go="docone" data-id="${id}" data-type="${t}"><span class="doc-ic">${DOC_IC[t]()}</span>
+      <span class="dr-t"><b>${DOC_T[t].n}${d&&docIsNew(d)?' <span class="ntag">جديد</span>':''}</b><small>${esc(sub)}</small></span>${docPill(d)}${I.chev}</button>`;}).join('');
+  const got=L.length;
+  setTimeout(docMarkSeen,1500);
+  return {title:mine?'مستنداتي':'مستندات '+h.n,html:`<div class="card doclist">
+    <div class="dl-h"><span>${I.idcard}</span><div><b>${esc(h.full||h.n)}</b><small>${got===3?'كل المستندات مضافة':got?'مضاف '+got+' من 3':'ما أضيف أي مستند للحين'}</small></div></div>
+    ${rows}</div>${docPrivacy()}`};
+};
+V.docone=({id,type})=>{
+  const h=H[id],t=DOC_T[type]?type:'eid';if(!h||!docsOn()||(!docsAll()&&id!==store.user.heir))return {title:'المستندات',html:'<p class="empty">ما عندك صلاحية تشوف هذي المستندات.</p>'};
+  const L=docsOf(id),mine=isHeirUser()&&store.user.heir===id;
+  const cards=[t].map(t=>{
     const d=L.find(x=>x.type===t),st=docState(d),n=docDays(d);
     const up=(lab,cls)=>`<label class="${cls||'ghost'} docup">${lab}<input type="file" accept="image/*,application/pdf" multiple data-doc-up="${t}" data-heir="${id}"></label>`;
     if(!d)return `<div class="card doc none"><div class="doc-h"><span class="doc-ic">${DOC_IC[t]()}</span><div><h4>${DOC_T[t].n}</h4><div class="m">ما أضيف للحين</div></div>${docPill(null)}</div>
@@ -3294,8 +3331,7 @@ V.docheir=({id})=>{
       <div class="actions"><button class="ghost" data-act="doc-view" data-id="${esc(d.id)}">عرض المستند${d.pages>1?' ('+d.pages+')':''}</button>${up(st==='ok'?'تحديث':'تجديد',st==='ok'?'ghost':'primary docup-main')}</div>
       <div class="doc-more"><button class="linkbtn" data-act="doc-edit" data-id="${esc(d.id)}">تعديل البيانات</button><button class="linkbtn neg" data-act="doc-del" data-id="${esc(d.id)}">حذف</button></div></div>`;
   }).join('');
-  setTimeout(docMarkSeen,1500);
-  return {title:mine?'مستنداتي':'مستندات '+h.n,html:`${mine?'':`<p class="doc-who">${esc(h.full||h.n)}</p>`}${cards}${docPrivacy()}`};
+  return {title:DOC_T[t].n+(mine?'':' – '+h.n),html:`${cards}`};
 };
 /* ---------- قراءة الصور والملفات ---------- */
 async function imgCanvas(file,max){
