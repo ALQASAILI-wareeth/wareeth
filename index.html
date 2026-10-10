@@ -748,6 +748,24 @@ label.docup input,.dpage.add input{position:absolute;inset:0;opacity:0;cursor:po
 .dw-row small{color:var(--muted);font-size:12px}
 .dw-row em{font-style:normal;font-weight:800;color:#F2C46B;white-space:nowrap}
 .dw-row.exp em{color:var(--neg)}
+.balchg{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.balchg>div{display:flex;flex-direction:column;gap:2px}
+.balchg span{font-size:12.5px;color:var(--muted)}
+.balchg b{font-size:17px;direction:ltr;text-align:right}
+.balchg>div:first-child b{color:var(--muted);font-weight:600}
+.balchg .now b{color:var(--ink);font-size:19px}
+.balchg .dif{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center;background:var(--card2);border-radius:10px;padding:6px 10px}
+.balchg .dif b.in{color:var(--pos)}.balchg .dif b.out{color:var(--neg)}
+.card .balchg{margin-top:0;padding-top:0;border-top:0}
+.ntag.del{background:rgba(242,141,125,.14);color:var(--neg);border:1px solid rgba(242,141,125,.45)}
+.row.gone .a .num,.nc-row.gone b{text-decoration:line-through;text-decoration-color:rgba(242,141,125,.7);color:var(--muted)}
+.gonenote{border-color:rgba(242,141,125,.5)}
+.txdiff h4{margin:0 0 8px;font-size:15px;color:var(--gold)}
+.td-r{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.td-r:last-child{border-bottom:0}
+.td-r .k{color:var(--muted);flex:none}
+.td-v{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;text-align:left}
+.td-v s{color:var(--muted)}.td-v i{font-style:normal;color:var(--gold)}.td-v b{color:var(--ink)}
 .dpn{position:absolute;bottom:5px;right:5px;background:rgba(5,9,22,.8);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:8px}
 .doc-name{border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
 .doc-name b{font-size:16px}.doc-name small{font-size:13px;line-height:1.7;color:var(--muted)}
@@ -847,7 +865,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='7.9';
+const APP_VER='8.0';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1443,6 +1461,39 @@ V.heir=({id})=>{
   <div class="card">${fair}<p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">المقارنة تشمل التوزيعات المسجلة من حساب البناية والمزارع فقط، بدون التوزيعات السابقة. حصته منها حسب السند ${money(r.entitled[id])}، واستلم ${money(r.recvLedger[id])}.</p></div>
   ${downloadsApi?`<div class="actions"><button class="ghost" data-act="heir-export" data-id="${id}">تصدير كشف ${h.n} PDF</button></div>`:''}`};
 };
+/* وش تغيّر في الحركة المعدّلة: القيمة قبل ← بعد */
+function txDiff(t){
+  const o=NEWS.base&&NEWS.base.txd&&NEWS.base.txd[t.id];if(!o)return '';const b=txFromMini(t.id,o),L=[];
+  const pn=id=>id&&P[id]?P[id].name:'عام';
+  if(b.kind!==t.kind)L.push(['النوع',KIND[b.kind],KIND[t.kind]]);
+  if(b.acct!==t.acct)L.push(['الحساب',ACCTS[b.acct]?ACCTS[b.acct].short:'',ACCTS[t.acct]?ACCTS[t.acct].short:'']);
+  if(Math.abs((+b.amount||0)-(+t.amount||0))>=0.005)L.push(['المبلغ',fmt(b.amount),fmt(t.amount),1]);
+  if(String(b.date)!==String(t.date||''))L.push(['التاريخ',dTime(b.date),dTime(t.date)]);
+  if((b.from||'')!==(t.from||''))L.push([t.kind==='dep'?'من':'الجهة',b.from||'—',t.from||'—']);
+  if((b.prop||'')!==(t.prop||''))L.push(['العقار',pn(b.prop),pn(t.prop)]);
+  if((b.note||'')!==(t.note||''))L.push(['الملحوظة',b.note||'—',t.note||'—']);
+  if(t.kind==='dist'){const na=t.alloc||{};HEIRS.forEach(h=>{const x=+(b.alloc||{})[h.id]||0,y=+na[h.id]||0;if(Math.abs(x-y)>=0.005)L.push(['نصيب '+h.n,fmt(x),fmt(y),1]);});}
+  if(!L.length)return '';
+  return `<div class="card txdiff"><h4>وش تغيّر</h4>${L.map(([k,x,y,num])=>`<div class="td-r"><span class="k">${esc(k)}</span><span class="td-v"><s class="${num?'num':''}">${esc(x)}</s><i>←</i><b class="${num?'num':''}">${esc(y)}</b></span></div>`).join('')}</div>`;
+}
+/* الحركة المحذوفة: نعرضها مثل ما كانت قبل الحذف (من النسخة المحفوظة على الجهاز) */
+V.txgone=({id})=>{
+  const o=NEWS.base&&NEWS.base.txd&&NEWS.base.txd[id];
+  if(!o)return {title:'حركة محذوفة',html:'<p class="empty">تفاصيل هذي الحركة ما عادت محفوظة على هذا الجهاز.</p>'};
+  const t=txFromMini(id,o),A=ACCTS[t.acct]||{short:'',name:''};
+  const allocRows=t.kind==='dist'?`<div class="rows" style="margin-bottom:10px">${HEIRS.filter(h=>+(t.alloc||{})[h.id]>0).map(h=>`<div class="row static"><span>${h.n}</span><span class="a">${money(t.alloc[h.id])}</span></div>`).join('')}</div>`:'';
+  return {title:(KIND[t.kind]||'حركة')+' محذوفة',html:`
+  <div class="note gonenote">🗑️ هذي الحركة <b>انحذفت</b> من بعد آخر زيارة لك. هذي تفاصيلها مثل ما كانت قبل الحذف.</div>
+  <div class="field"><div class="k">المبلغ</div><div class="v num"><s>${fmt(t.amount)}</s></div></div>
+  <div class="field"><div class="k">الحساب</div><div class="v">${esc(A.name||A.short)}</div></div>
+  ${t.from?`<div class="field"><div class="k">${t.kind==='dep'?'من':'الجهة'}</div><div class="v">${esc(t.from)}</div></div>`:''}
+  ${t.kind!=='dist'&&t.prop&&P[t.prop]?`<div class="field"><div class="k">العقار</div><div class="v">${esc(P[t.prop].name)}</div></div>`:''}
+  <div class="field"><div class="k">التاريخ</div><div class="v" style="font-size:17px">${esc(dTime(t.date))}</div></div>
+  ${allocRows}
+  ${t.note?`<div class="field"><div class="k">ملحوظة</div><div class="v" style="font-size:16px;font-weight:400">${esc(t.note)}</div></div>`:''}
+  ${t.owner==='agent'?`<p class="note">كانت باسم ${esc(store.agent||'الوكيل')}.</p>`:''}
+  <div class="actions"><button class="ghost" data-act="gone-ok" data-id="${esc(id)}">تم الاطلاع على الحذف</button></div>`};
+};
 V.tx=({id})=>{
   const t=state.txs.find(x=>x.id===id);
   if(!t) return {title:'الحركة',html:'<p class="empty">هذه الحركة محذوفة.</p>'};
@@ -1452,6 +1503,7 @@ V.tx=({id})=>{
   const rcpt=t.receipt&&t.receipt.id?`<div class="field"><div class="k">الإيصال</div>${(t.receipt.type||'').startsWith('image/')?`<a href="/_blob/${esc(t.receipt.id)}" target="_blank" rel="noopener"><img src="/_blob/${esc(t.receipt.id)}" alt="الإيصال" style="max-width:100%;border-radius:10px;margin-top:6px"></a>`:`<a class="linkbtn" href="/_blob/${esc(t.receipt.id)}" target="_blank" rel="noopener">فتح الملف</a>`}</div>`:'';
   return {title:KIND[t.kind]+' – '+A.short,html:`
   ${nk?`<div class="note newsnote">🔔 هذي الحركة ${nk==='new'?'جديدة':'تعدّلت'} من بعد آخر زيارة لك${whoDid(t)?' · أدخلها '+esc(whoDid(t)):''}.</div>`:''}
+  ${nk==='edit'?txDiff(t):''}
   <div class="field"><div class="k">المبلغ</div><div class="v num ${t.kind==='dep'?'in':'out'}">${fmt(t.amount)}</div></div>
   ${t.from?`<div class="field"><div class="k">${t.kind==='dep'?'من':'الجهة'}</div><div class="v">${esc(t.from)}</div></div>`:''}
   ${t.kind!=='dist'&&t.prop&&P[t.prop]?`<div class="field"><div class="k">العقار</div><div class="v">${esc(P[t.prop].name)}</div></div>`:''}
@@ -2518,12 +2570,16 @@ V.activity=()=>{
 const NEWS={base:null,mine:new Set(),key:''};
 const stampTx=t=>+t.updatedAt||+t.createdAt||1;
 function seenKey(){return 'wareeth-seen:'+(store.role||'')+(store.user&&store.user.id?':'+store.user.id:'');}
+/* نسخة مختصرة من كل حركة وقت آخر زيارة: عشان نعرض الحركة المحذوفة، ونبيّن وش تغيّر في المعدّلة */
+const txMini=t=>{const o={d:t.date||'',k:t.kind,a:t.acct,m:+t.amount||0};if(t.from)o.f=t.from;if(t.note)o.n=t.note;if(t.prop)o.p=t.prop;if(t.owner)o.o=t.owner;
+  if(t.kind==='dist'&&t.alloc){o.al={};Object.keys(t.alloc).forEach(h=>{if(+t.alloc[h]>0)o.al[h]=+t.alloc[h];});}return o;};
+const txFromMini=(id,o)=>({id,date:o.d,kind:o.k,acct:o.a,amount:o.m,from:o.f||'',note:o.n||'',prop:o.p||'',owner:o.o||'',alloc:o.al||{}});
 function snapNow(){
-  const r=calc(),tx={},pr={},cl={};
-  state.txs.forEach(t=>{tx[t.id]=stampTx(t);});
+  const r=calc(),tx={},pr={},cl={},txd={};
+  state.txs.forEach(t=>{tx[t.id]=stampTx(t);txd[t.id]=txMini(t);});
   (store.propsRaw||[]).forEach(p=>{if(p&&p.id)pr[p.id]=(+p.updatedAt||1)+(p.hidden?'h':'');});
   (store.closings||[]).forEach(c=>{if(c&&c.id)cl[c.id]=String(c.status||'')+(c.trial?'t':'');});
-  return {at:Date.now(),tx,pr,cl,bal:r2(r.total),share:isHeirUser()&&H[store.user.heir]?r2(r.bal.bld*W.bld[store.user.heir]+r.bal.farm*W.farm[store.user.heir]):null};
+  return {at:Date.now(),tx,pr,cl,txd,bal:r2(r.total),share:isHeirUser()&&H[store.user.heir]?r2(r.bal.bld*W.bld[store.user.heir]+r.bal.farm*W.farm[store.user.heir]):null};
 }
 function seenSave(){try{localStorage.setItem(NEWS.key,JSON.stringify(NEWS.base));}catch(e){}}
 function seenInit(){
@@ -2532,22 +2588,30 @@ function seenInit(){
   try{NEWS.base=JSON.parse(localStorage.getItem(k)||'null');}catch(e){NEWS.base=null;}
   if(!NEWS.base||!NEWS.base.tx){NEWS.base=snapNow();seenSave();}   // أول مرة على هذا الجهاز: نبدأ من الحين
 }
+/* الأجهزة اللي حفظت آخر زيارة قبل هذي الخاصية: نكمّل النسخ من الحركات اللي ما تغيّرت من وقتها */
+function seenFill(){
+  const b=NEWS.base;if(!b||!b.tx)return;b.txd=b.txd||{};let ch=false;
+  state.txs.forEach(t=>{if(!b.txd[t.id]&&b.tx[t.id]===stampTx(t)){b.txd[t.id]=txMini(t);ch=true;}});
+  Object.keys(b.txd).forEach(id=>{if(!(id in b.tx)){delete b.txd[id];ch=true;}});
+  if(ch)seenSave();
+}
 /* اللي سوّيته أنا من هذا الجهاز ما يطلع لي كـ"جديد" */
 function seenMine(){
   if(!NEWS.base||!NEWS.mine.size)return;const b=NEWS.base,now=snapNow();let ch=false;
   NEWS.mine.forEach(id=>{
-    if(id in now.tx){if(b.tx[id]!==now.tx[id]){b.tx[id]=now.tx[id];ch=true;}}else if(id in b.tx){delete b.tx[id];ch=true;}
+    if(id in now.tx){if(b.tx[id]!==now.tx[id]){b.tx[id]=now.tx[id];if(b.txd)b.txd[id]=now.txd[id];ch=true;}}else if(id in b.tx){delete b.tx[id];if(b.txd)delete b.txd[id];ch=true;}
     if(id in now.pr){if(b.pr[id]!==now.pr[id]){b.pr[id]=now.pr[id];ch=true;}}else if(id in b.pr){delete b.pr[id];ch=true;}
   });
   if(ch){b.bal=now.bal;b.share=now.share;seenSave();}
 }
 function newsCalc(){
   const b=NEWS.base;if(!b||store.mode!=='api')return null;
-  const n={txNew:[],txEdit:[],txDel:0,prNew:[],prEdit:[],prDel:0,clNew:[],bal:null,share:null,ids:{}};
+  const n={txNew:[],txEdit:[],txDel:0,txGone:[],prNew:[],prEdit:[],prDel:0,clNew:[],bal:null,share:null,ids:{}};
   const cur=new Set();
   state.txs.forEach(t=>{cur.add(t.id);if(NEWS.mine.has(t.id)||t.hist)return;
     if(!(t.id in b.tx)){n.txNew.push(t);n.ids[t.id]='new';}else if(stampTx(t)>b.tx[t.id]){n.txEdit.push(t);n.ids[t.id]='edit';}});
-  Object.keys(b.tx).forEach(id=>{if(!cur.has(id)&&!NEWS.mine.has(id))n.txDel++;});
+  Object.keys(b.tx).forEach(id=>{if(!cur.has(id)&&!NEWS.mine.has(id)){n.txDel++;n.txGone.push({id,t:b.txd&&b.txd[id]?txFromMini(id,b.txd[id]):null});}});
+  n.txGone.sort((x,y)=>String((y.t||{}).date||'').localeCompare(String((x.t||{}).date||'')));
   const praw=store.propsRaw||[],pcur=new Set();
   praw.forEach(p=>{if(!p||!p.id)return;pcur.add(p.id);if(NEWS.mine.has(p.id))return;const s=(+p.updatedAt||1)+(p.hidden?'h':'');
     if(!(p.id in b.pr)){if(!p.hidden){n.prNew.push(p.id);n.ids['p:'+p.id]='new';}}else if(s!==b.pr[p.id]){if(p.hidden)n.prDel++;else{n.prEdit.push(p.id);n.ids['p:'+p.id]='edit';}}});
@@ -2561,11 +2625,29 @@ function newsCalc(){
   return n.count||n.bal||n.share?n:null;
 }
 function seenAll(){NEWS.base=snapNow();seenSave();}
-function seenTx(id){const t=state.txs.find(x=>x.id===id);if(!t||!NEWS.base)return;if(NEWS.base.tx[id]!==stampTx(t)){NEWS.base.tx[id]=stampTx(t);seenSave();}}
+function seenTx(id){const t=state.txs.find(x=>x.id===id);if(!t||!NEWS.base)return;if(NEWS.base.tx[id]!==stampTx(t)){NEWS.base.tx[id]=stampTx(t);NEWS.base.txd=NEWS.base.txd||{};NEWS.base.txd[id]=txMini(t);seenSave();}}
+function seenGone(id){const b=NEWS.base;if(!b||!(id in b.tx))return;delete b.tx[id];if(b.txd)delete b.txd[id];seenSave();}
 function seenProps(){if(!NEWS.base)return;const s=snapNow();if(JSON.stringify(s.pr)!==JSON.stringify(NEWS.base.pr)){NEWS.base.pr=s.pr;seenSave();}}
 const newsTag=id=>{const k=NEWS.cache&&NEWS.cache.ids[id];return k?`<span class="ntag ${k}">${k==='new'?'جديد':'معدّل'}</span>`:'';};
 const nbadge=n=>n?`<i class="nbadge num">${n>99?'99+':n}</i>`:'';
 function whoDid(t){return t.owner==='agent'?(store.agent||'الوكيل'):'';}
+/* تغيّر الرصيد: كم كان قبل زيارتك، وكم المتاح الحين، والفرق */
+function balChange(n){
+  const v=n.share||n.bal;if(!v)return '';const d=r2(v[1]-v[0]),mine=!!n.share;
+  return `<div class="balchg"><div><span>${mine?'نصيبك قبل زيارتك':'الرصيد قبل زيارتك'}</span><b class="num">${fmt(v[0])}</b></div>
+    <div class="now"><span>${mine?'نصيبك الآن':'المتاح الآن'}</span><b class="num">${fmt(v[1])}</b></div>
+    <div class="dif"><span>${d>=0?'زاد':'نقص'}</span><b class="num ${d>=0?'in':'out'}">${d>=0?'+':'−'} ${fmt(Math.abs(d))}</b></div></div>`;
+}
+/* سطر حركة محذوفة: يفتح تفاصيلها كما كانت قبل الحذف */
+function goneRow(g,cls){
+  const t=g.t;if(!t)return `<div class="${cls||'row'} static gone"><span><span class="ntag del">محذوفة</span> حركة انحذفت<div class="m">تفاصيلها ما كانت محفوظة على هذا الجهاز (انحذفت قبل التحديث).</div></span></div>`;
+  const k=ACCTS[t.acct]?ACCTS[t.acct].short:'';
+  if(cls==='nc-row')return `<button class="nc-row gone" data-go="txgone" data-id="${esc(g.id)}"><span class="ntag del">محذوفة</span>
+    <span class="nc-t">${KIND[t.kind]||'حركة'} · ${esc(k)}<small>${esc(dShort(t.date))}</small></span><b class="num">${fmt(t.amount)}</b></button>`;
+  const who=t.kind==='dist'?Object.keys(t.alloc||{}).length+' ورثة':(t.from||'');
+  return `<button class="row gone" data-go="txgone" data-id="${esc(g.id)}"><span><span>${KIND[t.kind]||'حركة'}</span><span class="tag">${esc(k)}</span><span class="ntag del">محذوفة</span>
+    <div class="m">${esc(who)}${who?' · ':''}${esc(dShort(t.date))}</div></span><span class="a"><span class="num">${fmt(t.amount)}</span></span></button>`;
+}
 function newsCard(){
   const n=NEWS.cache;if(!n)return '';
   const b=NEWS.base,since=b&&b.at?fmtDT(new Date(b.at)):'';
@@ -2581,12 +2663,11 @@ function newsCard(){
   return `<div class="newscard" role="status">
     <div class="nc-h"><span class="nc-bell">${I.bell}</span><span><b>الجديد منذ آخر زيارة</b>${since?`<small>${esc(since)}</small>`:''}</span></div>
     ${L.length?`<div class="nc-sum">${L.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}
-    ${txs.length?`<div class="nc-list">${txs.slice(0,4).map(t=>{const w=whoDid(t),k=n.ids[t.id];return `<button class="nc-row" data-go="tx" data-id="${esc(t.id)}"><span class="ntag ${k}">${k==='new'?'جديد':'معدّل'}</span>
+    ${txs.length||n.txGone.length?`<div class="nc-list">${n.txGone.slice(0,Math.max(0,4-Math.min(4,txs.length))).map(g=>goneRow(g,'nc-row')).join('')}${txs.slice(0,4).map(t=>{const w=whoDid(t),k=n.ids[t.id];return `<button class="nc-row" data-go="tx" data-id="${esc(t.id)}"><span class="ntag ${k}">${k==='new'?'جديد':'معدّل'}</span>
         <span class="nc-t">${KIND[t.kind]} · ${esc(ACCTS[t.acct]?ACCTS[t.acct].short:'')}<small>${esc(dShort(t.date))}${w?' · أدخلها '+esc(w):''}</small></span>
         <b class="num ${t.kind==='dep'?'in':'out'}">${fmt(t.amount)}</b></button>`;}).join('')}
-      ${txs.length>4?`<button class="nc-more" data-go="moves">و${txs.length-4} غيرها في سجل الحركات</button>`:''}</div>`:''}
-    ${n.share?`<div class="kv"><span>نصيبك من الرصيد</span><b><span class="num">${fmt(n.share[0])}</span> ← <span class="num">${fmt(n.share[1])}</span></b></div>`
-      :n.bal?`<div class="kv"><span>الرصيد المتاح</span><b><span class="num">${fmt(n.bal[0])}</span> ← <span class="num">${fmt(n.bal[1])}</span></b></div>`:''}
+      ${txs.length+n.txGone.length>4?`<button class="nc-more" data-go="moves">و${txs.length+n.txGone.length-4} غيرها</button>`:''}</div>`:''}
+    ${balChange(n)}
     </div>`;
 }
 /* لما يوصل جديد والتطبيق مفتوح: تنبيه صغير */
@@ -2640,14 +2721,13 @@ V.news=()=>{
   const txs=n.txNew.concat(n.txEdit).sort((a,c)=>stampTx(c)-stampTx(a));
   const props=n.prNew.concat(n.prEdit).map(id=>P[id]).filter(Boolean);
   return {title:'الجديد',html:`
-  <p class="note" style="margin-top:0">كل اللي تغيّر من بعد آخر زيارة${b&&b.at?' ('+esc(fmtDT(new Date(b.at)))+')':''}. اضغط على أي حركة تفتح تفاصيلها.</p>
+  <p class="note" style="margin-top:0">كل اللي تغيّر من بعد آخر زيارة${b&&b.at?' ('+esc(fmtDT(new Date(b.at)))+')':''}. اضغط على أي حركة تفتح تفاصيلها، حتى المحذوفة والمعدّلة.</p>
   ${txs.length?`<h3 class="sec">الحركات <small class="num" style="color:var(--muted);font-weight:500">(${txs.length})</small></h3><div class="rows">${txs.map(txRow).join('')}</div>`:''}
-  ${n.txDel?`<p class="note">🗑️ انحذفت ${n.txDel} ${n.txDel>2&&n.txDel<11?'حركات':'حركة'}.</p>`:''}
+  ${n.txGone.length?`<h3 class="sec">الحركات المحذوفة <small class="num" style="color:var(--muted);font-weight:500">(${n.txGone.length})</small></h3><div class="rows">${n.txGone.map(g=>goneRow(g)).join('')}</div>`:''}
   ${props.length?`<h3 class="sec">العقارات</h3><div class="rows">${props.map(p=>`<button class="row" data-tab="props"><span>${esc(p.name)}${newsTag('p:'+p.id)}<div class="m">${esc(ACCTS[p.acct]?ACCTS[p.acct].name:'')}</div></span>${I.chev}</button>`).join('')}</div>`:''}
   ${n.prDel?`<p class="note">انخفى أو انحذف ${n.prDel} عقار.</p>`:''}
   ${n.clNew.map(c=>`<button class="row" data-go="close" style="margin-top:8px"><span>🔒 ${c.trial?'إقفال تجريبي':'إقفال'} سنة ${esc(c.year||'')}</span>${I.chev}</button>`).join('')}
-  ${n.share?`<div class="card" style="margin-top:12px"><div class="kv"><span>نصيبك من الرصيد</span><b><span class="num">${fmt(n.share[0])}</span> ← <span class="num">${fmt(n.share[1])}</span></b></div></div>`
-    :n.bal?`<div class="card" style="margin-top:12px"><div class="kv"><span>الرصيد المتاح</span><b><span class="num">${fmt(n.bal[0])}</span> ← <span class="num">${fmt(n.bal[1])}</span></b></div></div>`:''}
+  ${n.share||n.bal?`<div class="card" style="margin-top:12px">${balChange(n)}</div>`:''}
   <button class="primary" data-act="news-ok">تم الاطلاع</button>`};
 };
 function closeNewsPopup(){const b=document.querySelector('.modal-bg.newsbg');if(b)b.remove();}
@@ -3537,7 +3617,7 @@ function render(){
   const gate=store.mode==='login'||store.mode==='loading'||store.mode==='offline';
   let t=gate?{v:store.mode}:cur();
   if(!gate&&ownOnly()&&['total','heirs','me','heir'].includes(t.v)&&t.id!==store.user.heir)t=Object.assign({},t,{v:'heir',id:store.user.heir});
-  if(!gate&&store.mode==='api'){try{seenInit();seenMine();NEWS.cache=newsCalc();}catch(e){NEWS.cache=null;}}else NEWS.cache=null;
+  if(!gate&&store.mode==='api'){try{seenInit();seenFill();seenMine();NEWS.cache=newsCalc();}catch(e){NEWS.cache=null;}}else NEWS.cache=null;
   const out=(V[t.v]||V.home)(t);
   document.querySelector('nav.tabs').hidden=gate;
   {const dt=document.querySelector('nav.tabs [data-tab="docs"]');if(dt){const on=!gate&&docsOn();dt.hidden=!on;
@@ -3801,6 +3881,7 @@ document.addEventListener('click',async e=>{
   if(d.heirCard){heirCard(d.heirCard);return;}
   if(d.dtNow){dtNow(d.dtNow,d.dtTime==='1');return;}
   if(d.act==='bio-toggle'){if(BIO.on){bioClear();toast('تم إيقاف الدخول بالبصمة على هذا الجهاز');render();}else{await bioEnable();render();}return;}
+  if(d.act==='gone-ok'){seenGone(d.id);NEWS.cache=newsCalc();back();toast('تمام');return;}
   if(d.act==='news-ok'){seenAll();NEWS.cache=newsCalc();NEWS.dismissed=newsSig();closeNewsPopup();if(cur().v==='news')state.stack=[{v:'home'}];render();toast('تمام، تم الاطلاع');return;}
   if(d.act&&d.act.indexOf('doc-')===0){await docAction(d.act,b);return;}
   if(d.act&&(d.act.indexOf('user-')===0||d.act==='uf-off')){await userAction(d.act,b);return;}
