@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl" data-theme="navy">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>وريث</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -628,6 +628,26 @@ button.row.actrow{text-align:start}
 .newsmodal .nc-h,.newsmodal .nc-sum{cursor:pointer}
 .modal.sheet{touch-action:pan-y;will-change:transform}
 .modal.sheet .sheet-grip{width:52px;height:6px;cursor:grab}
+
+/* منع تكبير الشاشة كلها، والتكبير يصير داخل البطاقة بس */
+html,body{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%}
+.zoomctl{display:inline-flex;align-items:center;gap:4px;margin-inline-start:auto;margin-inline-end:4px;border:1px solid var(--hair);border-radius:999px;padding:2px}
+.zbtn{width:30px;height:30px;border-radius:50%;border:0;background:var(--card2);color:var(--gold-hi);font-size:18px;font-weight:700;line-height:1;cursor:pointer;display:grid;place-items:center}
+.zoomlbl{font-size:11.5px;color:var(--muted);min-width:38px;text-align:center}
+.hc-head h4{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hc-list{overflow-x:hidden}
+
+/* تكبير بطاقة الوريث */
+.modal.sheet{--hz:1}
+.modal.sheet .stat3 span{font-size:calc(11px*var(--hz))}
+.modal.sheet .stat3 b{font-size:calc(14px*var(--hz))}
+.modal.sheet .rcl{font-size:calc(13px*var(--hz))}
+.modal.sheet .rcl b{font-size:calc(14px*var(--hz))}
+.modal.sheet .rcl .o{min-width:calc(74px*var(--hz))}
+.modal.sheet.zbig .stat3{grid-template-columns:1fr!important}
+.modal.sheet.zbig .stat3>div{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.modal.sheet.zbig .rcl{grid-template-columns:1fr auto;grid-template-areas:"o b" "d d";row-gap:2px}
+.modal.sheet.zbig .rcl .o{grid-area:o;min-width:0}.modal.sheet.zbig .rcl b{grid-area:b}.modal.sheet.zbig .rcl .d{grid-area:d}
 </style>
 </head>
 <body>
@@ -713,7 +733,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='7.1';
+const APP_VER='7.3';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1199,7 +1219,9 @@ function sheetSwipe(sh,close,list){
   if(!sh)return;let y0=null,dy=0,t0=0,inList=false,mode='';
   sh.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;y0=e.touches[0].clientY;dy=0;t0=Date.now();inList=!!(list&&list.contains(e.target));mode='';sh.style.transition='none';},{passive:true});
   sh.addEventListener('touchmove',e=>{
-    if(y0==null)return;const d=e.touches[0].clientY-y0;
+    if(y0==null)return;
+    if(e.touches.length>1){y0=null;mode='';dy=0;sh.style.transition='transform .2s';sh.style.transform='';sh.style.opacity='';return;}
+    const d=e.touches[0].clientY-y0;
     if(!mode){if(Math.abs(d)<6)return;
       if(inList){const top=list.scrollTop<=0,bot=list.scrollTop+list.clientHeight>=list.scrollHeight-1;
         if((d>0&&top)||(d<0&&bot))mode='drag';else{mode='scroll';return;}}
@@ -1216,13 +1238,31 @@ function sheetSwipe(sh,close,list){
     y0=null;mode='';dy=0;};
   sh.addEventListener('touchend',end);sh.addEventListener('touchcancel',end);
 }
+/* تكبير بإصبعين داخل البطاقة بس: يكبّر محتواها وهو داخل حدودها، والشاشة ما تتأثر */
+function sheetPinch(sh,targets,key){
+  if(!sh||!targets.length)return;
+  let z=+(sessionStorage.getItem('zoom:'+key)||1)||1,d0=0,z0=1;
+  // نكبّر الخط نفسه، والترتيب يتعدّل لما يكبر (سطرين بدل سطر) عشان ما يطلع شي برّا البطاقة
+  const apply=()=>{sh.style.setProperty('--hz',z);sh.classList.toggle('zbig',z>=1.3);const b=sh.querySelector('.zoomlbl');if(b)b.textContent=Math.round(z*100)+'%';};
+  const dist=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+  sh.addEventListener('touchstart',e=>{if(e.touches.length===2){d0=dist(e);z0=z;}},{passive:true});
+  sh.addEventListener('touchmove',e=>{if(e.touches.length!==2||!d0)return;if(e.cancelable)e.preventDefault();
+    z=Math.min(1.8,Math.max(1,z0*dist(e)/d0));apply();},{passive:false});
+  sh.addEventListener('touchend',e=>{if(e.touches.length<2&&d0){d0=0;try{sessionStorage.setItem('zoom:'+key,String(z));}catch(x){}}});
+  sh.addEventListener('click',e=>{const b=e.target.closest('[data-zoom]');if(!b)return;e.stopPropagation();
+    z=b.dataset.zoom==='in'?Math.min(1.8,+(z+0.2).toFixed(2)):Math.max(1,+(z-0.2).toFixed(2));apply();try{sessionStorage.setItem('zoom:'+key,String(z));}catch(x){}});
+  apply();
+}
+/* الشاشة نفسها ما تتكبّر بالإصبعين (كانت تخرب ترتيب التطبيق) */
+['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();},{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.touches.length>1&&e.cancelable)e.preventDefault();},{passive:false});
 /* بطاقة الوريث: تطلع فوق الصفحة بدون ما تفتح صفحة جديدة */
 function heirCard(id){
   const h=H[id];if(!h)return;const r=calc(),rc=receipts(id),n=rc.length,share=r.bal.bld*W.bld[id]+r.bal.farm*W.farm[id];
   const bg=document.createElement('div');bg.className='modal-bg';
   bg.innerHTML=`<div class="modal sheet" role="dialog" aria-modal="true" aria-labelledby="hcT">
     <div class="sheet-grip"></div>
-    <div class="hc-head"><h4 id="hcT">${esc(h.full||h.n)}</h4><button class="iconbtn hc-x" data-hc="close" aria-label="إغلاق">✕</button></div>
+    <div class="hc-head"><h4 id="hcT">${esc(h.full||h.n)}</h4><span class="zoomctl"><button class="zbtn" data-zoom="out" aria-label="تصغير">−</button><span class="zoomlbl num">100%</span><button class="zbtn" data-zoom="in" aria-label="تكبير">+</button></span><button class="iconbtn hc-x" data-hc="close" aria-label="إغلاق">✕</button></div>
     <div class="stat3">
       <div><span>عدد الاستلامات</span><b class="num">${n}</b></div>
       <div><span>مجموع المستلم</span><b class="num">${fmt(r.received[id])}</b></div>
@@ -1236,6 +1276,7 @@ function heirCard(id){
     if(b.dataset.hc==='close')close();else if(b.dataset.hc==='pdf'){close();heirExport(id);}});
   document.addEventListener('keydown',onKey);document.body.appendChild(bg);
   sheetSwipe(bg.querySelector('.modal.sheet'),close,bg.querySelector('.hc-list'));
+  sheetPinch(bg.querySelector('.modal.sheet'),[...bg.querySelectorAll('.modal.sheet .stat3,.modal.sheet .hc-list')],'heir');
 }
 V.heirs=()=>{
   const r=calc();
@@ -2432,7 +2473,6 @@ function maybeNewsPopup(){
     <button class="iconbtn nm-x" data-nm="later" aria-label="إغلاق">✕</button>
     ${n?newsCard():''}
     ${hot?`<button class="reqline" data-go="reqs"><span class="dotp"></span><span>${esc(q.text)}</span><b class="num">${q.n}</b>${I.chev}</button>`:''}
-    ${n?`<button class="ghost nm-open" data-nm="open">${I.list}<span>شوف اللي صار</span></button>`:''}
     <div class="actions nm-acts">${n?`<button class="primary nm-ok" data-act="news-ok">تم الاطلاع</button>`:''}<button class="ghost" data-nm="later">لاحقاً</button></div></div>`;
   bg.addEventListener('click',e=>{
     if(e.target===bg||e.target.closest('[data-nm="later"]')){e.stopPropagation();NEWS.dismissed=sig;bg.remove();return;}
