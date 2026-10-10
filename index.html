@@ -847,7 +847,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='7.8';
+const APP_VER='7.9';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1174,11 +1174,11 @@ V.home=()=>{
     <div class="upd">${r.last?'آخر تحديث: '+esc(fmtDT(new Date(r.last),true)):(store.mode==='nodb'?'سجّل دخولك في Claude عشان تظهر البيانات.':'ابدأ بإضافة أول إيداع من حساب البناية أو المزارع.')}</div>
 </div>
   ${store.canWrite&&store.ver<4?`<div class="note warnbox">⚠️ الخادم شغّال على نسخة قديمة، فالإقفال السنوي ما يشتغل${store.ver<3?'، ولا حالة الطلبات وحماية حركات '+esc(store.agent||'الوكيل'):''}. حدّث كود الخادم وانشر <b>إصدار جديد</b> على نفس عملية النشر.</div>`:''}
-  ${docLine()}${myCard()}
+  ${docLine()}
   <div class="tiles">
     <button class="tile" data-go="acct" data-k="${prefs.lastAcct==='farm'?'farm':'bld'}"><span class="ic">${I.wallet}</span><span>الحسابات</span><small>${adminView()?'إيداع وخصم':'الأرصدة'}</small></button>
     <button class="tile" data-go="moves"><span class="ic">${I.list}</span>${nbadge(NEWS.cache?NEWS.cache.txNew.length+NEWS.cache.txEdit.length:0)}<span>آخر الحركات</span><small>${recent[0]?esc(KIND[recent[0].kind])+' · '+esc(dShort(recent[0].date)):'لا يوجد'}</small></button>
-    ${ownOnly()?`<button class="tile" data-tab="props"><span class="ic">${I.farm}</span><span>العقارات</span><small>البيانات والحصص</small></button>`:`<button class="tile" data-go="total"><span class="ic">${I.pie}</span>${NEWS.cache&&NEWS.cache.dist?'<i class="ndot"></i>':''}<span>النصيب الكلي</span><small>لكل وريث</small></button>`}
+    ${ownOnly()?myTile():`<button class="tile" data-go="total"><span class="ic">${I.pie}</span>${NEWS.cache&&NEWS.cache.dist?'<i class="ndot"></i>':''}<span>النصيب الكلي</span><small>لكل وريث</small></button>`}
     <button class="tile" data-go="reports"><span class="ic">${I.chart}</span><span>التقارير</span><small>شهرية وسنوية</small></button>
   </div></div>`};
 };
@@ -1554,6 +1554,12 @@ async function userAction(act,b){
   }
 }
 /* الصفحة الرئيسية للمستخدم الشخصي: نصيبه واستلاماته أول شي */
+/* زر "حسابي" للمستخدم الشخصي: مكان زر العقارات (العقارات موجودة في الشريط السفلي) */
+function myTile(){
+  const id=store.user.heir,h=H[id];if(!h)return '';
+  const r=calc(),share=r.bal.bld*W.bld[id]+r.bal.farm*W.farm[id];
+  return `<button class="tile" data-go="heir" data-id="${id}"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6"/></svg></span><span>حسابي</span><small>نصيبك <bdi class="num">${fmt(share)}</bdi></small></button>`;
+}
 function myCard(){
   if(!isHeirUser())return '';
   const id=store.user.heir,h=H[id];if(!h)return '';
