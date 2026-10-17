@@ -786,6 +786,9 @@ label.docup input,.dpage.add input{position:absolute;inset:0;opacity:0;cursor:po
 .td-r .k{color:var(--muted);flex:none}
 .td-v{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;text-align:left}
 .td-v s{color:var(--muted)}.td-v i{font-style:normal;color:var(--gold)}.td-v b{color:var(--ink)}
+.baltile .tb{font-size:19px;font-weight:800;color:var(--ink);direction:ltr;text-align:right;line-height:1.2}
+
+.closebtn{width:100%;margin:0 0 12px}
 .dpn{position:absolute;bottom:5px;right:5px;background:rgba(5,9,22,.8);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:8px}
 .doc-name{border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
 .doc-name b{font-size:16px}.doc-name small{font-size:13px;line-height:1.7;color:var(--muted)}
@@ -885,7 +888,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='8.1';
+const APP_VER='8.2';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1214,8 +1217,8 @@ V.home=()=>{
   ${store.canWrite&&store.ver<4?`<div class="note warnbox">⚠️ الخادم شغّال على نسخة قديمة، فالإقفال السنوي ما يشتغل${store.ver<3?'، ولا حالة الطلبات وحماية حركات '+esc(store.agent||'الوكيل'):''}. حدّث كود الخادم وانشر <b>إصدار جديد</b> على نفس عملية النشر.</div>`:''}
   ${docLine()}
   <div class="tiles">
-    <button class="tile" data-go="acct" data-k="${prefs.lastAcct==='farm'?'farm':'bld'}"><span class="ic">${I.wallet}</span><span>الحسابات</span><small>${adminView()?'إيداع وخصم':'الأرصدة'}</small></button>
-    <button class="tile" data-go="moves"><span class="ic">${I.list}</span>${nbadge(NEWS.cache?NEWS.cache.txNew.length+NEWS.cache.txEdit.length:0)}<span>آخر الحركات</span><small>${recent[0]?esc(KIND[recent[0].kind])+' · '+esc(dShort(recent[0].date)):'لا يوجد'}</small></button>
+    ${heirView()?balTile('bld',r)+balTile('farm',r):`<button class="tile" data-go="acct" data-k="${prefs.lastAcct==='farm'?'farm':'bld'}"><span class="ic">${I.wallet}</span><span>الحسابات</span><small>${adminView()?'إيداع وخصم':'الأرصدة'}</small></button>
+    <button class="tile" data-go="moves"><span class="ic">${I.list}</span>${nbadge(NEWS.cache?NEWS.cache.txNew.length+NEWS.cache.txEdit.length:0)}<span>آخر الحركات</span><small>${recent[0]?esc(KIND[recent[0].kind])+' · '+esc(dShort(recent[0].date)):'لا يوجد'}</small></button>`}
     ${ownOnly()?myTile():`<button class="tile" data-go="total"><span class="ic">${I.pie}</span>${NEWS.cache&&NEWS.cache.dist?'<i class="ndot"></i>':''}<span>النصيب الكلي</span><small>لكل وريث</small></button>`}
     <button class="tile" data-go="reports"><span class="ic">${I.chart}</span><span>التقارير</span><small>شهرية وسنوية</small></button>
   </div></div>`};
@@ -1629,6 +1632,12 @@ async function userAction(act,b){
   }
 }
 /* الصفحة الرئيسية للمستخدم الشخصي: نصيبه واستلاماته أول شي */
+/* شاشة الورثة (مو المدير ولا الوكيل): زر لكل حساب فيه رصيده، يفتح إيداعاته ومصروفاته */
+const heirView=()=>!store.canWrite&&!store.isAgent;
+function balTile(k,r){
+  const A=ACCTS[k],n=NEWS.cache?NEWS.cache.txNew.concat(NEWS.cache.txEdit).filter(t=>t.acct===k).length:0;
+  return `<button class="tile baltile" data-go="moves" data-k="${k}" data-lock="1"><span class="ic">${k==='bld'?I.bld:I.farm}</span>${nbadge(n)}<span>رصيد ${esc(A.short)}</span><b class="tb num">${fmt(r.bal[k])}</b><small>الإيداعات والمصروفات</small></button>`;
+}
 /* زر "حسابي" للمستخدم الشخصي: مكان زر العقارات (العقارات موجودة في الشريط السفلي) */
 function myTile(){
   const id=store.user.heir,h=H[id];if(!h)return '';
@@ -1979,6 +1988,7 @@ V.reports=(p)=>{
       <option value="all"${acct==='all'?' selected':''}>الحسابين</option><option value="bld"${acct==='bld'?' selected':''}>البناية</option><option value="farm"${acct==='farm'?' selected':''}>المزارع</option></select></div>
     <div><label class="k" for="rYear" style="margin-top:0">السنة</label><select id="rYear">${years.map(y=>`<option${y===year?' selected':''}>${y}</option>`).join('')}</select></div>
   </div></div>
+  <button class="mbtn closebtn" data-go="close"><span class="l"><span class="ic">${I.lock}</span><span>الإقفال السنوي<small class="msub">${canEditNow()?'إقفال السنة واعتمادها':'الإقفالات المعتمدة'}${lockOf()?' · مقفول لين '+esc(dShort(lockOf())):''}</small></span></span>${I.chev}</button>
   <div class="card" style="padding:10px 14px"><div class="kv"><span>رصيد أول السنة</span><b class="num">${fmt(yOpen)}</b></div>
     <div class="kv"><span>${year===String(new Date().getFullYear())?'الرصيد الحالي':'رصيد آخر السنة'}${cl?' · 🔒 مقفولة':''}</span><b class="num">${fmt(yClose)}</b></div></div>
   <div class="grid2" style="margin-bottom:12px">
@@ -1996,7 +2006,7 @@ V.reports=(p)=>{
       <span>${h.n}</span><span style="height:10px;background:var(--card2);border-radius:5px;overflow:hidden;border:1px solid var(--line)"><span style="display:block;height:100%;width:${(heirs[h.id]/hmax*100).toFixed(1)}%;background:var(--gold)"></span></span>
       <span class="num" style="font-size:13px">${fmt(heirs[h.id])}</span></div>`).join('')}</div>`:''}
   ${downloadsApi?`<div class="actions"><button class="ghost" data-act="rep-export" data-k="${acct}" data-id="${year}">تصدير تقرير ${year} PDF</button></div>`:''}
-  <div class="actions"><button class="ghost" data-go="close">الإقفال السنوي</button></div>`
+`
   :`<p class="empty">ما فيه حركات في ${year}${acct!=='all'?' في '+ACCTS[acct].short:''}.</p>`}`};
 };
 V.month=({k,id})=>{
