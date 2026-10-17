@@ -786,6 +786,35 @@ label.docup input,.dpage.add input{position:absolute;inset:0;opacity:0;cursor:po
 .td-r .k{color:var(--muted);flex:none}
 .td-v{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;text-align:left}
 .td-v s{color:var(--muted)}.td-v i{font-style:normal;color:var(--gold)}.td-v b{color:var(--ink)}
+/* ===== بطاقات العقارات: إطار رسمي فخم بزخرفة ذهبية ===== */
+.card.prop{position:relative;padding:30px 26px 34px;border:1px solid rgba(217,184,110,.8);border-radius:20px;overflow:hidden;
+  background:radial-gradient(120% 60% at 50% 0%,rgba(217,184,110,.16),transparent 62%),var(--lattice),linear-gradient(180deg,#1C2D5E 0%,#14214C 100%);
+  box-shadow:inset 0 0 0 6px rgba(10,18,44,.85),inset 0 0 0 7px rgba(217,184,110,.55),0 16px 34px rgba(3,8,24,.4)}
+.card.prop::before{content:"";position:absolute;inset:12px;pointer-events:none;
+  background:url("data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 60 60%22%3E%3Cg transform=%22%22%3E%3Cg fill=%22none%22 stroke=%22%23D9B86E%22 stroke-width=%221.6%22 stroke-linecap=%22round%22%3E%0A%3Cpath d=%22M58 2 H18 M58 2 V42%22/%3E%3Cpath d=%22M52 8 H26 M52 8 V34%22 stroke-width=%221%22/%3E%0A%3Cpath d=%22M18 2 C10 2 6 8 10 12 C13 15 18 12 16 9%22/%3E%3Cpath d=%22M58 42 C58 50 52 54 48 50 C45 47 48 42 51 44%22/%3E%0A%3Cpath d=%22M44 16 C36 18 30 24 28 32%22 stroke-width=%221.1%22/%3E%3Cpath d=%22M44 16 C46 24 40 30 32 32%22 stroke-width=%221.1%22/%3E%3C/g%3E%0A%3Cpath d=%22M52 8 l-4 4 l-4 -4 l4 -4 z%22 fill=%22%23D9B86E%22/%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%222%22 fill=%22%23D9B86E%22/%3E%3Ccircle cx=%2222%22 cy=%228%22 r=%221.4%22 fill=%22%23D9B86E%22/%3E%3Ccircle cx=%2252%22 cy=%2238%22 r=%221.4%22 fill=%22%23D9B86E%22/%3E%3C/g%3E%3C/svg%3E") top right/46px 46px no-repeat,url("data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 60 60%22%3E%3Cg transform=%22translate%2860 0%29 scale%28-1 1%29%22%3E%3Cg fill=%22none%22 stroke=%22%23D9B86E%22 stroke-width=%221.6%22 stroke-linecap=%22round%22%3E%0A%3Cpath d=%22M58 2 H18 M58 2 V42%22/%3E%3Cpath d=%22M52 8 H26 M52 8 V34%22 stroke-width=%221%22/%3E%0A%3Cpath d=%22M18 2 C10 2 6 8 10 12 C13 15 18 12 16 9%22/%3E%3Cpath d=%22M58 42 C58 50 52 54 48 50 C45 47 48 42 51 44%22/%3E%0A%3Cpath d=%22M44 16 C36 18 30 24 28 32%22 stroke-width=%221.1%22/%3E%3Cpath d=%22M44 16 C46 24 40 30 32 32%22 stroke-width=%221.1%22/%3E%3C/g%3E%0A%3Cpath d=%22M52 8 l-4 4 l-4 -4 l4 -4 z%22 fill=%22%23D9B86E%22/%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%222%22 fill=%22%23D9B86E%22/%3E%3Ccircle cx=%2222%22 cy=%228%22 r=%221.4%22 fill=%22%23D9B86E%22/%3E%3Ccircle cx=%2252%22 cy=%2238%22 r=%221.4%22 fill=%22%23D9B86E%22/%3E%3C/g%3E%3C/svg%3E") top left/46px 46px no-repeat,url("data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 60 60%22%3E%3Cg transform=%22translate%280 60%29 scale%281 -1%29%22%3E%3Cg fill=%22none%22 stroke=%22%23D9B86E%22 stroke-width=%221.6%22 stroke-linecap=%22round%22%3E%0A%3Cpath d=%22M58 2 H18 M58 2 V42%22/%3E%3Cpath d=%22M52 8 H26 M52 8 V34%22 stroke-width=%221%22/%3E%0A%3Cpath d=%22M18 2 C10 2 6 8 10 12 C13 15 18 12 16 9%22/%3E%3Cpath d=%22M58 42 C58 50 52 54 48 50 C45 47 48 42 51 44%22/%3E%0A%3Cpath d=%22M44 16 C36 18 30 24 28 32%22 stroke-width=%221.1%22/%3E%3Cpath d=%22M44 16 C46 24 40 30 32 32%22 stroke-width=%221.1%22/%3E%3C/g%3E%0A%3Cpath d=%22M52 8 l-4 4 l-4 -4 l4 -4 z%22 fill=%22%23D9B86E%22/%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%222%22 fill=%22%23D9B86E%22/%3E%3Ccircle cx=%2222%22 cy=%228%22 r=%221.4%22 fill=%22%23D9B86E%22/%3E%3Ccircle cx=%2252%22 cy=%2238%22 r=%221.4%22 fill=%22%23D9B86E%22/%3E%3C/g%3E%3C/svg%3E") bottom right/46px 46px no-repeat,url("data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 60 60%22%3E%3Cg transform=%22translate%2860 60%29 scale%28-1 -1%29%22%3E%3Cg fill=%22none%22 stroke=%22%23D9B86E%22 stroke-width=%221.6%22 stroke-linecap=%22round%22%3E%0A%3Cpath d=%22M58 2 H18 M58 2 V42%22/%3E%3Cpath d=%22M52 8 H26 M52 8 V34%22 stroke-width=%221%22/%3E%0A%3Cpath d=%22M18 2 C10 2 6 8 10 12 C13 15 18 12 16 9%22/%3E%3Cpath d=%22M58 42 C58 50 52 54 48 50 C45 47 48 42 51 44%22/%3E%0A%3Cpath d=%22M44 16 C36 18 30 24 28 32%22 stroke-width=%221.1%22/%3E%3Cpath d=%22M44 16 C46 24 40 30 32 32%22 stroke-width=%221.1%22/%3E%3C/g%3E%0A%3Cpath d=%22M52 8 l-4 4 l-4 -4 l4 -4 z%22 fill=%22%23D9B86E%22/%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%222%22 fill=%22%23D9B86E%22/%3E%3Ccircle cx=%2222%22 cy=%228%22 r=%221.4%22 fill=%22%23D9B86E%22/%3E%3Ccircle cx=%2252%22 cy=%2238%22 r=%221.4%22 fill=%22%23D9B86E%22/%3E%3C/g%3E%3C/svg%3E") bottom left/46px 46px no-repeat}
+.card.prop::after{content:"";position:absolute;inset:18px;border:1px solid rgba(217,184,110,.22);border-radius:12px;pointer-events:none}
+.card.prop>*{position:relative;z-index:1}
+.card.prop .prop-h{padding:6px 34px 16px;text-align:center;justify-content:center;margin:0 0 6px;background:url("data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 16%22%3E%3Cg fill=%22none%22 stroke=%22%23D9B86E%22 stroke-width=%221.2%22%3E%3Cpath d=%22M2 8 H44 M76 8 H118%22/%3E%3Cpath d=%22M44 8 C50 2 54 2 60 8 C66 2 70 2 76 8 C70 14 66 14 60 8 C54 14 50 14 44 8 Z%22/%3E%3C/g%3E%3Cpath d=%22M60 3 l5 5 l-5 5 l-5 -5 z%22 fill=%22%23D9B86E%22/%3E%3C/svg%3E") bottom center/150px 16px no-repeat}
+.card.prop h4{font-family:"Amiri","IBM Plex Sans Arabic",serif;font-size:23px;font-weight:700;letter-spacing:.01em;
+  background:linear-gradient(180deg,#F6E3B0,#D9B86E 60%,#B8913F);-webkit-background-clip:text;background-clip:text;color:transparent}
+.card.prop .prop-h .m{color:#C9D2EA}
+.card.prop dl{margin:12px 8px 0;padding:12px 14px;border-radius:12px;background:rgba(8,15,38,.35);border:1px solid rgba(217,184,110,.22)}
+.card.prop dt{color:#BFA46A}
+.card.prop .prop-st{margin:12px 8px 0;border-top:1px solid rgba(217,184,110,.3)}
+.card.prop details{margin:12px 22px 0}
+.card.prop details summary{color:#E3C27A;font-weight:600}
+.card.prop .prop-ed{border-color:rgba(217,184,110,.6);background:rgba(8,15,38,.5)}
+.card.prop .tag{background:rgba(217,184,110,.15);border-color:rgba(217,184,110,.5);color:#F0D79A}
+.certbtn{width:100%;margin:0 0 12px;border-color:rgba(217,184,110,.65)!important}
+.certbtn .ic,.certhero .ce{color:var(--gold)}
+.certhero{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;margin:0 0 14px;border-radius:16px;border:1px solid rgba(217,184,110,.6);background:var(--lacq);color:#fff}
+.certhero .ce{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:rgba(217,184,110,.15);flex:none}.certhero .ce svg{width:26px;height:26px}
+.certhero b{font-family:"Amiri","IBM Plex Sans Arabic",serif;font-size:20px;color:#F0D79A}.certhero small{display:block;color:#C9D2EA;font-size:13px;line-height:1.7;margin-top:2px}
+.certsum .kv{padding:4px 0}.certsum .kv.big b{font-size:20px;color:var(--gold)}.certsum .kv.mine{border-top:1px dashed var(--line);margin-top:6px;padding-top:8px}.certsum .kv.mine b{color:var(--pos)}
+.cf-chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px}.cf-chips .chip{font-size:13px}
+.certinfo .ci-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.certinfo .ref{color:var(--gold);font-weight:700}
+.certinfo dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:14px}.certinfo dt{color:var(--muted)}.certinfo dd{margin:0}.certinfo dd.num{direction:ltr;text-align:right}
+.signpad{width:100%;height:auto;aspect-ratio:8/3;background:#FCF9F1;border-radius:12px;border:1px dashed var(--hair);touch-action:none;display:block}
 .baltile .tb{font-size:19px;font-weight:800;color:var(--ink);direction:ltr;text-align:right;line-height:1.2}
 
 .closebtn{width:100%;margin:0 0 12px}
@@ -888,7 +917,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='8.2';
+const APP_VER='8.4';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1056,8 +1085,8 @@ const store={
   apply(j,fromCache){
     const prevIds=!fromCache&&this.loadedAt&&NEWS.base?new Set(state.txs.map(t=>t.id)):null;
     state.txs=(j.txs||[]);
-    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;this.docs=Array.isArray(j.docs)?j.docs:null;if(j.users)this.users=j.users;if(this.user&&H[this.user.heir])setMe(this.user.heir);
-    if(!fromCache){this.loadedAt=Date.now();saveCache(j);if(prevIds)setTimeout(()=>newsToast(prevIds),0);}
+    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;this.docs=Array.isArray(j.docs)?j.docs:null;this.certs=Array.isArray(j.certs)?j.certs:null;if(j.certCfg)this.certCfg=j.certCfg;if(j.users)this.users=j.users;if(this.user&&H[this.user.heir])setMe(this.user.heir);
+    if(!fromCache){this.loadedAt=Date.now();saveCache(j);setTimeout(()=>{if(!state.certToast&&typeof certNewApproved==='function'&&certNewApproved()){state.certToast=1;toast('📜 فيه شهادة دخل تغيّرت حالتها. شوفها من التقارير.');}},2500);if(prevIds)setTimeout(()=>newsToast(prevIds),0);}
     if(j.cfg)notif.cfg=j.cfg;
     applyProps(j.props);
     return broken;
@@ -1100,7 +1129,7 @@ const store={
 };
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&Date.now()-store.loadedAt>15000)store.refresh(false,true).catch(()=>{});});
 setInterval(()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&!isForm()&&navigator.onLine!==false){store.refresh(false,true).catch(()=>{});if(cur().v==='activity'||cur().v==='actperson')loadActivity(true);}},30000);
-function dataSig(j){const s=JSON.stringify([j.txs,j.reqs,j.closings,j.lock,j.cfg,j.docs]);let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return s.length+':'+h;}
+function dataSig(j){const s=JSON.stringify([j.txs,j.reqs,j.closings,j.lock,j.cfg,j.docs,j.certs,j.certCfg]);let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return s.length+':'+h;}
 function softRender(keep){
   if(!keep){render();return;}
   const st=scroller.scrollTop,open=[...document.querySelectorAll('details[open]')].map(d=>[...document.querySelectorAll('details')].indexOf(d));
@@ -1117,7 +1146,7 @@ function clearCache(){try{localStorage.removeItem(CACHE);}catch(e){}}
 const ME='wareeth-me';
 const getMe=()=>{try{return localStorage.getItem(ME)}catch(e){return null}};
 const setMe=v=>{try{v?localStorage.setItem(ME,v):localStorage.removeItem(ME)}catch(e){}};
-const isForm=()=>['form','propform','userform','docform'].includes(cur().v);
+const isForm=()=>['form','propform','userform','docform','certform','certcfg'].includes(cur().v);
 const PREF='wareeth-prefs';
 const prefs=Object.assign({fs:1,ns:1,swipe:true,lock:false,notify:true,theme:'auto'},(()=>{try{return JSON.parse(localStorage.getItem(PREF)||'{}')}catch(e){return {}}})());
 prefs.fs=1;prefs.ns=1; // التكبير انشال من الإعدادات: الحجم ثابت ومريح
@@ -1196,7 +1225,7 @@ const markSvg='<svg viewBox="110 40 414 380" aria-hidden="true"><defs><linearGra
 const V={};
 function reqPill(){const q=reqSummary();if(!q)return '';return `<button class="onlinepill reqpill${q.hot?' hot':''}" data-go="reqs" aria-label="${esc(q.text)}">⏳ <span class="num">${q.n}</span> ${q.hot?'بانتظارك':'طلباتك'}</button>`;}
 function roleBadge(){
-  if(store.canWrite)return `<div class="badges"><button class="rolebadge admin" data-act="settings" aria-label="حساب المدير">${I.crown}<span>حساب المدير</span></button>${store.online!=null?`<button class="onlinepill" data-go="activity"><span class="live"></span><span class="num">${store.online}</span> متصل الحين</button>`:''}${reqPill()}<button class="onlinepill userspill" data-go="users">${I.users}<span>المستخدمين</span>${(store.users||[]).length?`<span class="num">${store.users.length}</span>`:''}</button></div>`;
+  if(store.canWrite)return `<div class="badges"><button class="rolebadge admin" data-act="settings" aria-label="حساب المدير">${I.crown}<span>حساب المدير</span></button>${store.online!=null?`<button class="onlinepill" data-go="activity"><span class="live"></span><span class="num">${store.online}</span> متصل الحين</button>`:''}${reqPill()}${certPending()&&certsOn()?`<button class="onlinepill reqpill hot" data-go="certs">📜 <span class="num">${certPending()}</span> شهادة</button>`:''}<button class="onlinepill userspill" data-go="users">${I.users}<span>المستخدمين</span>${(store.users||[]).length?`<span class="num">${store.users.length}</span>`:''}</button></div>`;
   if(store.isAgent)return `<div class="badges"><button class="rolebadge agent" data-act="settings" aria-label="حساب الوكيل">${I.key}<span>حساب الوكيل · ${esc(store.agent||'')}</span></button>${reqPill()}</div>`;
   if(isHeirUser())return `<button class="rolebadge view" data-act="settings" aria-label="حسابك">${I.eye}<span>حساب ${esc(store.user.name)}${store.user.scope==='all'?'':' · حسابه الشخصي'}</span></button>`;
   return `<button class="rolebadge view" data-act="settings" aria-label="حساب الورثة">${I.eye}<span>${whoName()?esc(whoName())+' · ':''}حساب الورثة · عرض فقط</span></button>`;
@@ -1472,7 +1501,7 @@ V.heir=({id})=>{
   const own=isHeirUser()&&store.user.heir===id;
   const shareBanner=`<div class="sharebanner"><div class="sb-l">${own?'نصيبك':'نصيبه'} من الرصيد الحالي</div><div class="sb-big"><span class="num">${fmt(nb+nf)}</span> <small>د.إ</small></div>
     <div class="sb-row"><div><span>البناية <bdi class="num">${ACCTS.bld.shares[id]}%</bdi></span><b class="num">${fmt(nb)}</b></div><div><span>المزارع <bdi class="num">${ACCTS.farm.shares[id]}%</bdi></span><b class="num">${fmt(nf)}</b></div></div></div>`;
-  return {title:own?'حسابي':h.n,html:`${own?shareBanner:''}
+  return {title:own?'حسابي':h.n,html:`${own?shareBanner+certBtn('اطلبها لأي بلدية، وتنزل PDF بعد الاعتماد'):''}
   <div class="total-line"><span class="t">المبالغ المستلمة</span><span class="v">${money(r.received[id])}</span></div>
   ${rc.length?(()=>{const all=cur().all,items=rc.map((x,i)=>({x,i})).reverse(),shown=all?items:items.slice(0,3);
     return `<div class="rows">${shown.map(({x,i})=>`<button class="row" data-go="tx" data-id="${esc(x.t.id)}"><span>الاستلام ${ord(i)}<div class="m">${esc(dShort(x.t.date))} · ${ACCTS[x.t.acct].short}</div></span><span class="a num">${fmt(x.amt)}</span></button>`).join('')}</div>
@@ -1988,6 +2017,7 @@ V.reports=(p)=>{
       <option value="all"${acct==='all'?' selected':''}>الحسابين</option><option value="bld"${acct==='bld'?' selected':''}>البناية</option><option value="farm"${acct==='farm'?' selected':''}>المزارع</option></select></div>
     <div><label class="k" for="rYear" style="margin-top:0">السنة</label><select id="rYear">${years.map(y=>`<option${y===year?' selected':''}>${y}</option>`).join('')}</select></div>
   </div></div>
+  ${certBtn()}
   <button class="mbtn closebtn" data-go="close"><span class="l"><span class="ic">${I.lock}</span><span>الإقفال السنوي<small class="msub">${canEditNow()?'إقفال السنة واعتمادها':'الإقفالات المعتمدة'}${lockOf()?' · مقفول لين '+esc(dShort(lockOf())):''}</small></span></span>${I.chev}</button>
   <div class="card" style="padding:10px 14px"><div class="kv"><span>رصيد أول السنة</span><b class="num">${fmt(yOpen)}</b></div>
     <div class="kv"><span>${year===String(new Date().getFullYear())?'الرصيد الحالي':'رصيد آخر السنة'}${cl?' · 🔒 مقفولة':''}</span><b class="num">${fmt(yClose)}</b></div></div>
@@ -2901,6 +2931,7 @@ const ACT_DESC={
   'user-put':p=>'حفظ مستخدم: '+((p.user||{}).name||''),'user-del':()=>'حذف مستخدم',
   close:()=>'اعتماد إقفال','close-del':()=>'حذف إقفال تجريبي',reopen:()=>'فتح سنة مقفولة',cfg:()=>'تغيير الإعدادات',
   notify:()=>'إرسال إشعار للورثة',wa:()=>'إرسال واتساب',
+  'cert-req':p=>'طلب شهادة دخل – '+(H[(p.cert||{}).heir]?H[p.cert.heir].n:''),'cert-approve':()=>'اعتماد شهادة دخل','cert-reject':()=>'رفض شهادة دخل','cert-del':()=>'حذف طلب شهادة','cert-cfg':()=>'إعدادات الشهادة',
   'doc-put':p=>{const d=p.doc||{};return `حفظ ${DOC_T[d.type]?DOC_T[d.type].n:'مستند'} – ${H[d.heir]?H[d.heir].n:''}`;},
   'doc-del':p=>{const d=(store.docs||[]).find(x=>x.id===p.id);return d?`حذف ${DOC_T[d.type].n} – ${H[d.heir].n}`:'حذف مستند';},
   'doc-file':p=>{const d=(store.docs||[]).find(x=>x.id===p.id);return d?`عرض ${DOC_T[d.type].n} – ${H[d.heir].n}`:'عرض مستند';}
@@ -3659,6 +3690,399 @@ function docWarnPopup(){
   document.body.appendChild(bg);
 }
 
+I.cert='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v9"/><path d="M5 3v15h8"/><path d="M8 8h7M8 11.5h7M8 15h3"/><circle cx="17" cy="17" r="3"/><path d="M15.6 19.6 15 23l2-1.2 2 1.2-.6-3.4"/></svg>';
+/* =====================================================================
+   شهادة الدخل السنوي — باسم شركة إيفرستون لإدارة العقارات والصيانة
+   المستخدم يعبّي الطلب ← يرسله للاعتماد ← المدير يعتمد بالختم والتوقيع ← تنزل الشهادة PDF
+   ===================================================================== */
+const CO_AR='شركة إيفرستون لإدارة العقارات والصيانة',CO_EN='EVERSTONE PROPERTY MANAGEMENT & MAINTENANCE';
+const CERT_AUTHS=['بلدية مدينة أبوظبي','بلدية منطقة الظفرة','بلدية مدينة العين'];
+const HEIR_F=new Set(['may','bakheeta','hamda','shamma','madhheya','noura']);   // للمخاطبة: السيد / السيدة
+const CERT_ST={pending:'بانتظار الاعتماد',approved:'معتمدة',rejected:'مرفوضة'};
+const certsOn=()=>store.mode==='api'&&store.ver>=8&&Array.isArray(store.certs);
+const certCanReq=()=>certsOn()&&(store.canWrite||store.isAgent||(isHeirUser()&&!!H[store.user.heir]));
+const certList=()=>(store.certs||[]).slice().sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1)||b.at-a.at);
+const certPending=()=>(store.certs||[]).filter(c=>c.status==='pending').length;
+/* ---------- الأرقام: دخل الحساب في السنة وتوزيعه على الورثة حسب الحصص ---------- */
+function certYears(){const ys=[...new Set(state.txs.filter(t=>t.kind==='dep'&&t.from!=='رصيد افتتاحي').map(t=>(t.date||'').slice(0,4)).filter(y=>/^\d{4}$/.test(y)))].sort().reverse();
+  const cy=String(new Date().getFullYear());if(!ys.includes(cy))ys.unshift(cy);return ys.sort().reverse();}
+function certCalc(acct,year,basis){
+  let dep=0,exp=0,n=0;
+  state.txs.forEach(t=>{if(t.acct!==acct||!(t.date||'').startsWith(year)||t.from==='رصيد افتتاحي')return;
+    if(t.kind==='dep'){dep+=+t.amount||0;n++;}else if(t.kind==='exp'){exp+=+t.amount||0;n++;}});
+  dep=r2(dep);exp=r2(exp);const net=r2(dep-exp),income=basis==='net'?net:dep;
+  const cy=year===String(new Date().getFullYear());
+  const shares=HEIRS.map(h=>{const pct=+ACCTS[acct].shares[h.id]||0;return {h:h.id,name:h.full||h.n,pct,amt:r2(income*pct/100)};});
+  return {dep,exp,net,income,n,from:year+'-01-01',to:cy?todayStr():year+'-12-31',partial:cy,shares};
+}
+function certPropDesc(acct){
+  const L=PROPS.filter(p=>p.acct===acct);
+  if(acct==='bld'){const b=L[0]||P.bld;return `${b.name}${b.plot?' – قطعة رقم '+b.plot:''}${b.where?'، '+b.where:''}`;}
+  return 'المزارع ('+L.map(p=>p.name+(p.plot?' '+p.plot:'')).join('، ')+')';
+}
+function certSnapshot(heir,acct,income,auth){
+  income=r2(+income||0);const rows=certShares(acct,income),me=rows.find(x=>x.h===heir)||{pct:0,amt:0};
+  return {v:2,heir,heirName:H[heir].full||H[heir].n,f:HEIR_F.has(heir),acct,acctName:ACCTS[acct].name,auth,income,pct:me.pct,amt:me.amt,rows:rows.map(x=>[x.h,x.pct,x.amt]),at:Date.now()};
+}
+/* ---------- المبلغ كتابة (تفقيط) ---------- */
+function arWords(num){
+  const ones=['','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة','أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
+  const tens=['','','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];
+  const hund=['','مائة','مائتان','ثلاثمائة','أربعمائة','خمسمائة','ستمائة','سبعمائة','ثمانمائة','تسعمائة'];
+  const u1000=n=>{const p=[],h=Math.floor(n/100),r=n%100;if(h)p.push(hund[h]);if(r){if(r<20)p.push(ones[r]);else{const u=r%10,t=Math.floor(r/10);p.push(u?ones[u]+' و'+tens[t]:tens[t]);}}return p.join(' و');};
+  const scale=(n,one,two,few,many)=>n===1?one:n===2?two:n<=10?u1000(n)+' '+few:u1000(n)+' '+many;
+  n=Math.floor(num);if(!n)return 'صفر';
+  const parts=[],b=Math.floor(n/1e9),m=Math.floor(n%1e9/1e6),k=Math.floor(n%1e6/1e3),r=n%1e3;
+  if(b)parts.push(scale(b,'مليار','ملياران','مليارات','مليار'));
+  if(m)parts.push(scale(m,'مليون','مليونان','ملايين','مليون'));
+  if(k)parts.push(scale(k,'ألف','ألفان','آلاف','ألف'));
+  if(r)parts.push(u1000(r));
+  return parts.join(' و');
+}
+function amountWords(v){v=r2(+v||0);const d=Math.floor(v),f=Math.round((v-d)*100);
+  return 'فقط '+arWords(d)+' درهم إماراتي'+(f?' و'+arWords(f)+' فلس':'')+' لا غير';}
+/* ---------- رسم الشهادة (صفحة A4 رسمية) ---------- */
+const CERT_ASSET={};
+async function certAsset(kind){
+  if(!(store.certCfg||{})[kind])return null;
+  if(CERT_ASSET[kind]!==undefined)return CERT_ASSET[kind];
+  try{const r=await api('cert-asset',{kind});if(!r.data){CERT_ASSET[kind]=null;return null;}
+    CERT_ASSET[kind]=await new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(null);i.src='data:'+(r.mime||'image/png')+';base64,'+r.data;});}
+  catch(e){CERT_ASSET[kind]=null;}
+  return CERT_ASSET[kind];
+}
+function certSeal(c,cx,cy,R,ink){   // ختم دائري (إذا ما فيه صورة ختم مرفوعة)
+  c.save();c.translate(cx,cy);c.rotate(-0.1);c.strokeStyle=ink;c.fillStyle=ink;c.globalAlpha=.88;
+  c.lineWidth=5;c.beginPath();c.arc(0,0,R,0,Math.PI*2);c.stroke();
+  c.lineWidth=1.6;c.beginPath();c.arc(0,0,R-8,0,Math.PI*2);c.stroke();
+  c.lineWidth=2;c.beginPath();c.arc(0,0,R-36,0,Math.PI*2);c.stroke();
+  // اسم الشركة على الحلقة: كلمة كلمة عشان الحروف العربية تبقى متصلة
+  const rad=R-22,size=15;c.font=`700 ${size}px ${PDF_FONT}`;c.textAlign='center';c.textBaseline='middle';c.direction='rtl';
+  const words=['شركة','إيفرستون','لإدارة','العقارات','والصيانة'],gap=size*.5,ws=words.map(w=>c.measureText(w).width+gap),tot=ws.reduce((a,b)=>a+b,0)/rad;
+  let a=-tot/2;[...words].reverse().forEach((w,k)=>{const i=words.length-1-k,ang=a+ws[i]/rad/2;c.save();c.rotate(ang);c.translate(0,-rad);c.fillText(w,0,0);c.restore();a+=ws[i]/rad;});
+  // نجمتين أسفل الحلقة
+  [[Math.PI-.78],[Math.PI+.78]].forEach(([ang])=>{c.save();c.rotate(ang);c.translate(0,-rad);c.font=`700 14px ${PDF_FONT}`;c.fillText('★',0,0);c.restore();});
+  c.save();c.rotate(Math.PI);c.translate(0,-rad);c.rotate(Math.PI);c.font='700 11px Georgia, serif';c.direction='ltr';c.fillText('EVERSTONE',0,0);c.restore();
+  // الوسط
+  c.direction='ltr';c.font='700 46px Georgia, serif';c.fillText('E',0,-14);
+  c.font='700 13px Georgia, serif';c.fillText('EVERSTONE',0,20);c.fillRect(-30,30,60,1.5);
+  c.font='600 9px Arial, sans-serif';c.fillText('Abu Dhabi - UAE',0,40);
+  c.restore();
+}
+function certEmblem(c,cx,cy,r){   // شعار الشركة: قمم جبل داخل دائرة ذهبية
+  const g=c.createLinearGradient(cx-r,cy-r,cx+r,cy+r);g.addColorStop(0,'#F4DE9F');g.addColorStop(.5,'#C99D4A');g.addColorStop(1,'#8E6A2A');
+  c.fillStyle=g;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fill();
+  c.fillStyle='#14244F';c.beginPath();c.arc(cx,cy,r-6,0,Math.PI*2);c.fill();
+  c.strokeStyle='#D9B86E';c.lineWidth=1.5;c.beginPath();c.arc(cx,cy,r-12,0,Math.PI*2);c.stroke();
+  c.fillStyle=g;c.beginPath();c.moveTo(cx-r*.62,cy+r*.36);c.lineTo(cx-r*.22,cy-r*.3);c.lineTo(cx-r*.02,cy-r*.02);c.lineTo(cx+r*.2,cy-r*.48);c.lineTo(cx+r*.62,cy+r*.36);c.closePath();c.fill();
+  c.fillStyle='#14244F';c.beginPath();c.moveTo(cx+r*.2,cy-r*.48);c.lineTo(cx+r*.08,cy-r*.24);c.lineTo(cx+r*.2,cy-r*.3);c.lineTo(cx+r*.32,cy-r*.24);c.closePath();c.fill();
+  c.fillStyle='#D9B86E';c.fillRect(cx-r*.62,cy+r*.42,r*1.24,3);
+}
+function certCorner(c,x,y,sx,sy,GOLD){
+  c.save();c.translate(x,y);c.scale(sx,sy);c.strokeStyle=GOLD;c.fillStyle=GOLD;c.lineWidth=2.2;c.lineCap='round';
+  c.beginPath();c.moveTo(0,0);c.lineTo(120,0);c.moveTo(0,0);c.lineTo(0,120);c.stroke();
+  c.lineWidth=1.3;c.beginPath();c.moveTo(14,14);c.lineTo(84,14);c.moveTo(14,14);c.lineTo(14,84);c.stroke();
+  c.beginPath();c.moveTo(120,0);c.bezierCurveTo(138,0,146,14,136,22);c.bezierCurveTo(128,28,118,20,124,13);c.stroke();
+  c.beginPath();c.moveTo(0,120);c.bezierCurveTo(0,138,14,146,22,136);c.bezierCurveTo(28,128,20,118,13,124);c.stroke();
+  c.beginPath();c.moveTo(34,34);c.bezierCurveTo(58,34,70,46,72,64);c.moveTo(34,34);c.bezierCurveTo(34,58,46,70,64,72);c.stroke();
+  c.beginPath();c.moveTo(22,14);c.lineTo(14,22);c.lineTo(6,14);c.lineTo(14,6);c.closePath();c.fill();
+  c.beginPath();c.arc(68,68,4,0,Math.PI*2);c.fill();c.beginPath();c.arc(96,14,2.5,0,Math.PI*2);c.arc(14,96,2.5,0,Math.PI*2);c.fill();
+  c.restore();
+}
+/* ---------- رسم الشهادة: نفس نموذج شركة إيفرستون (ترويسة، بسملة، مخاطبة، بيان حصص الملاك، جدول، ختم) ---------- */
+const CERT_ORDER=['mohamed','ali','rashed','naser','saeed','eid','noura','shamma','hamda','madhheya','bakheeta','may'];
+const CO_DEF={phone:'050 411 3342، 056 859 9446',email:'everstone.ccc@gmail.com',web:'www.everstone.ae',address:'Abu Dhabi, UAE'};
+function certShares(acct,income){
+  const L=CERT_ORDER.map(h=>({h,pct:+ACCTS[acct].shares[h]||0}));const sum=L.reduce((a,x)=>a+x.pct,0)||100;
+  L.forEach(x=>x.amt=r2(income*x.pct/sum));
+  const diff=r2(income-L.reduce((a,x)=>a+x.amt,0));if(diff&&L.length)L[0].amt=r2(L[0].amt+diff);   // مواءمة المبالغ ليكون المجموع مطابق
+  return L;
+}
+function certPropText(acct){
+  if(acct==='bld')return 'البناية التجارية ملف مالي رقم (1) والكائنة في مدينة أبوظبي حوض رقم شرق 12 قطعة رقم C44';
+  const L=PROPS.filter(p=>p.acct==='farm'),F=L.filter(p=>/مزرعة/.test(p.name));
+  return 'المزارع الكائنة في منطقة الظفرة ('+(F.length?F:L).map(p=>p.name+(p.plot?' قطعة رقم '+p.plot:'')).join('، ')+')';
+}
+function certWatermark(c,cx,cy){
+  c.save();c.translate(cx,cy);c.rotate(-0.42);c.globalAlpha=.16;
+  const GOLD='#C9A86A',GRAY='#8E97AE';
+  c.strokeStyle=GOLD;c.lineWidth=7;pdfRR(c,-150,-430,190,210,26);c.stroke();
+  c.fillStyle=GOLD;c.font='700 190px Georgia, serif';c.textAlign='center';c.textBaseline='middle';c.direction='ltr';c.fillText('E',-55,-322);
+  c.fillStyle=GRAY;c.font='700 150px Georgia, serif';c.fillText('EVERSTONE',30,-120);
+  c.strokeStyle=GOLD;c.lineWidth=3;c.beginPath();c.moveTo(-330,-30);c.lineTo(380,-30);c.stroke();
+  c.save();c.translate(30,-30);c.rotate(Math.PI/4);c.fillStyle=GOLD;c.fillRect(-9,-9,18,18);c.restore();
+  c.fillStyle=GRAY;c.font='400 54px Arial, sans-serif';c.fillText('Abu Dhabi - UAE',30,30);
+  c.fillStyle=GOLD;c.font='400 34px Arial, sans-serif';c.fillText('PROPERTY MANAGEMENT & MAINTENANCE',30,90);
+  [[-470,-140],[300,-370]].forEach(([x,y])=>{for(let k=0;k<3;k++){c.strokeStyle=k===1?GRAY:GOLD;c.lineWidth=4;c.beginPath();c.moveTo(x,y+k*26);c.lineTo(x+260,y+k*26-60);c.stroke();}});
+  c.restore();
+}
+async function certCanvas(cert,scale){
+  await pdfPrep();
+  const d=cert.data||{},approved=cert.status==='approved',W=PG.w,PH=PG.h,cfg=Object.assign({},CO_DEF,store.certCfg||{});
+  if(!cfg.phone)cfg.phone=CO_DEF.phone;if(!cfg.email)cfg.email=CO_DEF.email;if(!cfg.web)cfg.web=CO_DEF.web;if(!cfg.address)cfg.address=CO_DEF.address;
+  const cv=document.createElement('canvas');cv.width=Math.round(W*scale);cv.height=Math.round(PH*scale);
+  const c=cv.getContext('2d');c.setTransform(scale,0,0,scale,0,0);c.imageSmoothingQuality='high';
+  const NAVY='#1C2A4A',GOLD='#B8913F',TEAL='#2B6A82',TEALH='#1F5E76',INK='#1E1E1E',MUTED='#6B7286',AR=`"IBM Plex Sans Arabic", Tahoma, Arial, sans-serif`;
+  const T=(s,x,y,o={})=>{c.font=o.font||`${o.w||400} ${o.size||22}px ${AR}`;c.fillStyle=o.color||INK;c.textBaseline='middle';s=String(s??'');
+    c.direction=o.ltr?'ltr':'rtl';c.textAlign=o.align||'right';c.fillText(o.max?pdfFit(c,s,o.max):s,x,y);return c.measureText(s).width;};
+  c.fillStyle='#FFFFFF';c.fillRect(0,0,W,PH);
+  certWatermark(c,W/2+40,PH*.66);
+  // الإطار
+  c.strokeStyle=NAVY;c.lineWidth=2.2;c.strokeRect(36,36,W-72,PH-72);
+  // الترويسة: يسار بالإنجليزي والعربي، يمين وسائل التواصل
+  T('EVERSTONE',104,76,{font:'700 32px Georgia, "Times New Roman", serif',color:NAVY,align:'left',ltr:true});
+  const w2=T('PROPERTY MANAGEMENT & MAINTENANCE',104,118,{font:'700 29px Arial, Helvetica, sans-serif',color:GOLD,align:'left',ltr:true});
+  T('إيفرستون لإدارة العقارات والصيانة',104+w2,160,{size:27,w:700,color:NAVY});
+  const contacts=String(cfg.phone).split(/[،,]/).map(x=>x.trim()).filter(Boolean).concat([cfg.email,cfg.web,cfg.address].filter(Boolean)).slice(0,6);
+  contacts.forEach((x,i)=>{const yy=84+i*29;c.fillStyle=GOLD;c.beginPath();c.arc(835,yy,7,0,Math.PI*2);c.fill();T(x,852,yy,{font:'400 18px Arial, Helvetica, sans-serif',color:NAVY,align:'left',ltr:true,max:W-900});});
+  // البسملة والتاريخ
+  T('بسم الله الرحمن الرحيم',W/2,278,{size:20,w:700,align:'center'});
+  const dt=new Date(approved&&cert.apAt?cert.apAt:(cert.at||Date.now()));
+  T('التاريخ: '+dt.getFullYear()+'/'+(dt.getMonth()+1)+'/'+dt.getDate(),W-108,314,{size:26});
+  // المخاطبة
+  T('السادة / '+(d.auth||cert.auth||'')+'.   المحترمين',W-108,380,{size:25});
+  T('تحية طيبة وبعد،،،',W-108,414,{size:25});
+  // الفقرة (اسم الشركة بالخط العريض)
+  const seg=[['تشهد شركة',0],['إيفرستون لإدارة العقارات والصيانة',1],['بأن '+certPropText(d.acct||cert.acct)+' هي ملك ورثة / مبارك علي محمد القصيلي المنصوري وتدار عن طريق شركة',0],['إيفرستون لإدارة العقارات والصيانة',1]];
+  const words=[];seg.forEach(([t,b])=>t.split(/\s+/).filter(Boolean).forEach(w=>words.push({w,b})));
+  const fz=26,maxW=W-216,sp=7;let line=[],lw=0,y=468;const lines=[];
+  words.forEach(o=>{c.font=`${o.b?700:400} ${fz}px ${AR}`;o.width=c.measureText(o.w).width;if(lw+o.width>maxW&&line.length){lines.push(line);line=[];lw=0;}line.push(o);lw+=o.width+sp;});
+  if(line.length)lines.push(line);
+  lines.forEach((L,li)=>{let x=W-108;const last=li===lines.length-1,extra=last?0:(maxW-L.reduce((a,o)=>a+o.width,0)-sp*(L.length-1))/Math.max(1,L.length-1);
+    L.forEach(o=>{c.font=`${o.b?700:400} ${fz}px ${AR}`;c.fillStyle=INK;c.textBaseline='middle';c.direction='rtl';c.textAlign='right';c.fillText(o.w,x,y);x-=o.width+sp+extra;});y+=38;});
+  // بيان حصص الملاك
+  T('بيان حصص الملاك',W/2,y+8,{size:29,w:700,color:TEAL,align:'center'});y+=30;
+  c.fillStyle='#F7F1E5';c.fillRect(108,y,W-216,104);c.strokeStyle='#B9A47A';c.lineWidth=1.4;c.strokeRect(108,y,W-216,104);c.beginPath();c.moveTo(W/2,y);c.lineTo(W/2,y+104);c.stroke();
+  T('مجموع الحصص: 100 حصة',W/2+(W/2-108)/2,y+52,{size:23,w:700,color:'#3A3A3A',align:'center'});
+  T('الدخل السنوي المتوقع: '+fmt0(d.income)+' درهم',108+(W/2-108)/2,y+52,{size:23,w:700,color:'#3A3A3A',align:'center',max:W/2-140});
+  y+=128;
+  c.font=`400 17px ${AR}`;pdfWrap(c,`فيما يلي توزيع الدخل السنوي المتوقع للعقار على الملاك وفق نسب الحصص الواردة في كشف الملكية، مع مواءمة المبالغ حسابياً ليكون إجمالي التوزيع السنوي ${fmt0(d.income)} درهم.`,W-216).forEach(l=>{T(l,W-108,y,{size:17});y+=26;});
+  y+=14;
+  // الجدول
+  const X0=108,TW=W-216,cols=[[TW*.083,'م'],[TW*.385,'اسم المالك'],[TW*.21,'النسبة'],[TW*.322,'الحصة السنوية']];
+  const xs=[];let xr=X0+TW;cols.forEach(k=>{xs.push([xr-k[0],xr]);xr-=k[0];});
+  const HH=62,RH=40,rows=(d.rows||certShares(d.acct||cert.acct,d.income||0).map(x=>[x.h,x.pct,x.amt]));
+  c.fillStyle=TEALH;c.fillRect(X0,y,TW,HH);
+  cols.forEach((k,i)=>{const [l,r]=xs[i];T(k[1],(l+r)/2,y+HH/2+(i===0?-12:6),{size:16,w:700,color:'#FFFFFF',align:'center'});});
+  c.strokeStyle='#8FA2B4';c.lineWidth=1.2;
+  rows.forEach(([h,pct,amt],i)=>{const yy=y+HH+i*RH;c.strokeRect(X0,yy,TW,RH);
+    T(String(i+1),(xs[0][0]+xs[0][1])/2,yy+RH/2,{font:'400 18px Arial, sans-serif',align:'center',ltr:true});
+    T(certName(h),(xs[1][0]+xs[1][1])/2,yy+RH/2,{size:17,w:700,align:'center',max:xs[1][1]-xs[1][0]-16});
+    T((+pct).toFixed(2)+'%',(xs[2][0]+xs[2][1])/2,yy+RH/2,{font:'700 18px Arial, sans-serif',align:'center',ltr:true});
+    T(fmt(amt)+' د.إ',xs[3][0]+24,yy+RH/2,{font:`700 18px Arial, ${AR}`,align:'left',ltr:true});});
+  const tb=y+HH+rows.length*RH;c.strokeRect(X0,y,TW,tb-y);
+  for(let i=1;i<cols.length;i++){c.beginPath();c.moveTo(xs[i][1],y);c.lineTo(xs[i][1],tb);c.stroke();}
+  y=tb+40;
+  // الملاحظات (يمين) والختم (يسار)
+  T('ملاحظة:',W-108,y,{size:17});y+=26;
+  T('وقد اعطيت هذه الشهادة بناء على طلب المالك ودون أدنى مسؤولية على الشركة',W-108,y,{size:17});y+=48;
+  T('وتفضلوا بقبول فائق الاحترام ،،،،،',W-108,y,{size:17});y+=26;
+  T('• تعتبر الشهادة ملغاة في حالة وجود اي شطب او تعديل',W-108,y,{size:17});
+  const sy=Math.min(tb+112,PH-160);
+  if(approved){
+    const stamp=await certAsset('stamp'),sign=await certAsset('sign');
+    if(stamp){const k=Math.min(230/stamp.width,210/stamp.height);c.drawImage(stamp,300-stamp.width*k/2,sy-stamp.height*k/2,stamp.width*k,stamp.height*k);}
+    else certSeal(c,300,sy,100,'#1F5DB8');
+    if(sign){const k=Math.min(200/sign.width,70/sign.height);c.drawImage(sign,560-sign.width*k/2,sy-10-sign.height*k/2,sign.width*k,sign.height*k);
+      if(cfg.signer)T(cfg.signer,560,sy+42,{size:16,color:MUTED,align:'center',max:220});}
+  }
+  // المرجع والتحقق (صغير أسفل الإطار)
+  if(cert.ref)T('الرقم المرجعي: '+cert.ref+(approved?' · معتمدة إلكترونياً':''),W/2,PH-56,{size:14,color:MUTED,align:'center'});
+  if(!approved){c.save();c.translate(W/2,PH/2);c.rotate(-Math.PI/7);c.globalAlpha=.1;T(cert.status==='rejected'?'مرفوضة':'مسودة — بانتظار الاعتماد',0,0,{size:92,w:700,color:'#A8473A',align:'center'});c.restore();}
+  return cv;
+}
+const fmt0=v=>{v=+v||0;return Math.abs(v-Math.round(v))<0.005?Math.round(v).toLocaleString('en-US'):fmt(v);};
+function certName(h){const x=H[h];if(!x)return h;return x.full||x.n;}
+
+async function certPdf(cert){
+  const done=busy('جاري تجهيز الشهادة…');
+  try{const cv=await certCanvas(cert,PDF_RS);const url=cv.toDataURL('image/jpeg',PDF_Q);cv.width=cv.height=1;
+    const blob=await pdfBlob([url]);done();offerFile(blob,pdfName('شهادة دخل '+(cert.data&&cert.data.acctName||'')+' '+cert.year+' - '+(H[cert.heir]?H[cert.heir].n:'')));}
+  catch(e){done();console.error(e);toast('ما قدرت أجهز الشهادة. حاول مرة ثانية.');}
+}
+async function certPreview(cert){
+  const done=busy('جاري تجهيز المعاينة…');let cv;
+  try{cv=await certCanvas(cert,1);}catch(e){done();toast('ما قدرت أعرض المعاينة.');return;}
+  done();
+  const bg=document.createElement('div');bg.className='modal-bg';
+  bg.innerHTML=`<div class="modal sheet docview" role="dialog" aria-modal="true" aria-labelledby="cvT"><div class="sheet-grip"></div>
+    <div class="hc-head"><h4 id="cvT">معاينة الشهادة</h4><button class="zreset num" data-zr hidden>100%</button><button class="iconbtn hc-x" data-cv="close" aria-label="إغلاق">✕</button></div>
+    <div class="hc-vp"><div class="hc-sizer"><div class="hc-body"><img class="dv-img" alt="الشهادة" src="${cv.toDataURL('image/jpeg',.9)}"></div></div></div>
+    <div class="actions"><button class="ghost" data-cv="close">إغلاق</button></div></div>`;
+  const close=()=>bg.remove();
+  bg.addEventListener('click',e=>{e.stopPropagation();if(e.target===bg||e.target.closest('[data-cv="close"]'))close();});
+  document.body.appendChild(bg);const sh=bg.querySelector('.modal.sheet');sheetSwipe(sh,close,bg.querySelector('.hc-vp'));
+  const im=bg.querySelector('img');const z=()=>pageZoom(sh);if(im.complete)z();else im.onload=z;
+}
+/* ---------- الصفحات ---------- */
+function certBtn(sub){
+  if(!certsOn()||(!certCanReq()&&!(store.certs||[]).length))return '';
+  const nw=certNewApproved();
+  return `<button class="mbtn certbtn" data-go="certs"><span class="l"><span class="ic">${I.cert}</span><span>شهادة الدخل السنوي${nw?' <span class="ntag new">جاهزة</span>':''}<small class="msub">${sub||'بختم '+CO_AR.replace('شركة ','')}</small></span></span>${I.chev}</button>`;
+}
+function certSeen(){try{return JSON.parse(localStorage.getItem('wareeth-certseen')||'{}')||{};}catch(e){return {};}}
+function certNewApproved(){const s=certSeen();return (store.certs||[]).filter(c=>c.status!=='pending'&&s[c.id]!==c.status&&!(store.canWrite)).length;}
+function certMarkSeen(){const s=certSeen();(store.certs||[]).forEach(c=>{if(c.status!=='pending')s[c.id]=c.status;});try{localStorage.setItem('wareeth-certseen',JSON.stringify(s));}catch(e){}}
+const certStPill=c=>`<span class="dpill ${c.status==='approved'?'ok':c.status==='rejected'?'exp':'soon'}">${CERT_ST[c.status]}</span>`;
+V.certs=()=>{
+  if(!certsOn())return {title:'شهادة الدخل',html:`<p class="empty">${store.mode==='api'&&store.ver<8?'حدّث كود الخادم (Code) للإصدار الجديد عشان تشتغل الشهادات.':'طلب الشهادة يحتاج رقم سري خاص فيك. اطلب من المدير يعطيك رقمك.'}</p>`};
+  const L=certList();setTimeout(certMarkSeen,1200);
+  return {title:'شهادة الدخل السنوي',html:`
+  <div class="certhero"><span class="ce">${I.cert}</span><div><b>شهادة دخل سنوي رسمية</b><small>تصدر باسم ${CO_AR}، وتوضح دخل البناية أو المزارع في السنة ونصيب كل وارث، بعد اعتماد المدير وختمها.</small></div></div>
+  ${certCanReq()?`<button class="primary" data-act="cert-new" style="margin:0 0 14px">طلب شهادة جديدة</button>`:''}
+  ${store.canWrite?`<button class="mbtn" data-go="certcfg" style="margin-bottom:14px"><span class="l"><span class="ic">${I.gear}</span><span>إعدادات الشهادة<small class="msub">الختم والتوقيع وبيانات الشركة${store.certCfg&&store.certCfg.stamp?' · الختم مرفوع':''}</small></span></span>${I.chev}</button>`:''}
+  ${L.length?`<h3 class="sec">${store.canWrite||store.isAgent?'الطلبات':'طلباتك'}</h3><div class="rows">${L.map(c=>`<button class="row" data-go="cert" data-id="${esc(c.id)}"><span>${esc(H[c.heir]?H[c.heir].n:'')} · ${esc(ACCTS[c.acct]?ACCTS[c.acct].short:'')} · <bdi class="num">${fmt0((c.data||{}).income||0)}</bdi>
+      <div class="m">${esc(c.auth)} · ${esc(dShort(new Date(c.at)))}${c.ref?' · <bdi class="num">'+esc(c.ref)+'</bdi>':''}</div></span>${certStPill(c)}</button>`).join('')}</div>`
+    :'<p class="empty">ما فيه طلبات للحين.</p>'}`};
+};
+function certFormInit(){
+  state.cf={heir:isHeirUser()?store.user.heir:'',auth:CERT_AUTHS[0],other:'',acct:'bld',income:''};certFillIncome(state.cf);
+}
+function certRefYears(acct){const cy=String(new Date().getFullYear()),py=String(+cy-1);return {cy,py,last:certCalc(acct,py,'gross').dep,now:certCalc(acct,cy,'gross').dep};}
+function certFillIncome(f){const r=certRefYears(f.acct);f.income=String(Math.round(r.last||r.now||0));}
+function readCF(){const f=state.cf;if(!f)return;const v=id=>{const e=document.getElementById(id);return e?e.value:null;};
+  if(v('cf_heir')!=null)f.heir=v('cf_heir');if(v('cf_auth')!=null)f.auth=v('cf_auth');if(v('cf_other')!=null)f.other=v('cf_other').trim();
+  if(v('cf_income')!=null)f.income=normDig(v('cf_income')).replace(/[^\d.]/g,'');}
+const cfAuth=f=>f.auth==='other'?f.other:f.auth;
+V.certform=()=>{
+  const f=state.cf;if(!f)return {title:'طلب شهادة',html:''};
+  const inc=+f.income||0,rows=certShares(f.acct,inc),me=f.heir&&rows.find(x=>x.h===f.heir),r=certRefYears(f.acct);
+  return {title:'طلب شهادة دخل',html:`
+  ${isHeirUser()?`<p class="doc-who">${esc(H[f.heir].full)}</p>`:`<label class="k" for="cf_heir">صاحب الطلب (الوريث) *</label><select id="cf_heir"><option value="">اختر الوريث</option>${HEIRS.map(h=>`<option value="${h.id}"${f.heir===h.id?' selected':''}>${esc(h.full||h.n)}</option>`).join('')}</select>`}
+  <label class="k" for="cf_auth">الجهة المقدّمة إليها *</label>
+  <select id="cf_auth">${CERT_AUTHS.map(a=>`<option${f.auth===a?' selected':''}>${a}</option>`).join('')}<option value="other"${f.auth==='other'?' selected':''}>جهة أخرى…</option></select>
+  ${f.auth==='other'?`<input id="cf_other" value="${esc(f.other)}" maxlength="80" placeholder="اكتب اسم الجهة" style="margin-top:8px">`:''}
+  <label class="k">الدخل *</label>
+  <div class="seg"><button data-cf-acct="bld" aria-pressed="${f.acct==='bld'}">دخل البناية</button><button data-cf-acct="farm" aria-pressed="${f.acct==='farm'}">دخل المزارع</button></div>
+  <label class="k" for="cf_income">الدخل السنوي المتوقع (درهم) *</label>
+  <input id="cf_income" inputmode="decimal" value="${esc(f.income)}" dir="ltr" style="text-align:right;font-size:20px;font-weight:700" placeholder="مثلاً 400000">
+  <div class="chips cf-chips"><button class="chip" data-cf-inc="${Math.round(r.last)}">دخل ${r.py}: <bdi class="num">${fmt0(r.last)}</bdi></button><button class="chip" data-cf-inc="${Math.round(r.now)}">${r.cy} حتى الآن: <bdi class="num">${fmt0(r.now)}</bdi></button></div>
+  <div class="card certsum">
+    <div class="kv big"><span>الدخل السنوي المتوقع</span><b class="num">${fmt0(inc)} د.إ</b></div>
+    ${me?`<div class="kv mine"><span>حصة ${esc(H[f.heir].n)} (<bdi class="num">${(+me.pct).toFixed(2)}%</bdi>)</span><b class="num">${fmt(me.amt)}</b></div>`:''}
+    <p class="m" style="margin:6px 0 0;color:var(--muted);font-size:12.5px">الشهادة فيها جدول حصص الملاك الـ 12 وتوزيع هذا الدخل عليهم، مثل نموذج الشركة.</p>
+  </div>
+  <p class="note">الطلب يوصل للمدير يراجعه ويعتمده بختم الشركة، بعدها تقدر تنزل الشهادة PDF.</p>
+  <div class="err" id="cfErr"></div>
+  <div class="actions"><button class="ghost" data-act="cert-preview-form">معاينة</button></div>
+  <button class="primary" data-act="cert-send">إرسال للاعتماد والتوقيع</button>`};
+};
+V.cert=({id})=>{
+  const c=(store.certs||[]).find(x=>x.id===id);if(!c)return {title:'الشهادة',html:'<p class="empty">الطلب ما عاد موجود.</p>'};
+  const d=c.data||{},mine=isHeirUser()&&store.user.heir===c.heir,r=certRefYears(c.acct),inc=d.income||0,me=(d.rows||[]).find(x=>x[0]===c.heir)||[0,d.pct||0,d.amt||0];
+  return {title:'شهادة دخل '+(ACCTS[c.acct]?ACCTS[c.acct].short:''),html:`
+  <div class="card certinfo">
+    <div class="ci-h">${certStPill(c)}${c.ref?`<bdi class="num ref">${esc(c.ref)}</bdi>`:''}</div>
+    <dl><dt>الوريث</dt><dd>${esc(H[c.heir]?H[c.heir].full:'')}</dd><dt>الجهة</dt><dd>${esc(c.auth)}</dd><dt>الدخل</dt><dd>${esc(ACCTS[c.acct]?ACCTS[c.acct].name:'')}</dd>
+      <dt>الدخل السنوي</dt><dd class="num">${fmt0(inc)} د.إ</dd><dt>حصته</dt><dd class="num">${fmt(me[2])} (${(+me[1]).toFixed(2)}%)</dd>
+      <dt>طلبها</dt><dd>${esc(c.by)} · ${esc(fmtDT(new Date(c.at)))}</dd>${c.apAt?`<dt>${c.status==='approved'?'اعتمدها':'رفضها'}</dt><dd>${esc(c.apBy)} · ${esc(fmtDT(new Date(c.apAt)))}</dd>`:''}</dl>
+    ${c.status==='rejected'&&c.reason?`<div class="doc-warn exp">سبب الرفض: ${esc(c.reason)}</div>`:''}
+  </div>
+  ${store.canWrite&&c.status==='pending'?`<label class="k" for="ca_income">الدخل السنوي في الشهادة (تقدر تعدّله قبل الاعتماد)</label>
+    <input id="ca_income" inputmode="decimal" value="${esc(String(inc))}" dir="ltr" style="text-align:right;font-size:20px;font-weight:700">
+    <p class="m" style="color:var(--muted);font-size:12.5px;margin:6px 0 0">للمقارنة: دخل ${r.py} الفعلي <bdi class="num">${fmt0(r.last)}</bdi> · ${r.cy} حتى الآن <bdi class="num">${fmt0(r.now)}</bdi></p>`:''}
+  ${c.status==='approved'?`<button class="primary" data-act="cert-pdf" data-id="${esc(c.id)}">تحميل الشهادة PDF</button>`:''}
+  <div class="actions"><button class="ghost" data-act="cert-preview" data-id="${esc(c.id)}">معاينة الشهادة</button></div>
+  ${store.canWrite&&c.status==='pending'?`<button class="primary" data-act="cert-approve" data-id="${esc(c.id)}">اعتماد مع الختم</button>
+    <button class="btn-danger" style="width:100%;margin-top:10px" data-act="cert-reject" data-id="${esc(c.id)}">رفض الطلب</button>`:''}
+  ${(c.status!=='approved'&&(mine||store.isAgent||store.canWrite))||(store.canWrite)?`<div class="doc-more" style="justify-content:center;margin-top:14px"><button class="linkbtn neg" data-act="cert-del" data-id="${esc(c.id)}">حذف الطلب</button></div>`:''}`};
+};
+V.certcfg=()=>{
+  if(!store.canWrite)return {title:'إعدادات الشهادة',html:'<p class="empty">للمدير بس.</p>'};
+  const g=store.certCfg||{},f=state.ccf||(state.ccf={signer:g.signer||'',title:g.title||'',license:g.license||'',phone:g.phone||CO_DEF.phone,email:g.email||CO_DEF.email,web:g.web||CO_DEF.web,address:g.address||CO_DEF.address});
+  const inp=(k,l,ph,ltr)=>`<label class="k" for="cc_${k}">${l}</label><input id="cc_${k}" value="${esc(f[k])}" maxlength="120" placeholder="${ph}"${ltr?' dir="ltr" style="text-align:right"':''}>`;
+  return {title:'إعدادات الشهادة',html:`
+  ${inp('signer','اسم المفوّض بالتوقيع','مثلاً: سعيد مبارك القصيلي')}${inp('title','المسمّى','مثلاً: المدير العام')}
+  <p class="note" style="margin-top:4px">بيانات التواصل تطلع في ترويسة الشهادة مثل نموذج الشركة.</p>
+  ${inp('phone','أرقام الهاتف (افصل بفاصلة)','050 411 3342، 056 859 9446',1)}${inp('email','البريد الإلكتروني','',1)}${inp('web','الموقع','www.everstone.ae',1)}${inp('address','العنوان','Abu Dhabi, UAE',1)}
+  <h3 class="sec">ختم الشركة</h3>
+  <div class="card"><p class="m" style="margin:0 0 10px;color:var(--muted)">${g.stamp?'✓ صورة الختم مرفوعة وبتطلع على الشهادات المعتمدة.':'ما فيه صورة ختم، فالشهادة تطلع بختم دائري مرسوم باسم الشركة. الأفضل ترفع صورة الختم الحقيقي (PNG بخلفية شفافة أو بيضاء).'}</p>
+    <div class="actions" style="margin-top:0"><label class="ghost docup">${g.stamp?'تغيير صورة الختم':'رفع صورة الختم'}<input type="file" accept="image/png,image/jpeg" data-cc-up="stamp"></label>${g.stamp?`<button class="ghost" data-act="cert-asset-del" data-k="stamp">حذف</button>`:''}</div></div>
+  <h3 class="sec">التوقيع</h3>
+  <div class="card"><p class="m" style="margin:0 0 10px;color:var(--muted)">${g.sign?'✓ التوقيع محفوظ ويطلع جنب الختم.':'اختياري: نموذج الشركة فيه الختم بس. إذا تبي توقيع جنبه، وقّع بإصبعك هنا أو ارفع صورته.'}</p>
+    <canvas id="signPad" class="signpad" width="640" height="240"></canvas>
+    <div class="actions"><button class="ghost" data-act="sign-clear">مسح</button><label class="ghost docup">رفع صورة<input type="file" accept="image/png,image/jpeg" data-cc-up="sign"></label>${g.sign?`<button class="ghost" data-act="cert-asset-del" data-k="sign">حذف</button>`:''}</div></div>
+  <div class="err" id="ccErr"></div>
+  <button class="primary" data-act="cert-cfg-save">حفظ الإعدادات</button>
+  <div class="actions"><button class="ghost" data-act="cert-sample">معاينة شهادة تجريبية</button></div>`};
+};
+function readCCF(){const f=state.ccf;if(!f)return;['signer','title','license','phone','email','web','address'].forEach(k=>{const e=document.getElementById('cc_'+k);if(e)f[k]=e.value.trim();});}
+/* لوحة التوقيع بالإصبع */
+function signPadInit(){
+  const cv=document.getElementById('signPad');if(!cv||cv.dataset.on)return;cv.dataset.on='1';
+  const g=cv.getContext('2d');g.lineWidth=5;g.lineCap='round';g.lineJoin='round';g.strokeStyle='#1D3A8A';
+  let draw=false,last=null;const pt=e=>{const r=cv.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return [(t.clientX-r.left)*cv.width/r.width,(t.clientY-r.top)*cv.height/r.height];};
+  const down=e=>{draw=true;last=pt(e);state.signDirty=true;e.preventDefault();},move=e=>{if(!draw)return;const p=pt(e);g.beginPath();g.moveTo(last[0],last[1]);g.lineTo(p[0],p[1]);g.stroke();last=p;e.preventDefault();},up=()=>{draw=false;};
+  cv.addEventListener('pointerdown',down);cv.addEventListener('pointermove',move);addEventListener('pointerup',up);
+  cv.addEventListener('touchstart',down,{passive:false});cv.addEventListener('touchmove',move,{passive:false});cv.addEventListener('touchend',up);
+}
+function signPadPng(){const cv=document.getElementById('signPad');if(!cv||!state.signDirty)return null;
+  const g=cv.getContext('2d'),d=g.getImageData(0,0,cv.width,cv.height).data;let x0=cv.width,y0=cv.height,x1=0,y1=0;
+  for(let y=0;y<cv.height;y++)for(let x=0;x<cv.width;x++)if(d[(y*cv.width+x)*4+3]>10){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
+  if(x1<=x0)return null;const o=document.createElement('canvas');o.width=x1-x0+20;o.height=y1-y0+20;o.getContext('2d').drawImage(cv,x0-10,y0-10,o.width,o.height,0,0,o.width,o.height);
+  return b64of(o.toDataURL('image/png'));}
+async function imgFileB64(f,max){const cv=await imgCanvas(f,max||900);const png=f.type==='image/png';
+  if(!png){return {mime:'image/jpeg',data:b64of(cv.toDataURL('image/jpeg',.92))};}
+  // نحتفظ بالشفافية للـ PNG
+  const url=URL.createObjectURL(f);try{const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url;});
+    const k=Math.min(1,(max||900)/Math.max(im.width,im.height)),o=document.createElement('canvas');o.width=Math.round(im.width*k);o.height=Math.round(im.height*k);o.getContext('2d').drawImage(im,0,0,o.width,o.height);
+    return {mime:'image/png',data:b64of(o.toDataURL('image/png'))};}finally{URL.revokeObjectURL(url);}}
+async function certAction(act,b){
+  if(act==='cert-new'){certFormInit();go('certform');return;}
+  if(act==='cert-preview-form'||act==='cert-send'){
+    readCF();const f=state.cf,err=document.getElementById('cfErr');
+    if(!f.heir){err.textContent='اختر الوريث.';return;}const auth=cfAuth(f);if(!auth){err.textContent='اكتب اسم الجهة.';return;}
+    if(!(+f.income>0)){err.textContent='اكتب الدخل السنوي المتوقع.';return;}
+    const data=certSnapshot(f.heir,f.acct,f.income,auth);
+    if(act==='cert-preview-form'){certPreview({status:'pending',heir:f.heir,acct:f.acct,auth,at:Date.now(),data});return;}
+    const done=busy('جاري إرسال الطلب…');
+    try{const r=await api('cert-req',{cert:{heir:f.heir,acct:f.acct,year:String(new Date().getFullYear()),basis:'gross',auth,data}});done();
+      if(!store.applyRes(r))await store.refresh();state.cf=null;back();render();toast('انرسل الطلب للمدير للاعتماد والتوقيع');}
+    catch(e){done();err.textContent='ما انرسل: '+apiErr(e);}
+    return;}
+  const c=(store.certs||[]).find(x=>x.id===b.dataset.id);
+  const caInc=()=>{const e=document.getElementById('ca_income');return e?+normDig(e.value).replace(/[^\d.]/g,'')||0:((c&&c.data&&c.data.income)||0);};
+  if(act==='cert-preview'&&c){const view=c.status==='approved'?c:Object.assign({},c,{data:certSnapshot(c.heir,c.acct,caInc(),c.auth)});certPreview(view);return;}
+  if(act==='cert-pdf'&&c){certPdf(c);return;}
+  if(act==='cert-approve'&&c){
+    if(!(store.certCfg||{}).stamp&&!await ask('اعتماد الشهادة','ما رفعت صورة ختم الشركة، فبيطلع ختم مرسوم باسم الشركة. تبي تعتمدها كذا؟ (تقدر ترفع الختم من إعدادات الشهادة)','اعتماد'))return;
+    else if((store.certCfg||{}).stamp&&!await ask('اعتماد الشهادة','بتنختم الشهادة بختم الشركة بدخل سنوي '+fmt0(caInc())+' درهم، ويقدر '+(H[c.heir]?H[c.heir].n:'')+' ينزلها PDF.','اعتماد'))return;
+    const done=busy('جاري الاعتماد…');
+    if(!(caInc()>0)){toast('اكتب الدخل السنوي.');return;}
+    try{const r=await api('cert-approve',{id:c.id,data:certSnapshot(c.heir,c.acct,caInc(),c.auth)});done();if(!store.applyRes(r))await store.refresh();render();toast('تم اعتماد الشهادة'+(r.ref?' · '+r.ref:''));}
+    catch(e){done();toast('ما انعتمدت: '+apiErr(e));}return;}
+  if(act==='cert-reject'&&c){const reason=await askText('رفض الطلب','اكتب سبب الرفض (يوصل للوارث)');if(reason==null)return;
+    const done=busy('جاري الرفض…');try{const r=await api('cert-reject',{id:c.id,reason});done();if(!store.applyRes(r))await store.refresh();render();toast('تم رفض الطلب');}catch(e){done();toast('ما انرفض: '+apiErr(e));}return;}
+  if(act==='cert-del'&&c){if(!await ask('حذف الطلب','ينحذف طلب الشهادة نهائياً.','حذف'))return;
+    const done=busy('جاري الحذف…');try{const r=await api('cert-del',{id:c.id});done();if(!store.applyRes(r))await store.refresh();back();toast('تم الحذف');}catch(e){done();toast('ما انحذف: '+apiErr(e));}return;}
+  if(act==='sign-clear'){const cv=document.getElementById('signPad');if(cv)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);state.signDirty=false;return;}
+  if(act==='cert-asset-del'){const k=b.dataset.k;if(!await ask('حذف','تحذف '+(k==='stamp'?'صورة الختم':'التوقيع')+'؟','حذف'))return;
+    const done=busy('جاري الحذف…');try{const r=await api('cert-cfg',{cfg:{},[k]:'remove'});done();CERT_ASSET[k]=undefined;if(!store.applyRes(r))await store.refresh();render();}catch(e){done();toast(apiErr(e));}return;}
+  if(act==='cert-cfg-save'){readCCF();const sign=signPadPng(),err=document.getElementById('ccErr');
+    const done=busy('جاري الحفظ…');
+    try{const r=await api('cert-cfg',Object.assign({cfg:state.ccf},sign?{sign:{mime:'image/png',data:sign}}:{}));done();if(sign){CERT_ASSET.sign=undefined;state.signDirty=false;}
+      if(!store.applyRes(r))await store.refresh();state.ccf=null;render();toast('تم حفظ إعدادات الشهادة');}
+    catch(e){done();err.textContent='ما انحفظ: '+apiErr(e);}return;}
+  if(act==='cert-sample'){readCCF();const g=store.certCfg;store.certCfg=Object.assign({},g,state.ccf);
+    const heir=HEIRS[2].id,y=certYears()[1]||certYears()[0];
+    await certPreview({status:'approved',ref:'EVS-'+y+'-0000',apAt:Date.now(),heir,acct:'bld',data:certSnapshot(heir,'bld',400000,CERT_AUTHS[0])});store.certCfg=g;return;}
+}
+async function certUpload(kind,file){
+  try{const img=await imgFileB64(file,900);const done=busy('جاري رفع '+(kind==='stamp'?'الختم':'التوقيع')+'…');
+    try{readCCF();const r=await api('cert-cfg',{cfg:state.ccf||{},[kind]:img});done();CERT_ASSET[kind]=undefined;if(!store.applyRes(r))await store.refresh();render();toast('تم الرفع');}
+    catch(e){done();toast('ما انرفع: '+apiErr(e));}}
+  catch(e){toast('ما قدرت أفتح الصورة.');}
+}
+/* نافذة كتابة نص (سبب الرفض) */
+function askText(title,ph){
+  return new Promise(res=>{const bg=document.createElement('div');bg.className='modal-bg';
+    bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><h4></h4><textarea rows="3" style="width:100%;margin:8px 0" maxlength="200"></textarea>
+      <div class="actions"><button class="ghost" data-m="0">إلغاء</button><button class="btn-danger" data-m="1">رفض</button></div></div>`;
+    bg.querySelector('h4').textContent=title;bg.querySelector('textarea').placeholder=ph||'';
+    bg.addEventListener('click',e=>{e.stopPropagation();const b=e.target.closest('[data-m]');if(e.target!==bg&&!b)return;const v=b&&b.dataset.m==='1'?bg.querySelector('textarea').value.trim():null;bg.remove();res(v);});
+    document.body.appendChild(bg);setTimeout(()=>bg.querySelector('textarea').focus(),50);});
+}
+
 function render(){
   const gate=store.mode==='login'||store.mode==='loading'||store.mode==='offline';
   let t=gate?{v:store.mode}:cur();
@@ -3682,6 +4106,7 @@ function render(){
   const root=state.stack[0].v;
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===root));
   if(t.v==='form'&&document.getElementById('allocSum'))updSum();
+  if(t.v==='certcfg')signPadInit();
 }
 
 document.addEventListener('click',async e=>{
@@ -3930,6 +4355,9 @@ document.addEventListener('click',async e=>{
   if(d.act==='gone-ok'){seenGone(d.id);NEWS.cache=newsCalc();back();toast('تمام');return;}
   if(d.act==='news-ok'){seenAll();NEWS.cache=newsCalc();NEWS.dismissed=newsSig();closeNewsPopup();if(cur().v==='news')state.stack=[{v:'home'}];render();toast('تمام، تم الاطلاع');return;}
   if(d.act&&d.act.indexOf('doc-')===0){await docAction(d.act,b);return;}
+  if(d.act&&(d.act.indexOf('cert-')===0||d.act==='sign-clear')){await certAction(d.act,b);return;}
+  if(d.cfAcct){readCF();if(state.cf.acct!==d.cfAcct){state.cf.acct=d.cfAcct;certFillIncome(state.cf);}render();return;}
+  if(d.cfInc!=null){readCF();state.cf.income=d.cfInc;render();return;}
   if(d.act&&(d.act.indexOf('user-')===0||d.act==='uf-off')){await userAction(d.act,b);return;}
   if(d.ufScope){readUF();state.uf.scope=d.ufScope;render();return;}
   if(d.ufPin){readUF();state.uf.pinMode=d.ufPin;render();return;}
@@ -3955,7 +4383,9 @@ document.addEventListener('toggle',e=>{
 document.addEventListener('change',e=>{
   {const ds=e.target.dataset||{};
     if((ds.docUp||ds.docAdd)&&e.target.files&&e.target.files.length){const fl=[...e.target.files];e.target.value='';if(cur().v==='docform')readDF();docScan(fl,ds.heir,ds.docUp||ds.docAdd,!!ds.docAdd);return;}
-    if((e.target.id==='df_exp'||e.target.id==='df_iss')&&state.df){readDF();updDF();return;}}
+    if((e.target.id==='df_exp'||e.target.id==='df_iss')&&state.df){readDF();updDF();return;}
+    if(['cf_heir','cf_auth','cf_income'].includes(e.target.id)&&state.cf){readCF();render();return;}
+    if(ds.ccUp&&e.target.files&&e.target.files[0]){const f=e.target.files[0];e.target.value='';certUpload(ds.ccUp,f);return;}}
   if(e.target.id==='uf_heir'&&state.uf){const prev=state.uf.heir,pn=H[prev]?H[prev].n:'';readUF();const f=state.uf;
     if(!f.name.trim()||f.name.trim()===pn)f.name=H[f.heir]?H[f.heir].n:'';if(f.heir==='none')f.scope='all';render();return;}
   if(e.target.dataset&&e.target.dataset.dt){dtSync(e.target.dataset.dt);return;}
