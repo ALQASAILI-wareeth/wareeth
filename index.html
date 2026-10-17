@@ -892,6 +892,15 @@ nav.tabs button[hidden]{display:none}
 .yrow b{font-size:15.5px;font-weight:800}
 .certstick{padding-bottom:12px}
 .certstick .certbtn{margin:0!important}
+
+.idwait{text-align:center;padding:22px 18px}
+.idwait .ring{margin:0 auto 12px}
+.idwait h3{margin:0 0 8px;color:#8FE0B0}
+.idwait p{line-height:1.8;margin:6px 0}
+.idwait .m{font-size:13px;color:var(--muted)}
+.idpbtns{display:flex;gap:6px;flex:none}
+.primary.sm{padding:6px 14px;font-size:13px;min-height:0;width:auto;margin:0}
+.idpend .preqrow b{font-size:15px}
 </style>
 </head>
 <body>
@@ -978,7 +987,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='9.1';
+const APP_VER='9.2';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1154,6 +1163,7 @@ async function importY25(){
 const store={
   mode:'login',canWrite:false,role:null,loadedAt:0,
   async init(){
+    if(auth.idPending&&/^tk_/.test(auth.pin||'')){this.mode='idwait';render();idPoll();return;}   // جهاز جديد بانتظار موافقة المدير
     if(!auth.url||!auth.pin){this.mode='login';render();return;}
     // فتح فوري: نعرض آخر بيانات محفوظة على الجهاز، ونحدّثها من الخادم بالخلفية
     trackEv('open');
@@ -1167,7 +1177,7 @@ const store={
   apply(j,fromCache){
     const prevIds=!fromCache&&this.loadedAt&&NEWS.base?new Set(state.txs.map(t=>t.id)):null;
     state.txs=(j.txs||[]);
-    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;this.docs=Array.isArray(j.docs)?j.docs:null;this.certs=Array.isArray(j.certs)?j.certs:null;if(j.idLogin!=null){this.idLogin=!!j.idLogin;this.idTokens=+j.idTokens||0;}this.pdocs=Array.isArray(j.pdocs)?j.pdocs:null;this.preqs=Array.isArray(j.preqs)?j.preqs:[];if(j.certCfg)this.certCfg=j.certCfg;if(j.users)this.users=j.users;if(this.user&&H[this.user.heir])setMe(this.user.heir);
+    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;this.docs=Array.isArray(j.docs)?j.docs:null;this.certs=Array.isArray(j.certs)?j.certs:null;if(j.idLogin!=null){this.idLogin=!!j.idLogin;this.idTokens=+j.idTokens||0;this.idPending=Array.isArray(j.idPending)?j.idPending:[];}this.pdocs=Array.isArray(j.pdocs)?j.pdocs:null;this.preqs=Array.isArray(j.preqs)?j.preqs:[];if(j.certCfg)this.certCfg=j.certCfg;if(j.users)this.users=j.users;if(this.user&&H[this.user.heir])setMe(this.user.heir);
     if(!fromCache){this.loadedAt=Date.now();saveCache(j);setTimeout(()=>{if(!state.certToast&&typeof certNewApproved==='function'&&certNewApproved()){state.certToast=1;toast('📜 فيه شهادة دخل تغيّرت حالتها. شوفها من التقارير.');}},2500);if(prevIds)setTimeout(()=>newsToast(prevIds),0);}
     if(j.cfg)notif.cfg=j.cfg;
     applyProps(j.props);
@@ -1326,6 +1336,7 @@ V.home=()=>{
     <div class="upd">${r.last?'آخر تحديث: '+esc(fmtDT(new Date(r.last),true)):(store.mode==='nodb'?'سجّل دخولك في Claude عشان تظهر البيانات.':'ابدأ بإضافة أول إيداع من حساب البناية أو المزارع.')}</div>
 </div>
   ${store.canWrite&&store.ver<4?`<div class="note warnbox">⚠️ الخادم شغّال على نسخة قديمة، فالإقفال السنوي ما يشتغل${store.ver<3?'، ولا حالة الطلبات وحماية حركات '+esc(store.agent||'الوكيل'):''}. حدّث كود الخادم وانشر <b>إصدار جديد</b> على نفس عملية النشر.</div>`:''}
+  ${idPendCard()}
   ${docLine()}
   <div class="tiles">
     ${heirView()?balTile('bld',r)+balTile('farm',r):`<button class="tile" data-go="acct" data-k="${prefs.lastAcct==='farm'?'farm':'bld'}"><span class="ic">${I.wallet}</span><span>الحسابات</span><small>${adminView()?'إيداع وخصم':'الأرصدة'}</small></button>
@@ -2494,8 +2505,32 @@ async function idLogin(files){
   if(H[j.heir]){const c=nameCheck({heir:j.heir,pages:df.pages,ocr:r});
     if(c.st==='diff'){done();try{auth.pin=j.token;await api_('id-out',{});}catch(x){}auth.pin='';er(ID_ERR.id_name);return;}}
   done();
-  auth.pin=j.token;auth.viaId=true;saveAuth();
+  auth.pin=j.token;auth.viaId=true;auth.idName=j.name||'';auth.idPending=!!j.pending;saveAuth();
+  if(j.pending){store.mode='idwait';render();idPoll();return;}
   await enterApp(null,'أهلاً '+(j.name||'')+'، تأكدت من هويتك ✓');
+}
+/* جهاز جديد: ننتظر موافقة المدير ونسأل الخادم كل شوي */
+async function idPoll(){
+  clearTimeout(idPoll.t);if(store.mode!=='idwait')return;
+  let st='';try{const r=await api_('id-status',{});st=r.status;}catch(e){st='';}
+  if(store.mode!=='idwait')return;
+  if(st==='approved'){auth.idPending=false;saveAuth();await enterApp(null,'أهلاً '+(auth.idName||'')+'، وافق المدير على جهازك ✓');return;}
+  if(st==='gone'){auth.idPending=false;auth.pin='';auth.viaId=false;saveAuth();store.mode='login';state.loginErr='المدير ما وافق على الدخول من هذا الجهاز، أو انتهت مهلة الطلب (يوم كامل). تقدر تصوّر الهوية مرة ثانية، أو تدخل بالرقم السري.';render();return;}
+  idPoll.t=setTimeout(idPoll,8000);
+}
+V.idwait=()=>({title:'وريث',html:`<div class="gate"><div class="gmark">${markSvg}<span>WAREETH</span></div>
+  <div class="card idwait"><div class="ring"></div><h3>تأكدت من هويتك ✓</h3>
+  <p>أهلاً <b>${esc(auth.idName||'')}</b>. هذا أول دخول من هذا الجهاز، فلازم المدير يوافق عليه. وصله إشعار، وأول ما يوافق يفتح التطبيق لحاله.</p>
+  <p class="m">تقدر تسكّر التطبيق وترجع له بعدين. بعد الموافقة ما تحتاج موافقة ثانية على هذا الجهاز.</p></div>
+  <button class="ghost" data-act="idw-cancel" style="margin-top:14px">إلغاء والرجوع للدخول</button>
+  <p class="status" style="margin-top:18px">إصدار ${APP_VER}</p></div>`});
+/* المدير: أجهزة جديدة تبي تدخل بالهوية */
+function idPendCard(){
+  const L=store.canWrite&&store.idPending||[];if(!L.length)return '';
+  return `<div class="card preqcard idpend"><b>🪪 ${L.length===1?'جهاز جديد يبي يدخل بالهوية':L.length+' أجهزة جديدة تبي تدخل بالهوية'}</b>
+    ${L.map(x=>`<div class="preqrow"><div><b>${esc(x.name)}</b><div class="m">تطابقت هويته · ${esc(fmtDT(new Date(x.at)))} · جهاز ${esc(x.dev)}</div></div>
+      <div class="idpbtns"><button class="primary sm" data-act="idl-ok" data-k="${esc(x.k)}" data-name="${esc(x.name)}">موافقة</button><button class="ghost sm" data-act="idl-no" data-k="${esc(x.k)}" data-name="${esc(x.name)}">رفض</button></div></div>`).join('')}
+    <p class="m" style="margin-top:8px">وافق بس إذا متأكد إن الوريث نفسه اللي يدخل الحين (مثلاً كلّمك). بعد الموافقة يدخل من هذا الجهاز بدون موافقة ثانية.</p></div>`;
 }
 /* المدير: إعداد الدخول بالهوية */
 function idlCard(){
@@ -2504,8 +2539,9 @@ function idlCard(){
   return `<h3 class="sec">الدخول بتصوير الهوية</h3><div class="card">
     <button class="toggle" role="switch" aria-checked="${!!store.idLogin}" data-act="idl-toggle"><span>الورثة يقدرون يدخلون بتصوير الهوية
       <small>التطبيق يقرأ رقم الهوية وتاريخ انتهائها ويطابقهم مع الهوية المدرجة للوريث، ويدخله على حسابه الشخصي. الهويات المدرجة: <b class="num">${nIds}</b> من ${HEIRS.length}.</small></span><span class="sw"></span></button>
+    ${idPendCard()}
     <div class="kv" style="margin-top:10px"><span>أجهزة داخلة بالهوية الحين</span><b class="num">${store.idTokens||0}</b></div>
-    <p class="m" style="font-size:12.5px;color:var(--muted);margin:6px 0 0;line-height:1.8">⚠️ أي أحد معه هوية الوريث نفسها (أو صورة واضحة منها) يقدر يدخل على حسابه، فهي أسهل من الرقم السري بس أقل أمان. الدخول بالهوية يبقى على نفس الجهاز 90 يوم.</p>
+    <p class="m" style="font-size:12.5px;color:var(--muted);margin:6px 0 0;line-height:1.8">🔒 أول دخول بالهوية من أي جهاز جديد ينتظر موافقتك (يوصلك إيميل وإشعار هنا وفي الرئيسية). بعد الموافقة يبقى الدخول على نفس الجهاز 90 يوم.</p>
     <div class="actions"><button class="ghost" data-go="docs">إدراج الهويات</button>${store.idTokens?'<button class="ghost" data-act="idl-revoke">إخراج كل الأجهزة</button>':''}</div></div>`;
 }
 /* ---------- المدير: إدراج هويات كل الورثة مرة وحدة ---------- */
@@ -2595,10 +2631,17 @@ async function idlActs(act,b){
   if(act==='eb-cancel'){state.eb=null;back();return true;}
   if(act==='eb-rm'){readEB();state.eb.items.splice(+b.dataset.i,1);if(!state.eb.items.length){state.eb=null;back();}else render();return true;}
   if(act==='eb-ok'){readEB();const it=state.eb.items[+b.dataset.i];it.confirm=!it.confirm;render();return true;}
+  if(act==='idw-cancel'){clearTimeout(idPoll.t);try{await api_('id-out',{});}catch(e){}auth.idPending=false;auth.pin='';auth.viaId=false;saveAuth();store.mode='login';state.loginErr='';render();return true;}
+  if(act==='idl-ok'||act==='idl-no'){
+    const nm=b.dataset.name||'';
+    if(act==='idl-no'&&!await ask('رفض الجهاز',''+nm+' ما بيقدر يدخل من هذا الجهاز. يقدر يرسل طلب ثاني بعدين.','رفض'))return true;
+    const done=busy('لحظة…');
+    try{const r=await api('id-admin',{k:b.dataset.k,approve:act==='idl-ok'});done();store.idTokens=r.idTokens;store.idPending=r.idPending||[];render();toast(act==='idl-ok'?'✓ وافقت، و'+nm+' بيدخل الحين':'تم الرفض');}
+    catch(e){done();toast('ما تم: '+apiErr(e));}return true;}
   if(act==='idl-toggle'||act==='idl-revoke'){
     if(act==='idl-revoke'&&!await ask('إخراج كل الأجهزة','كل اللي داخلين بالهوية بيطلعون، ويحتاجون يصورون هويتهم مرة ثانية.','إخراج'))return true;
     const done=busy('لحظة…');
-    try{const r=await api('id-admin',act==='idl-toggle'?{on:!store.idLogin}:{revoke:true});done();store.idLogin=r.idLogin;store.idTokens=r.idTokens;render();toast(act==='idl-revoke'?'طلعت كل الأجهزة':r.idLogin?'الدخول بالهوية مفعّل':'الدخول بالهوية موقوف');}
+    try{const r=await api('id-admin',act==='idl-toggle'?{on:!store.idLogin}:{revoke:true});done();store.idLogin=r.idLogin;store.idTokens=r.idTokens;store.idPending=r.idPending||[];render();toast(act==='idl-revoke'?'طلعت كل الأجهزة':r.idLogin?'الدخول بالهوية مفعّل':'الدخول بالهوية موقوف');}
     catch(e){done();toast('ما تم: '+apiErr(e));}return true;}
   return false;
 }
@@ -4602,7 +4645,7 @@ function askText(title,ph,okLabel,def){
 }
 
 function render(){
-  const gate=store.mode==='login'||store.mode==='loading'||store.mode==='offline';
+  const gate=store.mode==='login'||store.mode==='loading'||store.mode==='offline'||store.mode==='idwait';
   let t=gate?{v:store.mode}:cur();
   if(!gate&&ownOnly()&&['total','heirs','me','heir'].includes(t.v)&&t.id!==store.user.heir)t=Object.assign({},t,{v:'heir',id:store.user.heir});
   if(!gate&&store.mode==='api'){try{seenInit();seenFill();seenMine();NEWS.cache=newsCalc();}catch(e){NEWS.cache=null;}}else NEWS.cache=null;
@@ -4869,7 +4912,7 @@ document.addEventListener('click',async e=>{
   if(d.act==='news-ok'){seenAll();NEWS.cache=newsCalc();NEWS.dismissed=newsSig();closeNewsPopup();if(cur().v==='news')state.stack=[{v:'home'}];render();toast('تمام، تم الاطلاع');return;}
   if(d.act&&d.act.indexOf('doc-')===0){await docAction(d.act,b);return;}
   if(d.act&&/^pd(oc|f)-/.test(d.act)){await pdocActs(d.act,b);return;}
-  if(d.act&&/^(eb|idl)-/.test(d.act)){await idlActs(d.act,b);return;}
+  if(d.act&&/^(eb|idl|idw)-/.test(d.act)){await idlActs(d.act,b);return;}
   if(d.act&&(d.act.indexOf('cert-')===0||d.act==='sign-clear')){await certAction(d.act,b);return;}
   if(d.cfAcct){readCF();if(state.cf.acct!==d.cfAcct){state.cf.acct=d.cfAcct;certFillIncome(state.cf);}render();return;}
   if(d.cfInc!=null){readCF();state.cf.income=d.cfInc;render();return;}
