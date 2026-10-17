@@ -901,6 +901,24 @@ nav.tabs button[hidden]{display:none}
 .idpbtns{display:flex;gap:6px;flex:none}
 .primary.sm{padding:6px 14px;font-size:13px;min-height:0;width:auto;margin:0}
 .idpend .preqrow b{font-size:15px}
+
+/* حسابي: البنر نص الشاشة وفيه الرصيد والمستلم والأزرار */
+.sharebanner.mybanner{min-height:50vh;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:22px 18px 18px}
+.mybanner .sb-recv{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:10px 14px;border-radius:14px;background:rgba(8,15,38,.45);border:1px solid rgba(214,178,102,.35)}
+.mybanner .sb-recv span{color:#E3C27A;font-weight:700}
+.mybanner .sb-recv b{font-size:20px;color:#fff}
+.mybanner .sb-recv small{font-size:12px;color:#C9D2EA}
+.mybanner .sb-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.sbbtn{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;border:1px solid rgba(214,178,102,.6);background:rgba(214,178,102,.12);color:#F4E9CF;font:inherit;text-align:start;cursor:pointer;min-width:0}
+.sbbtn:active{transform:scale(.98)}
+.sbbtn svg{width:24px;height:24px;color:#F0D79A;flex:none}
+.sbbtn span{display:flex;flex-direction:column;font-weight:700;font-size:14.5px;min-width:0}
+.sbbtn small{font-weight:500;font-size:11.5px;color:#C9D2EA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mycmp .fair{margin-bottom:8px}
+.mycmp .kv{font-size:14px}
+.mycmp .m{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+
+@media (max-height:760px){.sharebanner.mybanner{min-height:0;padding:14px 16px 14px}.mybanner .sb-recv,.mybanner .sb-btns{margin-top:8px}.sbbtn{padding:9px 10px}.mycmp{padding:10px 14px}.mycmp .m{display:none}.mypage .sharebanner{margin-bottom:10px}}
 </style>
 </head>
 <body>
@@ -987,7 +1005,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='9.2';
+const APP_VER='9.3';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1367,8 +1385,8 @@ V.moves=(p)=>{
   <div class="stick">${lock?'':seg('f',[['all','الحسابين'],['bld','البناية'],['farm','المزارع']],f)}
   ${seg('t',[['all','الكل'],['dep','إيداعات'],['out','مصروفات']],ty)}
   ${yrow}
-  <div class="sumrow"><div><span>العدد</span><b class="num">${list.length}</b></div><div><span>داخل</span><b class="num in">${fmt(tin)}</b>${since('in')}${mav&&ty!=='out'?`<small class="mav">≈ <span class="num">${fmt(mav.tin)}</span> شهرياً</small>`:''}</div><div><span>خارج</span><b class="num out">${fmt(tout)}</b>${since('out')}${mav&&ty!=='dep'?`<small class="mav">≈ <span class="num">${fmt(mav.tout)}</span> شهرياً</small>`:''}</div></div>
-  ${ty==='all'||sm.nh?`<div class="sumnote">${ty==='all'?`الصافي <b class="num">${fmt(tin-tout)}</b>${f==='all'?' = الرصيد الحالي':' = رصيد '+ACCTS[f].short}`:''}${sm.nh?`${ty==='all'?'<br>':''}الحركات السابقة (${sm.nh}) ما تنحسب، لأنها داخلة في الرصيد الافتتاحي`:''}${mav?`<br>المعدّل الشهري على ${mav.n} ${mav.n>2&&mav.n<11?'أشهر':'شهر'}، بدون الرصيد الافتتاحي`:''}</div>`:''}</div>
+  ${lock?'':`<div class="sumrow"><div><span>العدد</span><b class="num">${list.length}</b></div><div><span>داخل</span><b class="num in">${fmt(tin)}</b>${since('in')}${mav&&ty!=='out'?`<small class="mav">≈ <span class="num">${fmt(mav.tin)}</span> شهرياً</small>`:''}</div><div><span>خارج</span><b class="num out">${fmt(tout)}</b>${since('out')}${mav&&ty!=='dep'?`<small class="mav">≈ <span class="num">${fmt(mav.tout)}</span> شهرياً</small>`:''}</div></div>
+  ${ty==='all'||sm.nh?`<div class="sumnote">${ty==='all'?`الصافي <b class="num">${fmt(tin-tout)}</b>${f==='all'?' = الرصيد الحالي':' = رصيد '+ACCTS[f].short}`:''}${sm.nh?`${ty==='all'?'<br>':''}الحركات السابقة (${sm.nh}) ما تنحسب، لأنها داخلة في الرصيد الافتتاحي`:''}${mav?`<br>المعدّل الشهري على ${mav.n} ${mav.n>2&&mav.n<11?'أشهر':'شهر'}، بدون الرصيد الافتتاحي`:''}</div>`:''}`}</div>
   ${list.length?`<div class="rows" id="mvRows">${list.slice(0,MV_CHUNK).map(txRow).join('')}</div>${list.length>MV_CHUNK?`<button class="ghost" id="mvMore" data-act="mv-more" style="width:100%;margin-top:10px">عرض المزيد (${list.length-MV_CHUNK})</button>`:''}`:'<p class="empty">ما فيه حركات.</p>'}
   ${list.length?`<div class="actions"><button class="ghost" data-act="mv-export">تصدير القائمة PDF</button></div>`:''}`};
 };
@@ -1598,13 +1616,18 @@ V.heir=({id})=>{
   const own=isHeirUser()&&store.user.heir===id;
   const shareBanner=`<div class="sharebanner"><div class="sb-l">${own?'نصيبك':'نصيبه'} من الرصيد الحالي</div><div class="sb-big"><span class="num">${fmt(nb+nf)}</span> <small>د.إ</small></div>
     <div class="sb-row"><div><span>البناية <bdi class="num">${ACCTS.bld.shares[id]}%</bdi></span><b class="num">${fmt(nb)}</b></div><div><span>المزارع <bdi class="num">${ACCTS.farm.shares[id]}%</bdi></span><b class="num">${fmt(nf)}</b></div></div></div>`;
-  if(own)return {title:'حسابي',html:`<div class="mypage">${shareBanner}
-  <div class="myrecv"><span>المبلغ المستلم</span><b>${money(r.received[id])}</b></div>
-  <div class="mybtns">
-    <button class="mbtn" data-go="rcpts" data-id="${id}"><span class="l"><span class="ic">${I.rcpt}</span><span>عرض الاستلامات<small class="msub">${rc.length?rc.length+' '+(rc.length>2&&rc.length<11?'استلامات':'استلام')+' · آخرها '+esc(dShort(rc[rc.length-1].t.date)):'ما استلمت أي مبلغ بعد'}</small></span></span>${I.chev}</button>
-    <button class="mbtn" data-go="cmp" data-id="${id}"><span class="l"><span class="ic">${I.cmpr}</span><span>مقارنة التوزيعات<small class="msub">${Math.abs(diff)<1?'اللي استلمته مطابق لحصتك':diff<0?'استلمت أقل من حصتك بـ '+fmt(-diff):'استلمت أكثر من حصتك بـ '+fmt(diff)}</small></span></span>${I.chev}</button>
-    ${downloadsApi?`<button class="mbtn" data-act="heir-export" data-id="${id}"><span class="l"><span class="ic">${I.pdfx}</span><span>تصدير الكشف PDF<small class="msub">كل استلاماتك ونصيبك في ملف واحد</small></span></span>${I.chev}</button>`:''}
-  </div></div>`};
+  if(own){
+    const fairTxt=Math.abs(diff)<1?'اللي استلمته مطابق لحصتك من التوزيعات':diff<0?'استلمت أقل من حصتك بـ '+fmt(-diff)+' د.إ':'استلمت أكثر من حصتك بـ '+fmt(diff)+' د.إ';
+    return {title:'حسابي',html:`<div class="mypage"><div class="sharebanner mybanner"><div class="sb-l">نصيبك من الرصيد الحالي</div><div class="sb-big"><span class="num">${fmt(nb+nf)}</span> <small>د.إ</small></div>
+    <div class="sb-row"><div><span>البناية <bdi class="num">${ACCTS.bld.shares[id]}%</bdi></span><b class="num">${fmt(nb)}</b></div><div><span>المزارع <bdi class="num">${ACCTS.farm.shares[id]}%</bdi></span><b class="num">${fmt(nf)}</b></div></div>
+    <div class="sb-recv"><span>المبلغ المستلم</span><b><span class="num">${fmt(r.received[id])}</span> <small>د.إ</small></b></div>
+    <div class="sb-btns"><button class="sbbtn" data-go="rcpts" data-id="${id}">${I.rcpt}<span>الاستلامات<small>${rc.length?rc.length+' '+(rc.length>2&&rc.length<11?'استلامات':'استلام'):'ما فيه للحين'}</small></span></button>
+      ${downloadsApi?`<button class="sbbtn" data-act="heir-export" data-id="${id}">${I.pdfx}<span>تصدير الكشف<small>ملف PDF</small></span></button>`:''}</div></div>
+    <div class="card mycmp"><div class="fair"><span class="dot" style="background:${Math.abs(diff)<1?'var(--pos)':diff<0?'var(--neg)':'var(--gold)'}"></span>${fairTxt}</div>
+      <div class="kv"><span>حصتك من التوزيعات حسب السند</span><b>${money(r.entitled[id])}</b></div>
+      <div class="kv"><span>اللي استلمته منها</span><b>${money(r.recvLedger[id])}</b></div>
+      <p class="m">المقارنة تشمل التوزيعات المسجلة من حساب البناية والمزارع، بدون التوزيعات السابقة.</p></div></div>`};
+  }
   return {title:h.n,html:`
   <div class="total-line"><span class="t">المبالغ المستلمة</span><span class="v">${money(r.received[id])}</span></div>
   ${rc.length?(()=>{const all=cur().all,items=rc.map((x,i)=>({x,i})).reverse(),shown=all?items:items.slice(0,3);
@@ -2422,11 +2445,11 @@ V.settings=()=>({title:'الإعدادات',html:`
   </div>
   <div class="actions"><button class="ghost" data-act="reset-prefs">رجوع للإعدادات الافتراضية</button></div>
   ${adminView()&&sheet.meta?'<h3 class="sec">الربط مع Google Sheets</h3>'+sheetCard()+'<p class="m" style="font-size:13px;color:var(--muted)">بعد كل حركة تضيفها أو تعدّلها أو تحذفها، ينشئ التطبيق نسخة محدّثة من سجل الحركات في مجلد "وريث – سجل الحركات" في Google Drive، ويحذف النسخة القديمة.</p>':''}
-  <h3 class="sec">حالة الاتصال</h3>
+  ${isHeirUser()||store.role==='view'?'':`<h3 class="sec">حالة الاتصال</h3>
   <div class="card">${(()=>{const L=NETSTAT.last,E=NETSTAT.err,ago=t=>{const s=Math.round((Date.now()-t)/1000);return s<60?s+' ثانية':Math.round(s/60)+' دقيقة';};
     return (L?`<div class="kv"><span>آخر رد من الخادم</span><b><span class="num">${(L.rt/1000).toFixed(1)}</span> ث${L.srv?` <small style="color:var(--muted);font-weight:500">(المعالجة <span class="num">${(L.srv/1000).toFixed(1)}</span> ث)</small>`:''}</b></div><div class="kv"><span>قبل</span><b>${ago(L.at)}</b></div>`:'<div class="kv"><span>ما فيه اتصال للحين</span></div>')
       +(E?`<div class="kv"><span>آخر خطأ</span><b style="color:var(--neg)">${esc(apiErr({error:E.code}))} <small style="color:var(--muted)">قبل ${ago(E.at)}</small></b></div>`:'')
-      +'<div class="kv"><span>التحديث التلقائي</span><b>كل 30 ثانية</b></div>';})()}</div>
+      +'<div class="kv"><span>التحديث التلقائي</span><b>كل 30 ثانية</b></div>';})()}</div>`}
   <h3 class="sec">الحساب</h3>
   <div class="card">
     ${store.role==='view'?`<div class="kv"><span>اسمك على هذا الجهاز</span><b>${esc(whoName()||'ما اخترت')} <button class="linkbtn" data-act="who-change">تغيير</button></b></div>`:''}
