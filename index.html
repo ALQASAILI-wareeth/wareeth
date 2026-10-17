@@ -868,6 +868,30 @@ nav.tabs button[hidden]{display:none}
 .tile.baltile span.bcur{font-size:11.5px;font-weight:600;color:var(--gold);letter-spacing:.02em}
 .archnote{font-size:12.5px;line-height:1.8;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);color:var(--muted)}
 .archnote b{color:var(--ink)}
+
+/* الدخول بالهوية + إدراج الهويات */
+.ordiv{display:flex;align-items:center;gap:10px;margin:16px 0 4px;color:var(--muted);font-size:13px}
+.ordiv::before,.ordiv::after{content:"";flex:1;border-top:1px solid var(--line)}
+.scanbtn.idlbtn{margin-top:10px;flex-direction:row;text-align:start;justify-content:flex-start}
+.scanbtn.ebbtn{margin:0 0 14px;flex-direction:row;text-align:start;justify-content:flex-start}
+.ebitem.ok{border-color:rgba(110,200,150,.45)}
+
+/* حسابي: صفحة وحدة بدون تمرير */
+.mypage .sharebanner{margin-bottom:12px}
+.myrecv{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;margin:0 0 12px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.myrecv span{font-weight:700;color:var(--muted)}
+.myrecv b{font-size:20px}
+.mybtns{display:grid;gap:8px}
+.mybtns .mbtn{margin:0!important;padding:11px 14px!important;min-height:0}
+.mybtns .mbtn .msub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:100%}
+/* سجل الحركات: داخل وخارج السنة الحالية */
+.yrow{display:flex;align-items:center;gap:12px;margin:8px 0 6px;padding:8px 12px;border-radius:12px;border:1px solid rgba(214,178,102,.4);background:rgba(214,178,102,.07);font-size:13px}
+.yrow .yl{font-weight:700;color:var(--gold);flex:none}
+.yrow>div{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0}
+.yrow>div span{color:var(--muted);font-size:12px}
+.yrow b{font-size:15.5px;font-weight:800}
+.certstick{padding-bottom:12px}
+.certstick .certbtn{margin:0!important}
 </style>
 </head>
 <body>
@@ -954,7 +978,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='9.0';
+const APP_VER='9.1';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1025,7 +1049,7 @@ async function api__(action,payload){
 function apiErr(e){
   const c=e&&e.error;
   if(c==='wa')return e.detail||'صار خطأ في الواتساب.';
-  if(c==='pin')return 'الرقم السري غلط.';
+  if(c==='pin')return auth.viaId?'انتهى الدخول بالهوية على هذا الجهاز (أو أوقفه المدير). صوّر هويتك مرة ثانية، أو ادخل بالرقم السري.':'الرقم السري غلط.';
   if(c==='expired')return 'المستند منتهي، والتطبيق ما يقبل مستند منتهي. جدّده وصوّر الجديد.';
   if(c==='drive_auth')return store.canWrite?'حفظ المستندات يحتاج صلاحية Google Drive: افتح Apps Script وشغّل الدالة setupDocs مرة وحدة ووافق، بعدين انشر إصدار جديد.':'حفظ المستندات للحين مو مفعّل في الخادم. كلّم المدير.';
   if(c==='locked')return 'هذا الجهاز انقفل مؤقتاً بسبب محاولات كثيرة غلط. انتظر نص ساعة، أو اطلب من المدير يفك القفل. باقي الأجهزة ما تتأثر.';
@@ -1143,7 +1167,7 @@ const store={
   apply(j,fromCache){
     const prevIds=!fromCache&&this.loadedAt&&NEWS.base?new Set(state.txs.map(t=>t.id)):null;
     state.txs=(j.txs||[]);
-    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;this.docs=Array.isArray(j.docs)?j.docs:null;this.certs=Array.isArray(j.certs)?j.certs:null;this.pdocs=Array.isArray(j.pdocs)?j.pdocs:null;this.preqs=Array.isArray(j.preqs)?j.preqs:[];if(j.certCfg)this.certCfg=j.certCfg;if(j.users)this.users=j.users;if(this.user&&H[this.user.heir])setMe(this.user.heir);
+    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;this.docs=Array.isArray(j.docs)?j.docs:null;this.certs=Array.isArray(j.certs)?j.certs:null;if(j.idLogin!=null){this.idLogin=!!j.idLogin;this.idTokens=+j.idTokens||0;}this.pdocs=Array.isArray(j.pdocs)?j.pdocs:null;this.preqs=Array.isArray(j.preqs)?j.preqs:[];if(j.certCfg)this.certCfg=j.certCfg;if(j.users)this.users=j.users;if(this.user&&H[this.user.heir])setMe(this.user.heir);
     if(!fromCache){this.loadedAt=Date.now();saveCache(j);setTimeout(()=>{if(!state.certToast&&typeof certNewApproved==='function'&&certNewApproved()){state.certToast=1;toast('📜 فيه شهادة دخل تغيّرت حالتها. شوفها من التقارير.');}},2500);if(prevIds)setTimeout(()=>newsToast(prevIds),0);}
     if(j.cfg)notif.cfg=j.cfg;
     applyProps(j.props);
@@ -1204,7 +1228,7 @@ function clearCache(){try{localStorage.removeItem(CACHE);}catch(e){}}
 const ME='wareeth-me';
 const getMe=()=>{try{return localStorage.getItem(ME)}catch(e){return null}};
 const setMe=v=>{try{v?localStorage.setItem(ME,v):localStorage.removeItem(ME)}catch(e){}};
-const isForm=()=>['form','propform','userform','docform','certform','certcfg','pdocform'].includes(cur().v);
+const isForm=()=>['form','propform','userform','docform','certform','certcfg','pdocform','eidbulk'].includes(cur().v);
 const PREF='wareeth-prefs';
 const prefs=Object.assign({fs:1,ns:1,swipe:true,lock:false,notify:true,theme:'auto'},(()=>{try{return JSON.parse(localStorage.getItem(PREF)||'{}')}catch(e){return {}}})());
 prefs.fs=1;prefs.ns=1; // التكبير انشال من الإعدادات: الحجم ثابت ومريح
@@ -1325,9 +1349,13 @@ V.moves=(p)=>{
   const since=k=>{const ds=list.filter(t=>!t.hist&&(k==='in'?t.kind==='dep':t.kind!=='dep')).map(t=>(t.date||'').slice(0,10)).filter(Boolean).sort();return ds.length?`<small class="since">من ${esc(dShort(ds[0]))}</small>`:'';};
   const seg=(key,opts,cur)=>`<div class="seg seg3">${opts.map(([k,l])=>`<button data-mv="${key}:${k}" aria-pressed="${k===cur}">${l}</button>`).join('')}</div>`;
   const lock=!!p.lock&&!!ACCTS[f]&&f!=='all';   // جاي من صفحة الحساب: حركات هذا الحساب بس
+  const Y=String(new Date().getFullYear());let yIn=0,yOut=0;
+  state.txs.forEach(t=>{if(t.hist||(f!=='all'&&t.acct!==f)||!(t.date||'').startsWith(Y)||t.from==='رصيد افتتاحي')return;const a=+t.amount||0;if(t.kind==='dep')yIn+=a;else yOut+=a;});
+  const yrow=`<div class="yrow"><span class="yl">من بداية ${Y}</span><div><span>الداخل</span><b class="num in">${fmt(yIn)}</b></div><div><span>الخارج</span><b class="num out">${fmt(yOut)}</b></div></div>`;
   return {title:lock?'سجل حركات '+ACCTS[f].short:'سجل الحركات',html:`
   <div class="stick">${lock?'':seg('f',[['all','الحسابين'],['bld','البناية'],['farm','المزارع']],f)}
   ${seg('t',[['all','الكل'],['dep','إيداعات'],['out','مصروفات']],ty)}
+  ${yrow}
   <div class="sumrow"><div><span>العدد</span><b class="num">${list.length}</b></div><div><span>داخل</span><b class="num in">${fmt(tin)}</b>${since('in')}${mav&&ty!=='out'?`<small class="mav">≈ <span class="num">${fmt(mav.tin)}</span> شهرياً</small>`:''}</div><div><span>خارج</span><b class="num out">${fmt(tout)}</b>${since('out')}${mav&&ty!=='dep'?`<small class="mav">≈ <span class="num">${fmt(mav.tout)}</span> شهرياً</small>`:''}</div></div>
   ${ty==='all'||sm.nh?`<div class="sumnote">${ty==='all'?`الصافي <b class="num">${fmt(tin-tout)}</b>${f==='all'?' = الرصيد الحالي':' = رصيد '+ACCTS[f].short}`:''}${sm.nh?`${ty==='all'?'<br>':''}الحركات السابقة (${sm.nh}) ما تنحسب، لأنها داخلة في الرصيد الافتتاحي`:''}${mav?`<br>المعدّل الشهري على ${mav.n} ${mav.n>2&&mav.n<11?'أشهر':'شهر'}، بدون الرصيد الافتتاحي`:''}</div>`:''}</div>
   ${list.length?`<div class="rows" id="mvRows">${list.slice(0,MV_CHUNK).map(txRow).join('')}</div>${list.length>MV_CHUNK?`<button class="ghost" id="mvMore" data-act="mv-more" style="width:100%;margin-top:10px">عرض المزيد (${list.length-MV_CHUNK})</button>`:''}`:'<p class="empty">ما فيه حركات.</p>'}
@@ -1559,7 +1587,14 @@ V.heir=({id})=>{
   const own=isHeirUser()&&store.user.heir===id;
   const shareBanner=`<div class="sharebanner"><div class="sb-l">${own?'نصيبك':'نصيبه'} من الرصيد الحالي</div><div class="sb-big"><span class="num">${fmt(nb+nf)}</span> <small>د.إ</small></div>
     <div class="sb-row"><div><span>البناية <bdi class="num">${ACCTS.bld.shares[id]}%</bdi></span><b class="num">${fmt(nb)}</b></div><div><span>المزارع <bdi class="num">${ACCTS.farm.shares[id]}%</bdi></span><b class="num">${fmt(nf)}</b></div></div></div>`;
-  return {title:own?'حسابي':h.n,html:`${own?shareBanner+certBtn('اطلبها لأي بلدية، وتنزل PDF بعد الاعتماد'):''}
+  if(own)return {title:'حسابي',html:`<div class="mypage">${shareBanner}
+  <div class="myrecv"><span>المبلغ المستلم</span><b>${money(r.received[id])}</b></div>
+  <div class="mybtns">
+    <button class="mbtn" data-go="rcpts" data-id="${id}"><span class="l"><span class="ic">${I.rcpt}</span><span>عرض الاستلامات<small class="msub">${rc.length?rc.length+' '+(rc.length>2&&rc.length<11?'استلامات':'استلام')+' · آخرها '+esc(dShort(rc[rc.length-1].t.date)):'ما استلمت أي مبلغ بعد'}</small></span></span>${I.chev}</button>
+    <button class="mbtn" data-go="cmp" data-id="${id}"><span class="l"><span class="ic">${I.cmpr}</span><span>مقارنة التوزيعات<small class="msub">${Math.abs(diff)<1?'اللي استلمته مطابق لحصتك':diff<0?'استلمت أقل من حصتك بـ '+fmt(-diff):'استلمت أكثر من حصتك بـ '+fmt(diff)}</small></span></span>${I.chev}</button>
+    ${downloadsApi?`<button class="mbtn" data-act="heir-export" data-id="${id}"><span class="l"><span class="ic">${I.pdfx}</span><span>تصدير الكشف PDF<small class="msub">كل استلاماتك ونصيبك في ملف واحد</small></span></span>${I.chev}</button>`:''}
+  </div></div>`};
+  return {title:h.n,html:`
   <div class="total-line"><span class="t">المبالغ المستلمة</span><span class="v">${money(r.received[id])}</span></div>
   ${rc.length?(()=>{const all=cur().all,items=rc.map((x,i)=>({x,i})).reverse(),shown=all?items:items.slice(0,3);
     return `<div class="rows">${shown.map(({x,i})=>`<button class="row" data-go="tx" data-id="${esc(x.t.id)}"><span>الاستلام ${ord(i)}<div class="m">${esc(dShort(x.t.date))} · ${ACCTS[x.t.acct].short}</div></span><span class="a num">${fmt(x.amt)}</span></button>`).join('')}</div>
@@ -1573,6 +1608,24 @@ V.heir=({id})=>{
   <h3 class="sec">مقارنة التوزيعات بحصته</h3>
   <div class="card">${fair}<p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">المقارنة تشمل التوزيعات المسجلة من حساب البناية والمزارع فقط، بدون التوزيعات السابقة. حصته منها حسب السند ${money(r.entitled[id])}، واستلم ${money(r.recvLedger[id])}.</p></div>
   ${downloadsApi?`<div class="actions"><button class="ghost" data-act="heir-export" data-id="${id}">تصدير كشف ${h.n} PDF</button></div>`:''}`};
+};
+/* حسابي ← عرض الاستلامات: كل الاستلامات هنا */
+V.rcpts=({id})=>{
+  const h=H[id];if(!h)return {title:'الاستلامات',html:''};const r=calc(),rc=receipts(id),own=isHeirUser()&&store.user.heir===id;
+  return {title:own?'استلاماتي':'استلامات '+h.n,html:`<div class="total-line"><span class="t">المبالغ المستلمة</span><span class="v">${money(r.received[id])}</span></div>
+  ${rc.length?`<div class="rows">${rc.map((x,i)=>({x,i})).reverse().map(({x,i})=>`<button class="row" data-go="tx" data-id="${esc(x.t.id)}"><span>الاستلام ${ord(i)}<div class="m">${esc(dShort(x.t.date))} · ${ACCTS[x.t.acct].short}${x.t.note?' · '+esc(x.t.note):''}</div></span><span class="a num">${fmt(x.amt)}</span></button>`).join('')}</div>`:'<p class="empty">ما استلم أي مبلغ بعد.</p>'}`};
+};
+/* حسابي ← مقارنة التوزيعات بالحصة */
+V.cmp=({id})=>{
+  const h=H[id];if(!h)return {title:'مقارنة التوزيعات',html:''};const r=calc(),diff=r.recvLedger[id]-r.entitled[id],own=isHeirUser()&&store.user.heir===id;
+  const fair=Math.abs(diff)<1?`<div class="fair"><span class="dot" style="background:var(--pos)"></span>${own?'اللي استلمته مطابق لحصتك':'اللي استلمه مطابق لحصته'} من التوزيعات.</div>`
+    :diff<0?`<div class="fair"><span class="dot" style="background:var(--neg)"></span>${own?'استلمت':'استلم'} أقل من ${own?'حصتك':'حصته'} بـ ${money(-diff)}</div>`
+    :`<div class="fair"><span class="dot" style="background:var(--gold)"></span>${own?'استلمت':'استلم'} أكثر من ${own?'حصتك':'حصته'} بـ ${money(diff)}</div>`;
+  return {title:'مقارنة التوزيعات',html:`<div class="card">${fair}
+    <div class="kv" style="margin-top:10px"><span>${own?'حصتك':'حصته'} من التوزيعات حسب السند</span><b>${money(r.entitled[id])}</b></div>
+    <div class="kv"><span>${own?'اللي استلمته':'اللي استلمه'} منها</span><b>${money(r.recvLedger[id])}</b></div>
+    <div class="kv"><span>الفرق</span><b class="${diff<-0.5?'out':diff>0.5?'':'in'}">${money(diff)}</b></div>
+    <p class="m" style="font-size:13px;color:var(--muted);margin:10px 0 0">المقارنة تشمل التوزيعات المسجلة من حساب البناية والمزارع فقط، بدون التوزيعات السابقة.</p></div>`};
 };
 /* وش تغيّر في الحركة المعدّلة: القيمة قبل ← بعد */
 function txDiff(t){
@@ -1932,7 +1985,8 @@ V.props=()=>{
     <label class="scanbtn">${I.cam}<span>من سند أو مخطط<small>صورة أو PDF</small></span><input type="file" id="propScan" accept="image/*,application/pdf" multiple></label>
     ${pdocsOn()?`<label class="scanbtn wide pdocup">${PDOC_IC.plan}<span>رفع مخطط أو سند لعقار<small>اختر ملف أو أكثر، والتطبيق يعرف العقار وتاريخ الطباعة ومدة الصلاحية</small></span><input type="file" data-pdoc-up="" accept="image/*,application/pdf" multiple></label>`:''}</div>`:'';
   const grp=k=>{const l=PROPS.filter(p=>p.acct===k);return l.length?`<h3 class="sec">${ACCTS[k].name} <small class="num" style="color:var(--muted);font-weight:500">(${l.length})</small></h3>`+l.map(propCard).join(''):'';};
-  return {title:'العقارات',html:preqAdminCard()+add+grp('bld')+grp('farm')
+  const cb=certBtn('اطلبها لأي بلدية، وتنزل PDF بعد الاعتماد');
+  return {title:'العقارات',html:(cb?`<div class="stick certstick">${cb}</div>`:'')+preqAdminCard()+add+grp('bld')+grp('farm')
     +(store.canWrite&&hid.length?`<details class="hidprops"><summary>عقارات مخفية (${hid.length})</summary>${hid.map(propCard).join('')}</details>`:'')
     +`<p class="note">حساب المزارع يوزّع حسب حصص سند ملكية مزرعة يو النظرة (12.5% لمي، 10.2941% لكل ابن، 5.147% لكل بنت). حصص كل عقار تطلع للمعلومية، والتوزيع يمشي على حصص الحساب.</p>`};
 };
@@ -2311,7 +2365,6 @@ V.reports=(p)=>{
       <option value="all"${acct==='all'?' selected':''}>الحسابين</option><option value="bld"${acct==='bld'?' selected':''}>البناية</option><option value="farm"${acct==='farm'?' selected':''}>المزارع</option></select></div>
     <div><label class="k" for="rYear" style="margin-top:0">السنة</label><select id="rYear">${years.map(y=>`<option${y===year?' selected':''}>${y}</option>`).join('')}</select></div>
   </div></div>
-  ${certBtn()}
   <button class="mbtn closebtn" data-go="close"><span class="l"><span class="ic">${I.lock}</span><span>الإقفال السنوي<small class="msub">${canEditNow()?'إقفال السنة واعتمادها':'الإقفالات المعتمدة'}${lockOf()?' · مقفول لين '+esc(dShort(lockOf())):''}</small></span></span>${I.chev}</button>
   <div class="card" style="padding:10px 14px"><div class="kv"><span>رصيد أول السنة</span><b class="num">${yOpen==null?'—':fmt(yOpen)}</b></div>
     <div class="kv"><span>${year===String(new Date().getFullYear())?'الرصيد الحالي':'رصيد آخر السنة'}${cl?' · 🔒 مقفولة':''}</span><b class="num">${yClose==null?'—':fmt(yClose)}</b></div>${archNote}</div>
@@ -2344,6 +2397,7 @@ V.settings=()=>({title:'الإعدادات',html:`
   <div class="propadd"><button class="scanbtn" data-act="user-new">${I.plus}<span>إضافة مستخدم<small>وعمل رقم سري له</small></span></button>
     <button class="scanbtn" data-go="users">${I.users}<span>المستخدمين${(store.users||[]).length?` (${store.users.length})`:''}<small>تعديل، رقم جديد، إيقاف</small></span></button></div>`:''}
   ${bioSettings()}
+  ${idlCard()}
   <h3 class="sec">التنقل والتعديل</h3>
   <div class="card">
     <button class="toggle" role="switch" aria-checked="${prefs.swipe}" data-pref="swipe"><span>التنقل بالسحب
@@ -2406,6 +2460,159 @@ V.offline=()=>({title:'وريث',html:`<div class="gate"><div class="gmark">${ma
   <p class="err" style="text-align:center">${esc(state.loginErr||'تعذّر الاتصال.')}</p>
   <button class="primary" data-act="retry">حاول مرة ثانية</button>
   <button class="ghost" style="margin-top:10px;width:100%" data-act="logout">تغيير بيانات الدخول</button></div>`});
+/* ===== الدخول بتصوير الهوية الإماراتية =====
+   التطبيق يقرأ رقم الهوية وتاريخ الانتهاء (من الرمز اللي خلف الهوية أو من الوجه الأمامي أو من ملف الهوية الرقمية)،
+   والخادم يطابقهم مع الهوية اللي أدرجها المدير للوريث. إذا تطابقت يدخل الوريث على حسابه الشخصي. */
+const ID_ERR={id_off:'الدخول بالهوية موقوف حالياً. ادخل بالرقم السري.',id_read:'ما قدرت أقرأ رقم الهوية وتاريخ الانتهاء بوضوح.',
+  id_unknown:'هذي الهوية مو مدرجة في التطبيق. اطلب من المدير يدرج هويتك.',id_mismatch:'تاريخ الانتهاء في الصورة غير المسجّل لهذي الهوية. صوّر هويتك الحالية (الأحدث).',
+  id_expired:'الهوية منتهية. جدّد الهوية، أو ادخل بالرقم السري.',id_nouser:'هويتك مدرجة، بس ما عندك حساب شخصي في التطبيق للحين. اطلب من المدير يسوي لك حساب.',
+  id_user_off:'حسابك في التطبيق موقوف. كلّم المدير.',
+  id_name:'الاسم المكتوب في الهوية ما يطابق اسم الوريث المسجّلة له. تأكد إنك صورت هويتك أنت.'};
+async function idRead(files,prog){
+  const df={heir:'',type:'eid',pages:[]};
+  for(const [i,f] of [...files].slice(0,3).entries()){const pre=files.length>1?`صورة ${i+1} من ${files.length}: `:'';
+    const pg=await docPage(f,m=>prog(pre+m),'eid',{room:2});df.pages.push(pg);if(pg.extra){df.pages.push(...pg.extra);delete pg.extra;}}
+  await docDeepen(df,prog);
+  const r=parseIdDoc(df.pages.flatMap(p=>p.lines||[]),'eid');
+  return {r,df};
+}
+const eidFmt=s=>{const d=String(s||'').replace(/\D/g,'');return /^784\d{12}$/.test(d)?d.replace(/^(\d{3})(\d{4})(\d{7})(\d)$/,'$1-$2-$3-$4'):'';};
+async function idLogin(files){
+  const er=t=>{state.loginErr=t;render();};
+  const done=busy('جاري قراءة الهوية…','أول مرة تاخذ وقت أطول');const prog=m=>{const s=document.querySelector('#busy small');if(s)s.textContent=m;};
+  let rd;
+  try{rd=await idRead(files,prog);}catch(e){done();er((e&&e.message)||'ما قدرت أقرأ الصورة.');return;}
+  const {r,df}=rd,no=eidFmt(r.no);
+  df.pages.forEach(p=>(p.cvs||[]).forEach(c=>{c.width=c.height=1;}));
+  if(!no||!r.expiry){done();er(ID_ERR.id_read+' صوّر الوجه الخلفي للهوية (اللي فيه الرموز تحت) بإضاءة واضحة وبدون انعكاس، أو اختر ملف الهوية الرقمية PDF.');return;}
+  if(r.expiry<todayStr()){done();er(ID_ERR.id_expired+' (انتهت '+docDate(r.expiry)+')');return;}
+  prog('أتأكد من الهوية…');
+  let j;
+  try{j=await api_('id-login',{eid:no,expiry:r.expiry,name:r.name||''});}
+  catch(e){done();er(ID_ERR[e&&e.error]||apiErr(e));return;}
+  // فحص إضافي: الاسم المقروء من الهوية لازم ما يخالف اسم الوريث
+  if(H[j.heir]){const c=nameCheck({heir:j.heir,pages:df.pages,ocr:r});
+    if(c.st==='diff'){done();try{auth.pin=j.token;await api_('id-out',{});}catch(x){}auth.pin='';er(ID_ERR.id_name);return;}}
+  done();
+  auth.pin=j.token;auth.viaId=true;saveAuth();
+  await enterApp(null,'أهلاً '+(j.name||'')+'، تأكدت من هويتك ✓');
+}
+/* المدير: إعداد الدخول بالهوية */
+function idlCard(){
+  if(!store.canWrite||store.idLogin==null)return '';
+  const nIds=(store.docs||[]).filter(d=>d.type==='eid').length;
+  return `<h3 class="sec">الدخول بتصوير الهوية</h3><div class="card">
+    <button class="toggle" role="switch" aria-checked="${!!store.idLogin}" data-act="idl-toggle"><span>الورثة يقدرون يدخلون بتصوير الهوية
+      <small>التطبيق يقرأ رقم الهوية وتاريخ انتهائها ويطابقهم مع الهوية المدرجة للوريث، ويدخله على حسابه الشخصي. الهويات المدرجة: <b class="num">${nIds}</b> من ${HEIRS.length}.</small></span><span class="sw"></span></button>
+    <div class="kv" style="margin-top:10px"><span>أجهزة داخلة بالهوية الحين</span><b class="num">${store.idTokens||0}</b></div>
+    <p class="m" style="font-size:12.5px;color:var(--muted);margin:6px 0 0;line-height:1.8">⚠️ أي أحد معه هوية الوريث نفسها (أو صورة واضحة منها) يقدر يدخل على حسابه، فهي أسهل من الرقم السري بس أقل أمان. الدخول بالهوية يبقى على نفس الجهاز 90 يوم.</p>
+    <div class="actions"><button class="ghost" data-go="docs">إدراج الهويات</button>${store.idTokens?'<button class="ghost" data-act="idl-revoke">إخراج كل الأجهزة</button>':''}</div></div>`;
+}
+/* ---------- المدير: إدراج هويات كل الورثة مرة وحدة ---------- */
+function eidGuessHeir(r,df){
+  const no=String(r.no||'').replace(/\D/g,'');
+  const reg=no&&(store.docs||[]).find(d=>d.type==='eid'&&String(d.no).replace(/\D/g,'')===no);
+  if(reg)return {heir:reg.heir,how:'رقم الهوية مسجّل له من قبل'};
+  // الاسم الأول في الرمز (MRZ) هو اسم صاحب الهوية
+  const first=String(r.name||'').trim().split(/\s+/)[0]||'';
+  if(/[A-Za-z]{2}/.test(first)){const f=nSk(first);const hit=HEIRS.filter(h=>{const a=String(h.full||h.n).split(/\s+/)[0];return (AR_EN[a]||[]).map(nSk).some(x=>near1(f,x));});
+    if(hit.length===1)return {heir:hit[0].id,how:'من الاسم: '+r.name};}
+  // من النص العربي: أول اسم بعد كلمة "الاسم"
+  const txt=df.pages.flatMap(p=>p.lines||[]).map(l=>arN(normDig(String(l).normalize('NFKC')))).join('\n');
+  const m=/الاسم\s*[:：]?\s*([ء-ي]+)/.exec(txt);
+  if(m){const hit=HEIRS.filter(h=>arN(String(h.full||h.n).split(/\s+/)[0])===m[1]);if(hit.length===1)return {heir:hit[0].id,how:'من الاسم العربي'};}
+  const ok=HEIRS.filter(h=>nameCheck({heir:h.id,pages:df.pages,ocr:r}).st==='ok');
+  if(ok.length===1)return {heir:ok[0].id,how:'من الاسم'};
+  return {heir:'',how:''};
+}
+async function eidBulk(files){
+  files=[...files].slice(0,30);if(!files.length)return;
+  if(store.ver<7){toast('حدّث كود الخادم (Code) للإصدار الجديد.');return;}
+  const done=busy('جاري قراءة الهويات…','أول مرة تاخذ وقت أطول');const prog=m=>{const s=document.querySelector('#busy small');if(s)s.textContent=m;};
+  const items=[];
+  for(const [i,f] of files.entries()){
+    const pre=`هوية ${i+1} من ${files.length}: `;
+    try{const df={heir:'',type:'eid',pages:[]};const pg=await docPage(f,m=>prog(pre+m),'eid',{room:2});df.pages.push(pg);if(pg.extra){df.pages.push(...pg.extra);delete pg.extra;}
+      await docDeepen(df,m=>prog(pre+m));
+      const r=parseIdDoc(df.pages.flatMap(p=>p.lines||[]),'eid'),no=eidFmt(r.no);
+      // الوجه الأمامي والخلفي في صورتين: نجمعهم إذا نفس الرقم، أو إذا الصورة الثانية ما فيها رقم وجات بعد صورة ناقصة
+      const prev=items[items.length-1];
+      if(prev&&((no&&prev.no===no)||(!no&&prev.pages.length<2&&!prev.expiry)||(!prev.no&&no&&prev.pages.length<2))){prev.pages.push(...df.pages);
+        const r2=parseIdDoc(prev.pages.flatMap(p=>p.lines||[]),'eid');prev.no=eidFmt(r2.no)||prev.no;prev.expiry=r2.expiry||prev.expiry;prev.ocr=r2;
+        if(!prev.heir){const g=eidGuessHeir(r2,{pages:prev.pages});prev.heir=g.heir;prev.how=g.how;}prev.names.push(f.name||'');continue;}
+      const g=eidGuessHeir(r,df);
+      items.push({names:[f.name||('ملف '+(i+1))],pages:df.pages,no,expiry:r.expiry||'',ocr:r,heir:g.heir,how:g.how,confirm:false});
+    }catch(e){items.push({names:[f.name||('ملف '+(i+1))],pages:[],no:'',expiry:'',ocr:null,heir:'',how:'',err:(e&&e.message)||'ما قدرت أقرأ الملف',confirm:false});}
+  }
+  done();
+  items.forEach(it=>it.pages.forEach(p=>(p.cvs||[]).forEach(c=>{c.width=c.height=1;})));
+  state.eb={items};go('eidbulk');
+}
+function readEB(){const b=state.eb;if(!b)return;const q=id=>document.getElementById(id);
+  b.items.forEach((it,i)=>{const h=q('eb_h'+i),n=q('eb_n'+i),e=q('eb_e'+i);if(h)it.heir=h.value;if(n)it.no=n.value.trim();if(e)it.expiry=e.value;});}
+function ebName(it){if(!it.heir||!it.pages.length)return {st:'unk',seen:''};return nameCheck({heir:it.heir,pages:it.pages,ocr:it.ocr});}
+V.eidbulk=()=>{
+  const b=state.eb;if(!b||!b.items.length)return {title:'إدراج الهويات',html:'<p class="empty">ما فيه ملفات.</p>'};
+  const card=(it,i)=>{const c=ebName(it),ok=c.st==='ok',exp=it.expiry&&it.expiry<todayStr(),old=it.heir&&docsOf(it.heir).find(d=>d.type==='eid');
+    return `<div class="card pdocitem ebitem ${ok?'ok':''}"><div class="pdi-h">${it.pages[0]&&it.pages[0].thumb?`<img src="${esc(it.pages[0].thumb)}" alt="">`:''}<div><b>${esc(it.names.join(' + '))}</b>
+      <div class="m">${it.err?'<span style="color:var(--neg)">'+esc(it.err)+'</span>':it.pages.length+' '+(it.pages.length>1?'صفحات':'صفحة')+(it.how?' · عرفت الوريث '+esc(it.how):'')}</div></div>
+      <button class="iconbtn" data-act="eb-rm" data-i="${i}" aria-label="شيل">✕</button></div>
+      <label class="k" for="eb_h${i}">الوريث</label><select id="eb_h${i}"><option value="">اختر الوريث…</option>${HEIRS.map(h=>`<option value="${h.id}"${h.id===it.heir?' selected':''}>${esc(h.full||h.n)}</option>`).join('')}</select>
+      <div class="row2"><div><label class="k" for="eb_n${i}">رقم الهوية</label><input id="eb_n${i}" dir="ltr" inputmode="numeric" value="${esc(it.no)}" placeholder="784-0000-0000000-0"></div>
+      <div><label class="k" for="eb_e${i}">تاريخ الانتهاء</label><input id="eb_e${i}" type="date" value="${esc(it.expiry)}"></div></div>
+      ${!it.heir?'':ok?`<div class="doc-warn okk">✓ الاسم في الهوية مطابق لـ ${esc(H[it.heir].full||H[it.heir].n)}${c.seen?` <bdi dir="auto">(${esc(c.seen)})</bdi>`:''}</div>`
+        :`<div class="doc-warn ${c.st==='diff'?'exp':'soon'}">${c.st==='diff'?`⚠️ الاسم في الهوية <bdi dir="auto">(${esc(c.seen)})</bdi> ما يطابق ${esc(H[it.heir].n)}.`:'ما قدرت أتأكد من الاسم من الصورة.'}</div>
+        <button class="toggle" role="switch" aria-checked="${!!it.confirm}" data-act="eb-ok" data-i="${i}" style="margin-top:8px"><span>أأكد إن هذي هوية ${esc(H[it.heir].full||H[it.heir].n)}</span><span class="sw"></span></button>`}
+      ${exp?`<div class="doc-warn exp">⛔ الهوية منتهية (${esc(docDate(it.expiry))})، والتطبيق ما يقبلها.</div>`:''}
+      ${old&&!exp?`<div class="m" style="margin-top:6px">بتحل محل الهوية المسجّلة له (تنتهي ${esc(docDate(old.expiry))}).</div>`:''}
+    </div>`;};
+  return {title:'إدراج '+b.items.length+' هويات',html:`<p class="note" style="margin-top:0">قرأت الهويات وعرفت صاحب كل وحدة من الاسم. راجعها قبل الحفظ. الوجه الأمامي والخلفي لنفس الهوية ينضمون في بطاقة وحدة.</p>
+    ${b.items.map(card).join('')}<p class="err" id="ebErr"></p>
+    <div class="actions"><button class="primary" data-act="eb-save">حفظ الكل</button><button class="ghost" data-act="eb-cancel">إلغاء</button></div>`};
+};
+async function ebSave(){
+  readEB();const b=state.eb,err=document.getElementById('ebErr');if(!b)return;
+  const L=b.items.filter(it=>it.pages.length);
+  for(const [i,it] of L.entries()){const n=' ('+(it.names[0]||'الهوية '+(i+1))+')';
+    if(!H[it.heir]){err.textContent='اختر الوريث'+n+'.';return;}
+    if(!eidFmt(it.no)){err.textContent='رقم الهوية لازم 15 رقم ويبدأ بـ 784'+n+'.';return;}
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(it.expiry||'')){err.textContent='اكتب تاريخ الانتهاء'+n+'.';return;}
+    if(it.expiry<todayStr()){err.textContent='الهوية منتهية'+n+'.';return;}
+    if(ebName(it).st!=='ok'&&!it.confirm){err.textContent='أكّد صاحب الهوية'+n+'.';return;}}
+  const hs=L.map(x=>x.heir);if(new Set(hs).size!==hs.length){err.textContent='فيه أكثر من هوية لنفس الوريث. خلّ وحدة بس (الأحدث).';return;}
+  const done=busy('جاري حفظ الهويات…','يرفع الصور بأمان');let ok=0,r=null;const fails=[];
+  for(const it of L){const h=H[it.heir];
+    try{r=await api('doc-put',{doc:{heir:it.heir,type:'eid',no:eidFmt(it.no),name:h.full||h.n,issue:(it.ocr&&it.ocr.issue)||'',expiry:it.expiry,noExp:false,src:it.ocr&&it.ocr.expiry===it.expiry?'ocr':'manual'},files:it.pages.map(p=>({mime:p.mime,data:p.data}))});ok++;it.saved=true;}
+    catch(e){fails.push(h.n+': '+apiErr(e));}}
+  done();
+  b.items=b.items.filter(x=>!x.saved);
+  if(!store.applyRes(r))await store.refresh().catch(()=>{});
+  if(!fails.length){state.eb=null;back();toast('✓ انحفظت '+ok+' هويات');}
+  else{render();const e2=document.getElementById('ebErr');if(e2)e2.textContent=(ok?'انحفظت '+ok+'. ':'')+'ما انحفظ: '+fails.join(' · ');}
+}
+async function idlActs(act,b){
+  if(act==='eb-save'){ebSave();return true;}
+  if(act==='eb-cancel'){state.eb=null;back();return true;}
+  if(act==='eb-rm'){readEB();state.eb.items.splice(+b.dataset.i,1);if(!state.eb.items.length){state.eb=null;back();}else render();return true;}
+  if(act==='eb-ok'){readEB();const it=state.eb.items[+b.dataset.i];it.confirm=!it.confirm;render();return true;}
+  if(act==='idl-toggle'||act==='idl-revoke'){
+    if(act==='idl-revoke'&&!await ask('إخراج كل الأجهزة','كل اللي داخلين بالهوية بيطلعون، ويحتاجون يصورون هويتهم مرة ثانية.','إخراج'))return true;
+    const done=busy('لحظة…');
+    try{const r=await api('id-admin',act==='idl-toggle'?{on:!store.idLogin}:{revoke:true});done();store.idLogin=r.idLogin;store.idTokens=r.idTokens;render();toast(act==='idl-revoke'?'طلعت كل الأجهزة':r.idLogin?'الدخول بالهوية مفعّل':'الدخول بالهوية موقوف');}
+    catch(e){done();toast('ما تم: '+apiErr(e));}return true;}
+  return false;
+}
+
+/* الدخول (بالرقم السري أو بالهوية): تحميل البيانات وفتح الرئيسية */
+async function enterApp(b,hello){
+  state.loginErr='';saveAuth();
+  trackEv('login');
+  try{store.mode='loading';state.loadMsg='';loadTick();render();
+      try{await store.refresh(true);}
+      catch(e1){if(e1&&(e1.error==='timeout'||e1.error==='network'||e1.error==='busy')){state.loadMsg='الخادم يتجهّز… محاولة ثانية';render();await store.refresh(true);}else throw e1;}
+      state.stack=[{v:'home'}];render();scrollTop0();toast(hello||(store.canWrite?'أهلاً، دخلت كمدير':store.isAgent?'أهلاً، دخلت كوكيل':'أهلاً بك'));bioLoad();setTimeout(bioOffer,1800);setTimeout(()=>askWho(),700);}
+    catch(e){auth.pin='';saveAuth();store.mode='login';state.loginErr=e&&e.error==='timeout'?'سيرفر Google ما رد خلال دقيقة مرتين. انتظر شوي وجرّب، وإذا تكررت صوّر صفحة "التنفيذات" في Apps Script.':apiErr(e);render();}
+}
 V.login=()=>({title:'وريث',html:`<div class="gate"><div class="gmark">${markSvg}<span>WAREETH</span></div>
   <h2 style="margin:6px 0 2px;font-size:22px">أهلاً بكم في تطبيق وريث</h2>
   <p style="color:var(--muted);margin:0 0 18px">ورثة مبارك علي القصيلي</p>
@@ -2414,6 +2621,8 @@ V.login=()=>({title:'وريث',html:`<div class="gate"><div class="gmark">${mark
   <input id="lPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••">
   <div class="err" id="lErr">${esc(state.loginErr||'')}</div>
   <button class="primary" data-act="login">دخول</button>
+  <div class="ordiv"><span>أو</span></div>
+  <label class="scanbtn idlbtn">${I.idcard||I.cam}<span>الدخول بتصوير الهوية<small>للورثة: صوّر خلف الهوية (أو الوجهين)، أو اختر ملف الهوية الرقمية PDF</small></span><input type="file" id="idlFile" accept="image/*,application/pdf" multiple></label>
   ${auth.url?`<button class="linkbtn" style="margin-top:12px" data-act="reset-url">تغيير رابط الخادم</button>`:''}
   <p class="status" style="margin-top:18px">إصدار ${APP_VER}</p></div>`});
 
@@ -3609,6 +3818,9 @@ function docPill(d){const s=docState(d),n=docDays(d);
 function docSeen(){try{return +localStorage.getItem(DOCSEEN_KEY)||0;}catch(e){return 0;}}
 function docMarkSeen(){try{localStorage.setItem(DOCSEEN_KEY,String(Date.now()));}catch(e){}}
 function docIsNew(d){const s=docSeen();return !!s&&(+d.updatedAt||0)>s&&d.by!==(store.canWrite?'المدير':store.isAgent?store.agent:'');}
+I.rcpt='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>';
+I.cmpr='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7h14"/><path d="M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0z"/><path d="M8 21h8"/></svg>';
+I.pdfx='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M12 11v6M9.5 14.5 12 17l2.5-2.5"/></svg>';
 I.idcard='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.8 16c.5-1.5 1.5-2.2 2.7-2.2s2.2.7 2.7 2.2M14 10h4M14 13.5h3"/></svg>';
 I.passport='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="10" r="3.2"/><path d="M8.8 10h6.4M12 6.8c-1 .9-1.4 2-1.4 3.2s.4 2.3 1.4 3.2c1-.9 1.4-2 1.4-3.2S13 7.7 12 6.8M9 17h6"/></svg>';
 I.family='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><circle cx="10" cy="11" r="1.6"/><circle cx="14.5" cy="11.5" r="1.3"/><path d="M8 16c.3-1.4 1-2.1 2-2.1s1.7.7 2 2.1M12.8 16c.2-1.1.8-1.7 1.7-1.7s1.4.6 1.6 1.7"/></svg>';
@@ -3633,7 +3845,8 @@ V.docs=()=>{
   if(!docsAll())return Object.assign(V.docheir({id:store.user.heir}),{title:'مستنداتي'});
   const all=store.docs,s=docSum(all);
   const alerts=all.map(d=>({d,n:docDays(d)})).filter(x=>x.n!=null&&x.n<=DOC_WARN).sort((a,b)=>a.n-b.n);
-  const html=`${alerts.length?`<div class="card docalert"><h4>${s.ex?'⛔':'⚠️'} ${alerts.length===1?'مستند يحتاج تجديد':alerts.length+' مستندات تحتاج تجديد'}</h4>
+  const bulk=store.canWrite?`<label class="scanbtn ebbtn">${I.idcard||I.cam}<span>إدراج هويات الورثة دفعة وحدة<small>اختر كل صور أو ملفات الهويات مرة وحدة، والتطبيق يعرف صاحب كل هوية من الاسم ويقرأ الرقم والانتهاء</small></span><input type="file" data-eid-bulk="" accept="image/*,application/pdf" multiple></label>`:'';
+  const html=`${bulk}${alerts.length?`<div class="card docalert"><h4>${s.ex?'⛔':'⚠️'} ${alerts.length===1?'مستند يحتاج تجديد':alerts.length+' مستندات تحتاج تجديد'}</h4>
     ${alerts.map(({d,n})=>`<button class="row" data-go="docheir" data-id="${d.heir}"><span>${esc(H[d.heir].n)} – ${DOC_T[d.type].n}<div class="m">${esc(docLeft(n))} · ${esc(docDate(d.expiry))}</div></span>${docPill(d)}</button>`).join('')}</div>`:''}
   <div class="rows docheirs">${HEIRS.map(h=>{const L=docsOf(h.id),nw=L.some(docIsNew);
     return `<button class="row" data-go="docheir" data-id="${h.id}"><span>${esc(h.full||h.n)}${nw?' <span class="ntag">جديد</span>':''}
@@ -4423,13 +4636,7 @@ document.addEventListener('click',async e=>{
     const u=document.getElementById('lUrl'),p=document.getElementById('lPin'),er=document.getElementById('lErr');
     if(u){const v=u.value.trim();if(!API_RE.test(v)){er.textContent='الرابط لازم يكون رابط نشر Google Apps Script وينتهي بـ /exec';return;}auth.url=v;auth.custom=true;}
     auth.pin=(p&&p.value||'').trim();if(!auth.pin){er.textContent='اكتب الرقم السري.';return;}
-    b.disabled=true;state.loginErr='';saveAuth();
-    trackEv('login');
-    try{store.mode='loading';state.loadMsg='';loadTick();render();
-      try{await store.refresh(true);}
-      catch(e1){if(e1&&(e1.error==='timeout'||e1.error==='network'||e1.error==='busy')){state.loadMsg='الخادم يتجهّز… محاولة ثانية';render();await store.refresh(true);}else throw e1;}
-      state.stack=[{v:'home'}];render();scrollTop0();toast(store.canWrite?'أهلاً، دخلت كمدير':store.isAgent?'أهلاً، دخلت كوكيل':'أهلاً بك');bioLoad();setTimeout(bioOffer,1800);setTimeout(()=>askWho(),700);}
-    catch(e){auth.pin='';saveAuth();store.mode='login';state.loginErr=e&&e.error==='timeout'?'سيرفر Google ما رد خلال دقيقة مرتين. انتظر شوي وجرّب، وإذا تكررت صوّر صفحة "التنفيذات" في Apps Script.':apiErr(e);render();}
+    b.disabled=true;auth.viaId=false;await enterApp(b);
     return;
   }
   if(d.act==='retry'){store.init();return;}
@@ -4438,7 +4645,8 @@ document.addEventListener('click',async e=>{
     if(store.mode==='api'&&!(await ask('تسجيل خروج؟','بتحتاج الرقم السري عشان تدخل مرة ثانية.','خروج')))return;
     closePage();trackEv('logout');api('track',trackPayload()).catch(()=>{});TRACK.cur=null;TRACK.q=[];trackSave();
     NEWS.key='';NEWS.base=null;NEWS.mine=new Set();bioClear();
-    auth.pin='';saveAuth();clearCache();TRACK.last='';
+    if(/^tk_/.test(auth.pin||''))api_('id-out',{}).catch(()=>{});
+    auth.pin='';auth.viaId=false;saveAuth();clearCache();TRACK.last='';
     Object.assign(store,{mode:'login',canWrite:false,isAgent:false,role:null,ver:0,repaired:false,user:null,users:null});
     state.txs=[];state.reqs=[];state.form=null;state.loginErr='';state.stack=[{v:'home'}];notif.cfg=null;
     render();scrollTop0();toast('تم تسجيل الخروج');return;
@@ -4661,6 +4869,7 @@ document.addEventListener('click',async e=>{
   if(d.act==='news-ok'){seenAll();NEWS.cache=newsCalc();NEWS.dismissed=newsSig();closeNewsPopup();if(cur().v==='news')state.stack=[{v:'home'}];render();toast('تمام، تم الاطلاع');return;}
   if(d.act&&d.act.indexOf('doc-')===0){await docAction(d.act,b);return;}
   if(d.act&&/^pd(oc|f)-/.test(d.act)){await pdocActs(d.act,b);return;}
+  if(d.act&&/^(eb|idl)-/.test(d.act)){await idlActs(d.act,b);return;}
   if(d.act&&(d.act.indexOf('cert-')===0||d.act==='sign-clear')){await certAction(d.act,b);return;}
   if(d.cfAcct){readCF();if(state.cf.acct!==d.cfAcct){state.cf.acct=d.cfAcct;certFillIncome(state.cf);}render();return;}
   if(d.cfInc!=null){readCF();state.cf.income=d.cfInc;render();return;}
@@ -4688,6 +4897,8 @@ document.addEventListener('toggle',e=>{
 },true);
 document.addEventListener('change',e=>{
   {const ds=e.target.dataset||{};
+    if(e.target.id==='idlFile'&&e.target.files&&e.target.files.length){const fl=[...e.target.files];e.target.value='';idLogin(fl);return;}
+    if(ds.eidBulk!=null&&e.target.files&&e.target.files.length){const fl=[...e.target.files];e.target.value='';eidBulk(fl);return;}
     if(ds.pdocUp!=null&&e.target.files&&e.target.files.length){const fl=[...e.target.files];e.target.value='';pdocScan(fl,ds.prop?{prop:ds.prop,type:ds.pdocUp}:null);return;}
     if((ds.docUp||ds.docAdd)&&e.target.files&&e.target.files.length){const fl=[...e.target.files];e.target.value='';if(cur().v==='docform')readDF();docScan(fl,ds.heir,ds.docUp||ds.docAdd,!!ds.docAdd);return;}
     if((e.target.id==='df_exp'||e.target.id==='df_iss')&&state.df){readDF();updDF();return;}
