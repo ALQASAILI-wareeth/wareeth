@@ -404,6 +404,9 @@ td{padding:7px 4px;border-bottom:1px solid var(--line)} td.r{text-align:left}
 .phrow{display:grid;grid-template-columns:76px 1fr;align-items:center;gap:10px;margin-bottom:8px}
 .phrow label{font-weight:700;font-size:16px}
 .phrow input{direction:ltr;text-align:left;font-variant-numeric:tabular-nums}
+.phrow .phin{display:grid;gap:6px}
+textarea.locked{opacity:.75;background:var(--card2,rgba(255,255,255,.04));cursor:default}
+.savedtag{display:inline-block;margin-top:8px;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:700;color:#7fd3a6;background:rgba(127,211,166,.12);border:1px solid rgba(127,211,166,.35)}
 .phrow input.bad{border-color:var(--neg)}
 .btn-danger{flex:1;background:var(--neg);color:#fff;border:0;border-radius:12px;padding:12px;font-weight:700;cursor:pointer}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--navy);display:grid;grid-template-columns:repeat(2,1fr);padding-bottom:env(safe-area-inset-bottom,0px);border-top:1px solid rgba(214,178,102,.25)}
@@ -1005,7 +1008,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='10.0';
+const APP_VER='10.1';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1360,7 +1363,7 @@ V.home=()=>{
     <div class="mark">${markSvg}<span>WAREETH</span></div>
     <div class="orn" aria-hidden="true"><i></i><b>◆</b><i></i></div>
     <h2>أهلاً بكم في تطبيق وريث</h2><p>ورثة مبارك علي القصيلي</p>${roleBadge()}</div>
-  <div class="hero"><div class="lbl">الرصيد المتاح الآن</div>
+  <div class="hero"><div class="lbl">إجمالي رصيد الورثة المتاح الآن</div>
     <div class="big"><span class="num">${fmt(r.total)}</span> <small>د.إ</small></div>
     <div class="upd">${r.last?'آخر تحديث: '+esc(fmtDT(new Date(r.last),true)):(store.mode==='nodb'?'سجّل دخولك في Claude عشان تظهر البيانات.':'ابدأ بإضافة أول إيداع من حساب البناية أو المزارع.')}</div>
 </div>
@@ -1772,18 +1775,37 @@ V.userform=()=>{
 };
 function pinSheet(name,heir,pin){
   const ph=notif&&notif.cfg&&notif.cfg.phones&&notif.cfg.phones[heir];
-  const msg=`أهلاً ${name}،\nرقمك السري في تطبيق وريث: ${pin}\nلا ترسله لأحد.`;
+  const em=notif&&notif.cfg&&notif.cfg.hemails&&notif.cfg.hemails[heir];
+  const msg=`أهلاً ${name}،\nرقمك السري في تطبيق وريث: ${pin}\nرابط التطبيق: ${APP_URL}\nلا ترسله لأحد.`;
   const bg=document.createElement('div');bg.className='modal-bg';
   bg.innerHTML=`<div class="modal sheet" role="dialog" aria-modal="true" aria-labelledby="pinT"><div class="sheet-grip"></div>
     <h4 id="pinT" style="margin:0 0 4px">الرقم السري لـ ${esc(name)}</h4>
     <p class="m" style="color:var(--muted);margin:0 0 12px;font-size:14px">انسخه أو أرسله له الحين. ما يطلع مرة ثانية، وإذا ضاع اعمل له رقم جديد.</p>
     <div class="pinbig num" dir="ltr">${esc(pin)}</div>
-    <div class="actions"><button class="ghost" data-pin="copy">نسخ الرقم</button><a class="ghost wa" href="https://wa.me/${ph?esc(ph):''}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">إرسال بالواتساب</a></div>
+    <div class="actions"><button class="ghost" data-pin="copy">نسخ الرقم</button><a class="ghost wa" href="https://wa.me/${ph?esc(ph):''}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">${ph?'إرسال بالواتساب':'واتساب (اختر المحادثة)'}</a></div>
+    ${em?`<div class="actions"><a class="ghost" href="mailto:${esc(em)}?subject=${encodeURIComponent('رقمك السري في تطبيق وريث')}&body=${encodeURIComponent(msg)}">إرسال بالإيميل&nbsp;<span class="num" dir="ltr" style="font-size:12px;margin-inline-start:6px;opacity:.8">${esc(em)}</span></a></div>`:''}
+    ${ph||em?'':`<p class="m" style="color:var(--muted);font-size:13px;margin:0 0 8px">ما فيه رقم واتساب ولا إيميل مسجل له. تقدر تضيفهم من الإعدادات ← أرقام وإيميلات الورثة.</p>`}
     <div class="actions"><button class="primary" data-pin="close" style="margin-top:0">تم</button></div></div>`;
   bg.addEventListener('click',async e=>{e.stopPropagation();const b=e.target.closest('[data-pin]');if(!b)return;
     if(b.dataset.pin==='copy'){try{await navigator.clipboard.writeText(pin);toast('تم نسخ الرقم');}catch(x){toast('ما قدرت أنسخ، اكتبه يدوي: '+pin);}return;}
     bg.remove();});
   document.body.appendChild(bg);
+}
+/* بعد الموافقة على جهاز الهوية: نعرض على المدير يسوي رقم سري ويرسله للوارث */
+async function pinOffer(heir,nm){
+  if(!heir||!store.canWrite)return;
+  let u=null;const pick=()=>{const L=(store.users||[]).filter(x=>x.heir===heir);return L.find(x=>x.scope==='own'&&!x.off)||L.find(x=>!x.off)||L[0]||null;};
+  u=pick();if(!u){try{await store.refresh();}catch(e){}u=pick();}
+  if(!u)return;
+  const ph=notif.cfg&&notif.cfg.phones&&notif.cfg.phones[heir],em=notif.cfg&&notif.cfg.hemails&&notif.cfg.hemails[heir];
+  const via=[ph?'الواتساب':'',em?'الإيميل':''].filter(Boolean).join(' و');
+  if(!await ask('إرسال رقم سري لـ '+(u.name||nm),'دخل الحين بالهوية. تبي نسوي له رقم سري جديد وترسله له'+(via?' على '+via+' المسجل':'')+'؟ يقدر يدخل فيه من أي جهاز. (إذا عنده رقم قديم يتغيّر)','سوّ رقم وأرسله'))return;
+  const done=busy('جاري إنشاء الرقم…');
+  try{const r=await api('user-put',{user:{id:u.id,name:u.name,heir:u.heir,scope:u.scope||'own',off:false,regen:true}});done();
+    if(!r||!r.ok||!r.pin){toast('ما قدرت أسوي الرقم: '+apiErr(r||{}));return;}
+    if(!store.applyRes(r))store.refresh().catch(()=>{});
+    pinSheet(u.name||nm,heir,r.pin);
+  }catch(e){done();toast('ما قدرت أسوي الرقم: '+apiErr(e));}
 }
 async function userAction(act,b){
   if(act==='user-new'||act==='user-edit'){
@@ -2465,7 +2487,7 @@ V.settings=()=>({title:'الإعدادات',html:`
   <div class="card">
     ${store.role==='view'?`<div class="kv"><span>اسمك على هذا الجهاز</span><b>${esc(whoName()||'ما اخترت')} <button class="linkbtn" data-act="who-change">تغيير</button></b></div>`:''}
     ${store.canWrite?`<div class="kv"><span>متابعة الاستخدام</span><b><button class="linkbtn" data-go="activity">مين دخل ومين متصل ←</button></b></div>`:''}
-    <div class="kv"><span>نوع الدخول</span><b>${store.canWrite?'مدير (إضافة وتعديل واعتماد)':store.isAgent?'وكيل (إدخال بانتظار الاعتماد)':isHeirUser()?'حساب شخصي: '+esc(store.user.name)+(store.user.scope==='all'?' (يشوف كل الحسابات)':' (يشوف حسابه بس)'):'عرض فقط'}</b></div>
+    <div class="kv"><span>نوع الدخول</span><b>${store.canWrite?'مدير (إضافة وتعديل واعتماد)':store.isAgent?'وكيل (إدخال بانتظار الاعتماد)':isHeirUser()?'حساب شخصي: '+esc(store.user.name):'عرض فقط'}</b></div>
     ${store.canWrite?`<div class="kv"><span>المستخدمين وأرقامهم</span><b><button class="linkbtn" data-go="users">إدارة المستخدمين (${(store.users||[]).length}) ←</button></b></div>`:''}
     <div class="actions"><button class="ghost" data-act="refresh">تحديث البيانات</button>${store.canWrite?'<button class="ghost" data-act="share-link">نسخ رابط الورثة</button>':''}</div>
     <div class="actions" style="margin-top:8px"><button class="ghost danger" data-act="logout">تسجيل خروج</button></div>
@@ -2563,7 +2585,7 @@ function idPendCard(){
   const L=store.canWrite&&store.idPending||[];if(!L.length)return '';
   return `<div class="card preqcard idpend"><b>🪪 ${L.length===1?'جهاز جديد يبي يدخل بالهوية':L.length+' أجهزة جديدة تبي تدخل بالهوية'}</b>
     ${L.map(x=>`<div class="preqrow"><div><b>${esc(x.name)}</b><div class="m">تطابقت هويته · ${esc(fmtDT(new Date(x.at)))} · جهاز ${esc(x.dev)}</div></div>
-      <div class="idpbtns"><button class="primary sm" data-act="idl-ok" data-k="${esc(x.k)}" data-name="${esc(x.name)}">موافقة</button><button class="ghost sm" data-act="idl-no" data-k="${esc(x.k)}" data-name="${esc(x.name)}">رفض</button></div></div>`).join('')}
+      <div class="idpbtns"><button class="primary sm" data-act="idl-ok" data-k="${esc(x.k)}" data-name="${esc(x.name)}" data-heir="${esc(x.heir||'')}">موافقة</button><button class="ghost sm" data-act="idl-no" data-k="${esc(x.k)}" data-name="${esc(x.name)}">رفض</button></div></div>`).join('')}
     <p class="m" style="margin-top:8px">وافق بس إذا متأكد إن الوريث نفسه اللي يدخل الحين (مثلاً كلّمك). بعد الموافقة يدخل من هذا الجهاز بدون موافقة ثانية.</p></div>`;
 }
 /* المدير: إعداد الدخول بالهوية */
@@ -2670,7 +2692,7 @@ async function idlActs(act,b){
     const nm=b.dataset.name||'';
     if(act==='idl-no'&&!await ask('رفض الجهاز',''+nm+' ما بيقدر يدخل من هذا الجهاز. يقدر يرسل طلب ثاني بعدين.','رفض'))return true;
     const done=busy('لحظة…');
-    try{const r=await api('id-admin',{k:b.dataset.k,approve:act==='idl-ok'});done();store.idTokens=r.idTokens;store.idPending=r.idPending||[];render();toast(act==='idl-ok'?'✓ وافقت، و'+nm+' بيدخل الحين':'تم الرفض');}
+    try{const r=await api('id-admin',{k:b.dataset.k,approve:act==='idl-ok'});done();store.idTokens=r.idTokens;store.idPending=r.idPending||[];render();toast(act==='idl-ok'?'✓ وافقت، و'+nm+' بيدخل الحين':'تم الرفض');if(act==='idl-ok')setTimeout(()=>pinOffer(b.dataset.heir,nm),500);}
     catch(e){done();toast('ما تم: '+apiErr(e));}return true;}
   if(act==='idl-toggle'||act==='idl-revoke'){
     if(act==='idl-revoke'&&!await ask('إخراج كل الأجهزة','كل اللي داخلين بالهوية بيطلعون، ويحتاجون يصورون هويتهم مرة ثانية.','إخراج'))return true;
@@ -4861,12 +4883,13 @@ document.addEventListener('click',async e=>{
     return;
   }
   if(d.act==='email-auto'&&notif.ref){const c=notif.cfg||{};try{await notif.ref.set(Object.assign({emails:[]},c,{auto:!c.auto}));notif.cfg=Object.assign({emails:[]},c,{auto:!c.auto});render();}catch(e){toast('ما قدرت أحفظ.');}return;}
+  if(d.act==='email-edit'){state.emEdit=true;render();setTimeout(()=>{const t=document.getElementById('nEmails');if(t)t.focus();},50);return;}
   if(d.act==='email-save'&&notif.ref){
     const raw=(document.getElementById('nEmails').value||'').split(/[\s,،;]+/).map(x=>x.trim()).filter(Boolean);
     const bad=raw.filter(x=>!EMAIL_RE.test(x));const err=document.getElementById('nErr');
     if(bad.length){err.textContent='هذي العناوين فيها خطأ: '+bad.join('، ');return;}
     const emails=[...new Set(raw.map(x=>x.toLowerCase()))].slice(0,30);
-    try{const c=Object.assign({auto:true},notif.cfg||{},{emails});await notif.ref.set(c);notif.cfg=c;render();toast('انحفظت '+emails.length+' إيميلات');}catch(e){err.textContent='ما قدرت أحفظ. حاول مرة ثانية.';}
+    try{const c=Object.assign({auto:true},notif.cfg||{},{emails});await notif.ref.set(c);state.emEdit=false;render();toast('انحفظت '+emails.length+' إيميلات');}catch(e){err.textContent='ما قدرت أحفظ. حاول مرة ثانية.';}
     return;
   }
   if(d.act&&d.act.startsWith('wa-')&&adminView()){
@@ -4892,12 +4915,15 @@ document.addEventListener('click',async e=>{
     return;
   }
   if(d.act==='phones-save'&&notif.ref){
-    const err=document.getElementById('phErr'),phones={},bad=[];
+    const err=document.getElementById('phErr'),phones={},hemails={},bad=[],badE=[];
     document.querySelectorAll('[data-ph]').forEach(i=>{const v=i.value.trim();if(!v){i.classList.remove('bad');return;}const n=normPhone(v);i.classList.toggle('bad',!n);if(n)phones[i.dataset.ph]=n;else bad.push(H[i.dataset.ph].n);});
-    if(bad.length){err.textContent='تأكد من رقم: '+bad.join('، ');return;}
+    document.querySelectorAll('[data-hm]').forEach(i=>{const v=i.value.trim().toLowerCase();if(!v){i.classList.remove('bad');return;}const ok=EMAIL_RE.test(v);i.classList.toggle('bad',!ok);if(ok)hemails[i.dataset.hm]=v;else badE.push(H[i.dataset.hm].n);});
+    if(bad.length||badE.length){err.textContent=(bad.length?'تأكد من رقم: '+bad.join('، ')+'. ':'')+(badE.length?'تأكد من إيميل: '+badE.join('، '):'');return;}
     err.textContent='';
     const done=busy('جاري حفظ الأرقام…');
-    try{const c=Object.assign({emails:[]},notif.cfg||{},{phones});await notif.ref.set(c);done();softRender(true);toast('انحفظت الأرقام ('+Object.keys(phones).length+')');}
+    try{const c=Object.assign({emails:[]},notif.cfg||{},{phones,hemails});await notif.ref.set(c);done();softRender(true);
+      const ne=Object.keys(hemails).length,saved=notif.cfg&&notif.cfg.hemails;
+      toast(ne&&!saved?'انحفظت الأرقام، بس الإيميلات تحتاج تحديث كود الخادم (Code)':'انحفظت '+Object.keys(phones).length+' أرقام'+(ne?' و'+ne+' إيميلات':''));}
     catch(e){done();err.textContent='ما قدرت أحفظ: '+apiErr(e);}
     return;
   }
@@ -5113,13 +5139,13 @@ function openNotify(text,only,waP){
   document.body.appendChild(bg);
 }
 function phonesCard(){
-  const p=(notif.cfg&&notif.cfg.phones)||{},n=HEIRS.filter(h=>p[h.id]).length;
-  return `<h3 class="sec" id="phonesSec">أرقام الورثة للواتساب</h3><div class="card">
+  const p=(notif.cfg&&notif.cfg.phones)||{},m=(notif.cfg&&notif.cfg.hemails)||{},n=HEIRS.filter(h=>p[h.id]).length,ne=HEIRS.filter(h=>m[h.id]).length;
+  return `<h3 class="sec" id="phonesSec">أرقام وإيميلات الورثة</h3><div class="card">
     <p class="m" style="font-size:14px;color:var(--muted);margin:0 0 12px">اكتب رقم كل وارث مرة وحدة. بعد كل حركة تطلع لك أسماءهم، تضغط على الاسم فينفتح الواتساب على محادثته والرسالة جاهزة. تقدر تكتب الرقم <span class="num" dir="ltr">05XXXXXXXX</span> أو بمفتاح الدولة. اللي تتركه فاضي ما يطلع.</p>
-    ${HEIRS.map(h=>`<div class="phrow"><label for="ph-${h.id}">${esc(h.n)}</label><input id="ph-${h.id}" data-ph="${h.id}" type="tel" inputmode="tel" autocomplete="off" placeholder="05XXXXXXXX" value="${esc(showPhone(p[h.id]))}"></div>`).join('')}
+    ${HEIRS.map(h=>`<div class="phrow"><label for="ph-${h.id}">${esc(h.n)}</label><div class="phin"><input id="ph-${h.id}" data-ph="${h.id}" type="tel" inputmode="tel" autocomplete="off" placeholder="05XXXXXXXX" value="${esc(showPhone(p[h.id]))}"><input data-hm="${h.id}" type="email" inputmode="email" autocomplete="off" placeholder="الإيميل (اختياري)" value="${esc(m[h.id]||'')}"></div></div>`).join('')}
     <div class="err" id="phErr"></div>
-    <div class="actions"><button class="ghost" data-act="phones-save">حفظ الأرقام</button></div>
-    <p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">محفوظ <span class="num">${n}</span> من <span class="num">${HEIRS.length}</span>. الأرقام في ورقة الإعدادات في الشيت، وتطلع لك أنت بس كمدير.</p></div>`;
+    <div class="actions"><button class="ghost" data-act="phones-save">حفظ الأرقام والإيميلات</button></div>
+    <p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">محفوظ <span class="num">${n}</span> رقم و<span class="num">${ne}</span> إيميل من <span class="num">${HEIRS.length}</span>. الإيميل يُستخدم لإرسال الرقم السري للوارث. كلها في ورقة الإعدادات في الشيت، وتطلع لك أنت بس كمدير.</p></div>`;
 }
 
 /* ===== إشعار تلقائي بالإيميل (Inkbox) ===== */
@@ -5189,14 +5215,15 @@ function waCard(){
     <div class="actions" style="margin-top:14px"><button class="ghost" data-act="wa-off" style="color:var(--neg)">فصل الربط</button></div></div>`;
 }
 function emailCard(){
-  const c=notif.cfg||{},list=(c.emails||[]).join('\n');
+  const c=notif.cfg||{},list=(c.emails||[]).join('\n'),lock=!!(c.emails||[]).length&&!state.emEdit;
   return `<h3 class="sec">إشعار الورثة بالإيميل</h3><div class="card">
     <button class="toggle" role="switch" aria-checked="${!!c.auto}" data-act="email-auto"><span>إرسال تلقائي بعد كل حركة
       <small>يوصل الإيميل من Gmail حقك لكل العناوين اللي تحت، وكل واحد ما يشوف عناوين الباقين. ونسخة توصلك أنت.</small></span><span class="sw"></span></button>
     <label class="k" for="nEmails">الإيميلات (كل إيميل في سطر)</label>
-    <textarea id="nEmails" dir="ltr" style="min-height:120px;text-align:left" placeholder="name@example.com">${esc(list)}</textarea>
+    <textarea id="nEmails" dir="ltr" class="${lock?'locked':''}" style="min-height:120px;text-align:left" placeholder="name@example.com"${lock?' readonly':''}>${esc(list)}</textarea>
+    ${lock?`<div class="savedtag">✓ محفوظة (${(c.emails||[]).length})</div>`:''}
     <div class="err" id="nErr"></div>
-    <div class="actions"><button class="ghost" data-act="email-save">حفظ الإيميلات</button></div>
+    <div class="actions">${lock?`<button class="ghost" data-act="email-edit">تعديل الإيميلات</button>`:`<button class="ghost" data-act="email-save">حفظ الإيميلات</button>`}</div>
     <p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">الإيميلات محفوظة في ورقة الإعدادات في الشيت، وما تطلع للورثة في التطبيق.</p></div>`;
 }
 
