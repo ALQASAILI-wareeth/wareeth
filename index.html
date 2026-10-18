@@ -1005,7 +1005,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='9.7';
+const APP_VER='9.8';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1016,7 +1016,7 @@ if(auth.def!==DEFAULT_API||(!auth.custom&&!API_URLS.includes(auth.url))){auth.ur
 // أمان: ما نقبل رابط خادم من الرابط نفسه (#api=…) عشان ما أحد يرسل للورثة رابط يسرق أرقامهم السرية
 (function(){if(/api=/.test(location.hash))history.replaceState(null,'',location.pathname+location.search);})();
 const API_RE=/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec$/;
-if(auth.url&&!API_RE.test(auth.url)){auth.url=DEFAULT_API;auth.custom=false;}
+if(!auth.url||!API_RE.test(auth.url)){auth.url=DEFAULT_API;auth.custom=false;}   // رابط الخادم مدمج: ما نطلبه من أحد
 function saveAuth(){try{localStorage.setItem(AUTH,JSON.stringify(auth))}catch(e){}}
 let netN=0;
 function net(d){netN=Math.max(0,netN+d);const e=document.getElementById('net');if(e)e.classList.toggle('on',netN>0);}
@@ -2689,14 +2689,12 @@ async function enterApp(b,hello){
 V.login=()=>({title:'وريث',html:`<div class="gate"><div class="gmark">${markSvg}<span>WAREETH</span></div>
   <h2 style="margin:6px 0 2px;font-size:22px">أهلاً بكم في تطبيق وريث</h2>
   <p style="color:var(--muted);margin:0 0 18px">ورثة مبارك علي القصيلي</p>
-  ${auth.url?'':`<label class="k" for="lUrl">رابط الخادم</label><input id="lUrl" dir="ltr" placeholder="https://script.google.com/macros/s/…/exec" value="">`}
   <label class="k" for="lPin">الرقم السري</label>
   <input id="lPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••">
   <div class="err" id="lErr">${esc(state.loginErr||'')}</div>
   <button class="primary" data-act="login">دخول</button>
   <div class="ordiv"><span>أو</span></div>
   <label class="scanbtn idlbtn">${I.idcard||I.cam}<span>الدخول بتصوير الهوية<small>للورثة: صوّر خلف الهوية (أو الوجهين)، أو اختر ملف الهوية الرقمية PDF</small></span><input type="file" id="idlFile" accept="image/*,application/pdf" multiple></label>
-  ${auth.url?`<button class="linkbtn" style="margin-top:12px" data-act="reset-url">تغيير رابط الخادم</button>`:''}
   <p class="status" style="margin-top:18px">إصدار ${APP_VER}</p></div>`});
 
 /* ===== النماذج ===== */
@@ -4714,7 +4712,7 @@ document.addEventListener('click',async e=>{
     return;
   }
   if(d.act==='retry'){store.init();return;}
-  if(d.act==='reset-url'){auth.url='';auth.custom=true;saveAuth();state.loginErr='';render();return;}
+  if(d.act==='reset-url'){auth.url=DEFAULT_API;auth.custom=false;saveAuth();state.loginErr='';render();return;}
   if(d.act==='logout'){
     if(store.mode==='api'&&!(await ask('تسجيل خروج؟','بتحتاج الرقم السري عشان تدخل مرة ثانية.','خروج')))return;
     closePage();trackEv('logout');api('track',trackPayload()).catch(()=>{});TRACK.cur=null;TRACK.q=[];trackSave();
