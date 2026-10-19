@@ -922,6 +922,41 @@ nav.tabs button[hidden]{display:none}
 .mycmp .m{font-size:12.5px;color:var(--muted);margin:8px 0 0}
 
 @media (max-height:760px){.sharebanner.mybanner{min-height:0;padding:14px 16px 14px}.mybanner .sb-recv,.mybanner .sb-btns{margin-top:8px}.sbbtn{padding:9px 10px}.mycmp{padding:10px 14px}.mycmp .m{display:none}.mypage .sharebanner{margin-bottom:10px}}
+
+/* ===== نمط الأزرار ٦: بارز فخم (ينضغط) ===== */
+:root{--r6-face:#E2C27E;--r6-edge:#9C7A35;--r6-ink:#10172E;--r6-sec:var(--card2);--r6-secedge:#C9BC9C;--r6-sh:rgba(70,52,18,.20);--r6-hi:rgba(255,255,255,.75);--r6-well:var(--bg2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--r6-secedge:#0A1430;--r6-sh:rgba(0,0,0,.38);--r6-hi:rgba(255,255,255,.08);--r6-sec:#1E2F60;--r6-well:#0F1B3F}}
+:root[data-theme="navy"],:root[data-theme="dark"]{--r6-secedge:#0A1430;--r6-sh:rgba(0,0,0,.38);--r6-hi:rgba(255,255,255,.08);--r6-sec:#1E2F60;--r6-well:#0F1B3F}
+:root[data-theme="dark"]{--r6-sec:#26304B;--r6-well:#141B2D}
+.primary,.mbtn.gold{background:var(--r6-face)!important;color:var(--r6-ink)!important;border:0!important;border-bottom:4px solid var(--r6-edge)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 10px 22px var(--r6-sh)!important;text-shadow:none!important;transition:transform .08s,border-bottom-width .08s,box-shadow .08s}
+.primary{font-family:var(--font)!important;font-size:17px!important;letter-spacing:0!important;padding:13px 14px!important;border-radius:14px!important}
+.primary:active,.mbtn.gold:active{transform:translateY(3px)!important;border-bottom-width:1px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 3px 8px var(--r6-sh)!important}
+.mbtn.gold svg{color:var(--r6-ink)!important}
+.ghost,.stepbtn,.prop-ed,.dtp-now,.mbtn:not(.gold){background:var(--r6-sec)!important;color:var(--ink);border:0!important;border-bottom:4px solid var(--r6-secedge)!important;
+  box-shadow:inset 0 1px 0 var(--r6-hi),0 10px 22px var(--r6-sh)!important;transition:transform .08s,border-bottom-width .08s}
+.ghost{border-radius:14px!important}
+.ghost.sm,.primary.sm{border-bottom-width:3px!important;padding:6px 14px!important;font-size:13px!important}
+.ghost:active,.stepbtn:active,.prop-ed:active,.dtp-now:active,.mbtn:not(.gold):active{transform:translateY(3px)!important;border-bottom-width:1px!important;box-shadow:inset 0 1px 0 var(--r6-hi),0 3px 8px var(--r6-sh)!important}
+.btn-danger{border:0!important;border-bottom:4px solid #6B241B!important;border-radius:14px!important;background:#B44A3B!important;box-shadow:inset 0 1px 0 rgba(255,215,205,.35),0 10px 22px var(--r6-sh)!important}
+.btn-danger:active{transform:translateY(3px)!important;border-bottom-width:1px!important}
+/* أزرار الصفحة الرئيسية */
+.tile{background:var(--r6-sec)!important;border:0!important;border-bottom:3px solid var(--r6-secedge)!important;border-radius:18px!important;
+  box-shadow:inset 0 1px 0 var(--r6-hi),0 12px 24px var(--r6-sh)!important;transition:transform .08s,border-bottom-width .08s}
+.tile:active{transform:translateY(3px)!important;border-bottom-width:1px!important;box-shadow:inset 0 1px 0 var(--r6-hi),0 4px 10px var(--r6-sh)!important}
+.tile .ic{border-radius:14px!important;border:0!important;background:var(--r6-well)!important;box-shadow:inset 0 2px 6px rgba(0,0,0,.45)}
+:root[data-theme="light"] .tile .ic{box-shadow:inset 0 2px 5px rgba(80,60,20,.22)}
+.tile .ic svg{color:var(--r6-face)!important}
+:root[data-theme="light"] .tile .ic svg{color:var(--gold)!important}
+.tile>span:not([class]),.tile>span.bl{font-family:"Amiri","IBM Plex Sans Arabic",serif!important;font-size:20px!important;font-weight:700;line-height:1.3}
+.tile>span.bl{font-size:18px!important}
+/* الاختيارات والشارات */
+.seg button,.chip{border:0!important;border-bottom:3px solid var(--r6-secedge)!important;background:var(--r6-sec)!important;box-shadow:inset 0 1px 0 var(--r6-hi)!important}
+.seg button[aria-pressed="true"],.chip[aria-pressed="true"]{background:var(--r6-face)!important;color:var(--r6-ink)!important;border-bottom-color:var(--r6-edge)!important}
+.seg button:active,.chip:active{transform:translateY(2px)!important;border-bottom-width:1px!important}
+.rolebadge.admin{background:var(--r6-face)!important;color:var(--r6-ink)!important;border:0!important;border-bottom:3px solid var(--r6-edge)!important;border-radius:12px!important;box-shadow:0 6px 14px rgba(0,0,0,.3)!important}
+.onlinepill,.rolebadge.view,.rolebadge.agent{border-radius:12px!important;border-bottom-width:3px!important}
+@media (prefers-reduced-motion:reduce){.primary,.ghost,.tile,.mbtn,.seg button,.chip{transition:none}}
 </style>
 </head>
 <body>
@@ -1008,7 +1043,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='10.1';
+const APP_VER='10.2';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
