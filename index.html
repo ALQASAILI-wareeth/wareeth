@@ -1006,6 +1006,46 @@ nav.tabs button[hidden]{display:none}
 #splash .sg.glow{stroke:#E8C981;stroke-width:7;opacity:.28;filter:blur(4px)}
 @keyframes sigdraw{to{stroke-dashoffset:0}}
 @media (prefers-reduced-motion:reduce){#splash .sg{animation:none;stroke-dashoffset:0}}
+
+/* ===== نموذج الإيداع والمصروف: كل شي في شاشة وحدة ===== */
+.fcompact label.k{margin:10px 2px 4px}
+.fcompact .frow2{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+.fcompact .frow2>div{min-width:0}
+.fcompact .ftools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 2px}
+.fcompact .ftools.one{grid-template-columns:1fr}
+.fcompact .ftools .scanbtn,.fcompact .ftools .filebtn{margin:0;min-height:46px;padding:8px 10px;font-size:13px;gap:6px;justify-content:center;text-align:center;width:100%;line-height:1.3}
+.fcompact .ftools .scanbtn svg{width:18px;height:18px;flex:none}
+.fcompact .ftools .receipt{margin:0}
+.fcompact input,.fcompact select{padding-top:10px;padding-bottom:10px}
+.fcompact .seg{margin-bottom:2px}
+.fcompact .note{margin:6px 0 0}
+.fcompact .dtp{padding:8px 8px 8px}
+.fcompact .dtp-f span{display:none}
+.fcompact .dtp-f select{height:42px}
+.fcompact .dtp-row+.dtp-row{margin-top:6px;padding-top:6px}
+.fcompact textarea{min-height:44px;height:44px;resize:none;padding-top:10px;padding-bottom:10px}
+.fcompact .frc .err:empty{display:none}
+.fcompact~.err:empty{min-height:0;margin:0}
+.fcompact~.primary{margin-top:12px}
+/* ===== بدون إطار ذهبي على الأزرار ===== */
+.primary,.mbtn.gold,.rolebadge.admin{border:0!important;border-bottom:4px solid var(--vel-edge)!important}
+.rolebadge.admin{border-bottom-width:3px!important}
+.tile{border:0!important;border-bottom:3px solid var(--vel-edge)!important}
+.scanbtn{border:0!important;border-bottom:4px solid var(--vel-edge)!important;background:var(--vel2)!important;color:var(--vel-ink)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 8px 18px var(--vel-sh)!important}
+.scanbtn svg{color:var(--vel-gold)!important}
+.scanbtn small{color:var(--vel-sub)!important}
+.seg button,.chip{border:0!important;border-bottom:3px solid var(--r6-secedge)!important}
+.seg button[aria-pressed="true"],.chip[aria-pressed="true"]{border:0!important;border-bottom:3px solid var(--vel-edge)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 6px 14px var(--vel-sh)!important}
+.onlinepill .onm{max-width:62vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ===== الخطوط الذهبية في البانر والشريط السفلي: أوضح وألوان مشبعة ===== */
+:root{--latt2:repeating-linear-gradient(45deg,rgba(214,166,64,.17) 0 1px,transparent 1px 26px),repeating-linear-gradient(-45deg,rgba(214,166,64,.17) 0 1px,transparent 1px 26px)}
+.home .banner.lux::before,nav.tabs::before,#splash::before{background:var(--latt2)!important;opacity:1!important}
+.home .banner.lux{border-bottom:1.5px solid #C99A3E!important}
+nav.tabs{border-top:1.5px solid #C99A3E!important}
+nav.tabs::after{height:1.5px!important;background:linear-gradient(90deg,transparent,#E9C36F 20%,#F3D58E 50%,#E9C36F 80%,transparent)!important}
+.orn i{height:1.5px!important;background:linear-gradient(90deg,transparent,#E2B456)!important}
+.orn i:last-child{background:linear-gradient(270deg,transparent,#E2B456)!important}
+.orn b{color:#E8BE62!important}
 </style>
 </head>
 <body>
@@ -1093,7 +1133,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='10.6';
+const APP_VER='10.7';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1297,7 +1337,7 @@ const store={
     const prevIds=!fromCache&&this.loadedAt&&NEWS.base?new Set(state.txs.map(t=>t.id)):null;
     state.txs=(j.txs||[]);
     if(!fromCache)this.overlay();   // حركات انحفظت للتو ولسا ما وصلت في رد الخادم: تبقى ظاهرة
-    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;this.docs=Array.isArray(j.docs)?j.docs:null;this.certs=Array.isArray(j.certs)?j.certs:null;if(j.idLogin!=null){this.idLogin=!!j.idLogin;this.idTokens=+j.idTokens||0;this.idPending=Array.isArray(j.idPending)?j.idPending:[];}this.pdocs=Array.isArray(j.pdocs)?j.pdocs:null;this.preqs=Array.isArray(j.preqs)?j.preqs:[];if(j.certCfg)this.certCfg=j.certCfg;if(j.users)this.users=j.users;if(this.user&&H[this.user.heir])setMe(this.user.heir);
+    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.onlineNames=j.onlineNames||null;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;this.docs=Array.isArray(j.docs)?j.docs:null;this.certs=Array.isArray(j.certs)?j.certs:null;if(j.idLogin!=null){this.idLogin=!!j.idLogin;this.idTokens=+j.idTokens||0;this.idPending=Array.isArray(j.idPending)?j.idPending:[];}this.pdocs=Array.isArray(j.pdocs)?j.pdocs:null;this.preqs=Array.isArray(j.preqs)?j.preqs:[];if(j.certCfg)this.certCfg=j.certCfg;if(j.users)this.users=j.users;if(this.user&&H[this.user.heir])setMe(this.user.heir);
     if(!fromCache){this.loadedAt=Date.now();saveCache(j);setTimeout(()=>{if(!state.certToast&&typeof certNewApproved==='function'&&certNewApproved()){state.certToast=1;toast('📜 فيه شهادة دخل تغيّرت حالتها. شوفها من التقارير.');}},2500);if(prevIds)setTimeout(()=>newsToast(prevIds),0);}
     if(j.cfg)notif.cfg=j.cfg;
     applyProps(j.props);
@@ -1456,7 +1496,7 @@ const markSvg='<svg viewBox="110 40 414 380" aria-hidden="true"><defs><linearGra
 const V={};
 function reqPill(){const q=reqSummary();if(!q)return '';return `<button class="onlinepill reqpill${q.hot?' hot':''}" data-go="reqs" aria-label="${esc(q.text)}">⏳ <span class="num">${q.n}</span> ${q.hot?'بانتظارك':'طلباتك'}</button>`;}
 function roleBadge(){
-  if(store.canWrite)return `<div class="badges"><button class="rolebadge admin" data-act="settings" aria-label="حساب المدير">${I.crown}<span>حساب المدير</span></button>${store.online!=null?`<button class="onlinepill" data-go="activity"><span class="live"></span><span class="num">${store.online}</span> متصل الحين</button>`:''}${reqPill()}${certPending()&&certsOn()?`<button class="onlinepill reqpill hot" data-go="certs">📜 <span class="num">${certPending()}</span> شهادة</button>`:''}${pdocsOn()&&preqPending().length?`<button class="onlinepill reqpill hot" data-tab="props">🗺️ <span class="num">${preqPending().length}</span> طلب مخطط</button>`:''}<button class="onlinepill userspill" data-go="users">${I.users}<span>المستخدمين</span>${(store.users||[]).length?`<span class="num">${store.users.length}</span>`:''}</button></div>`;
+  if(store.canWrite)return `<div class="badges"><button class="rolebadge admin" data-act="settings" aria-label="حساب المدير">${I.crown}<span>حساب المدير</span></button>${store.online!=null?`<button class="onlinepill" data-go="activity"><span class="live"></span>${store.onlineNames&&store.onlineNames.length?`<span class="onm">متصل الحين: ${store.onlineNames.slice(0,3).map(esc).join('، ')}${store.onlineNames.length>3?` <span class="num">+${store.onlineNames.length-3}</span>`:''}</span>`:`<span class="num">${store.online}</span> متصل الحين`}</button>`:''}${reqPill()}${certPending()&&certsOn()?`<button class="onlinepill reqpill hot" data-go="certs">📜 <span class="num">${certPending()}</span> شهادة</button>`:''}${pdocsOn()&&preqPending().length?`<button class="onlinepill reqpill hot" data-tab="props">🗺️ <span class="num">${preqPending().length}</span> طلب مخطط</button>`:''}<button class="onlinepill userspill" data-go="users">${I.users}<span>المستخدمين</span>${(store.users||[]).length?`<span class="num">${store.users.length}</span>`:''}</button></div>`;
   if(store.isAgent)return `<div class="badges"><button class="rolebadge agent" data-act="settings" aria-label="حساب الوكيل">${I.key}<span>حساب الوكيل · ${esc(store.agent||'')}</span></button>${reqPill()}</div>`;
   if(isHeirUser())return `<button class="rolebadge view" data-act="settings" aria-label="حسابك">${I.eye}<span>حساب ${esc(store.user.name)}${store.user.scope==='all'?'':' · حسابه الشخصي'}</span></button>`;
   return `<button class="rolebadge view" data-act="settings" aria-label="حساب الورثة">${I.eye}<span>${whoName()?esc(whoName())+' · ':''}حساب الورثة · عرض فقط</span></button>`;
@@ -2846,22 +2886,23 @@ V.form=()=>{
   let receipt='';
   if(f.receipt&&f.receipt.id){receipt=`<div class="receipt">${(f.receipt.type||'').startsWith('image/')?`<img src="/_blob/${esc(f.receipt.id)}" alt="">`:'<span>📄</span>'}<span class="grow">الإيصال مرفق</span><button class="linkbtn" data-act="rm-receipt">إزالة</button></div>`;}
   else if(assetsApi){receipt=`<label class="filebtn">📎 إرفاق إيصال أو فاتورة<input type="file" id="fFile" accept="image/*,application/pdf"></label>`;}
-  const common=`<label class="k">التاريخ والوقت</label>${dtPicker('fDate',f.date,{time:true})}
-    <label class="k" for="fNote">ملحوظة</label><textarea id="fNote" placeholder="اختياري">${esc(f.note)}</textarea>
-    <div style="margin-top:12px">${receipt}<div class="err" id="fFileSt" style="color:var(--muted)"></div></div>`;
+  const common=`<label class="k">التاريخ والوقت</label>${dtPicker('fDate',f.date,{time:true,noNow:true})}
+    <label class="k" for="fNote">ملحوظة</label><textarea id="fNote" rows="1" placeholder="اختياري">${esc(f.note)}</textarea>
+    <div class="frc">${isDist||f.acct==='old'?receipt:''}<div class="err" id="fFileSt" style="color:var(--muted)"></div></div>`;
+  const scanBtn=!f.edit&&!isDist&&f.acct!=='old'?`<label class="scanbtn sm">${I.cam}<span>${f.scan?'قراءة مستند ثاني':'قراءة من صورة فاتورة'}</span><input type="file" id="scanFile" accept="image/*,application/pdf"></label>`:'';
+  const tools=!isDist&&f.acct!=='old'&&(scanBtn||receipt)?`<div class="${f.receipt&&f.receipt.id?'ftools one':'ftools'}">${scanBtn}${receipt}</div>`:'';
+  const amtFrom=(cs)=>`<div class="frow2"><div><label class="k" for="fAmt">المبلغ (د.إ)</label><input id="fAmt" inputmode="decimal" placeholder="0.00" value="${esc(f.amount)}"></div><div>${cs}</div></div>`;
   let body='';
   if(f.kind==='dep'){
-    body=`<label class="k" for="fAmt">المبلغ (د.إ)</label><input id="fAmt" inputmode="decimal" placeholder="0.00" value="${esc(f.amount)}">
-    ${catSelect(f,DEP_FROM[f.acct]||DEP_FROM.bld,'من','اختر الجهة','')}
+    body=`<div class="fcompact">${tools}${amtFrom(catSelect(f,DEP_FROM[f.acct]||DEP_FROM.bld,'من','اختر الجهة',''))}
     ${propSelect(f)}
-    ${common}`;
+    ${common}</div>`;
   } else {
     body=f.acct==='old'?`<p class="note" style="margin-top:0">توزيع سابق: تعديله يغيّر استلامات الورثة وإجمالي التوزيع فقط، وما يأثر على الرصيد.</p>`
     :`<div class="seg"><button data-out="dist" aria-pressed="${f.out==='dist'}">توزيع على الورثة</button><button data-out="exp" aria-pressed="${f.out==='exp'}">مصروف</button></div>
     <p class="note" style="margin-top:4px">الرصيد المتاح في ${A.short}: ${money(r.bal[f.acct])}</p>`;
     if(!isDist){
-      body+=`<label class="k" for="fAmt">المبلغ (د.إ)</label><input id="fAmt" inputmode="decimal" placeholder="0.00" value="${esc(f.amount)}">
-      ${catSelect(f)}${propSelect(f)}${common}`;
+      body=`<div class="fcompact">${body}${tools}${amtFrom(catSelect(f))}${propSelect(f)}${common}</div>`;
     } else {
       body+=`<div class="seg"><button data-mode="share" aria-pressed="${f.mode==='share'}">حسب الحصص</button><button data-mode="fixed" aria-pressed="${f.mode==='fixed'}">مبلغ لكل وريث</button></div>
       ${f.mode==='share'?`<label class="k" for="fTotal">المبلغ الإجمالي للتوزيع</label><input id="fTotal" inputmode="decimal" placeholder="مثال: 110000" value="${esc(f.total)}">`
@@ -2874,8 +2915,7 @@ V.form=()=>{
       ${common}`;
     }
   }
-  const scanBtn=!f.edit&&!isDist&&f.acct!=='old'?`<label class="scanbtn sm">${I.cam}<span>${f.scan?'قراءة مستند ثاني':'قراءة من صورة فاتورة'}</span><input type="file" id="scanFile" accept="image/*,application/pdf"></label>`:'';
-  return {title,html:scanNote()+scanBtn+body+`<div class="err" id="fErr"></div><button class="primary" data-act="save">${f.edit?'حفظ التعديل':'حفظ'}</button>`};
+  return {title,html:scanNote()+body+`<div class="err" id="fErr"></div><button class="primary" data-act="save">${f.edit?'حفظ التعديل':'حفظ'}</button>`};
 };
 
 function readForm(){
