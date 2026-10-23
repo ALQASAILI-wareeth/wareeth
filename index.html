@@ -1039,13 +1039,9 @@ nav.tabs button[hidden]{display:none}
 .onlinepill .onm{max-width:62vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* ===== الخطوط الذهبية في البانر والشريط السفلي: أوضح وألوان مشبعة ===== */
 :root{--latt2:repeating-linear-gradient(45deg,rgba(214,166,64,.17) 0 1px,transparent 1px 26px),repeating-linear-gradient(-45deg,rgba(214,166,64,.17) 0 1px,transparent 1px 26px)}
-.home .banner.lux::before,nav.tabs::before,#splash::before{background:var(--latt2)!important;opacity:1!important}
-.home .banner.lux{border-bottom:1.5px solid #C99A3E!important}
+nav.tabs::before,#splash::before{background:var(--latt2)!important;opacity:1!important}
 nav.tabs{border-top:1.5px solid #C99A3E!important}
 nav.tabs::after{height:1.5px!important;background:linear-gradient(90deg,transparent,#E9C36F 20%,#F3D58E 50%,#E9C36F 80%,transparent)!important}
-.orn i{height:1.5px!important;background:linear-gradient(90deg,transparent,#E2B456)!important}
-.orn i:last-child{background:linear-gradient(270deg,transparent,#E2B456)!important}
-.orn b{color:#E8BE62!important}
 </style>
 </head>
 <body>
@@ -1133,7 +1129,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='10.7';
+const APP_VER='10.8';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
