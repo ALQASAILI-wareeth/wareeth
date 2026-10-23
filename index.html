@@ -1103,6 +1103,17 @@ nav.tabs button[aria-current="true"]{text-shadow:none!important}
 .ulist .ust .live{margin:0}
 .ulist .ust .dot0{width:8px;height:8px;border-radius:50%;background:rgba(201,209,228,.45);flex:none}
 .ulist .ust.never{color:var(--muted);opacity:.8}
+
+/* ===== الطلبات المعلّقة على الحساب ===== */
+.pendnote{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;text-align:start;cursor:pointer;margin:10px 0 0;border:1px solid rgba(235,207,143,.35)!important;background:rgba(235,207,143,.07)!important;color:var(--ink);font:inherit}
+.pendnote b{color:var(--gold);font-size:14px}.pendnote span{font-size:13px}.pendnote small{font-size:12px;color:var(--muted)}
+.tag.ptag{background:rgba(235,207,143,.16)!important;color:#EBCF8F!important}
+.row.pdel .a{text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.75}
+/* ===== شريط الداخل والخارج: الكلمة فوق منتصف المبلغ ===== */
+.yrow>div{display:grid;grid-template-columns:max-content;justify-content:start;justify-items:center;align-content:center}
+.yrow+.yrow{margin-top:0}
+.preqin{margin:8px 0 4px}
+.pdochint{font-size:12.5px;color:var(--muted);margin:2px 4px 0}
 </style>
 </head>
 <body>
@@ -1190,7 +1201,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='11.0';
+const APP_VER='11.1';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1261,6 +1272,8 @@ async function api__(action,payload){
 function apiErr(e){
   const c=e&&e.error;
   if(c==='wa')return e.detail||'صار خطأ في الواتساب.';
+  if(c==='needs_agent')return 'الإقفال الفعلي يحتاج اعتماد '+(store.agent||'الوكيل')+'. حدّث الصفحة وأرسله له.';
+  if(c==='income_changed')return 'الدخل تغيّر بعد آخر تحديث. حدّث الصفحة وأرسل مرة ثانية.';
   if(c==='pin')return auth.viaId?'انتهى الدخول بالهوية على هذا الجهاز (أو أوقفه المدير). صوّر هويتك مرة ثانية، أو ادخل بالرقم السري.':'الرقم السري غلط.';
   if(c==='expired')return 'المستند منتهي، والتطبيق ما يقبل مستند منتهي. جدّده وصوّر الجديد.';
   if(c==='drive_auth')return store.canWrite?'حفظ المستندات يحتاج صلاحية Google Drive: افتح Apps Script وشغّل الدالة setupDocs مرة وحدة ووافق، بعدين انشر إصدار جديد.':'حفظ المستندات للحين مو مفعّل في الخادم. كلّم المدير.';
@@ -1570,7 +1583,7 @@ V.home=()=>{
     <h2>أهلاً بكم في تطبيق وريث</h2><p>ورثة مبارك علي القصيلي</p>${roleBadge()}</div>
   <div class="hero"><div class="lbl">إجمالي رصيد الورثة المتاح الآن</div>
     <div class="big"><span class="num">${fmt(r.total)}</span> <small>د.إ</small></div>
-    ${heirView()?heroSplit(r):''}
+    ${heroSplit(r)}
     <div class="upd">${r.last?'آخر تحديث: '+esc(fmtDT(new Date(r.last),true)):(store.mode==='nodb'?'سجّل دخولك في Claude عشان تظهر البيانات.':'ابدأ بإضافة أول إيداع من حساب البناية أو المزارع.')}</div>
 </div>
   ${store.canWrite&&store.ver<4?`<div class="note warnbox">⚠️ الخادم شغّال على نسخة قديمة، فالإقفال السنوي ما يشتغل${store.ver<3?'، ولا حالة الطلبات وحماية حركات '+esc(store.agent||'الوكيل'):''}. حدّث كود الخادم وانشر <b>إصدار جديد</b> على نفس عملية النشر.</div>`:''}
@@ -1602,12 +1615,16 @@ V.moves=(p)=>{
   const Y=String(new Date().getFullYear());let yIn=0,yOut=0;
   state.txs.forEach(t=>{if(t.hist||(f!=='all'&&t.acct!==f)||!(t.date||'').startsWith(Y)||t.from==='رصيد افتتاحي')return;const a=+t.amount||0;if(t.kind==='dep')yIn+=a;else yOut+=a;});
   const yrow=`<div class="yrow"><span class="yl">من بداية ${Y}</span><div><span>الداخل</span><b class="num in">${fmt(yIn)}</b></div><div><span>الخارج</span><b class="num out">${fmt(yOut)}</b></div></div>`;
+  // من بداية 2023 لين اليوم: كل الحركات (السابقة والحالية) بدون الرصيد الافتتاحي
+  const Y0='2023',tdy=todayStr();let aIn=0,aOut=0;
+  state.txs.forEach(t=>{if((f!=='all'&&t.acct!==f)||t.from==='رصيد افتتاحي')return;const d=(t.date||'').slice(0,10);if(!d||d<Y0+'-01-01'||d>tdy)return;const a=+t.amount||0;if(t.kind==='dep')aIn+=a;else aOut+=a;});
+  const arow=`<div class="yrow"><span class="yl">من بداية ${Y0}</span><div><span>الداخل</span><b class="num in">${fmt(aIn)}</b></div><div><span>الخارج</span><b class="num out">${fmt(aOut)}</b></div></div>`;
   return {title:lock?'سجل حركات '+ACCTS[f].short:'سجل الحركات',html:`
   <div class="stick">${lock?'':seg('f',[['all','الحسابين'],['bld','البناية'],['farm','المزارع']],f)}
   ${seg('t',[['all','الكل'],['dep','إيداعات'],['out','مصروفات']],ty)}
   ${yrow}
-  ${lock?'':`<div class="sumrow"><div><span>العدد</span><b class="num">${list.length}</b></div><div><span>داخل</span><b class="num in">${fmt(tin)}</b>${since('in')}${mav&&ty!=='out'?`<small class="mav">≈ <span class="num">${fmt(mav.tin)}</span> شهرياً</small>`:''}</div><div><span>خارج</span><b class="num out">${fmt(tout)}</b>${since('out')}${mav&&ty!=='dep'?`<small class="mav">≈ <span class="num">${fmt(mav.tout)}</span> شهرياً</small>`:''}</div></div>
-  ${ty==='all'||sm.nh?`<div class="sumnote">${ty==='all'?`الصافي <b class="num">${fmt(tin-tout)}</b>${f==='all'?' = الرصيد الحالي':' = رصيد '+ACCTS[f].short}`:''}${sm.nh?`${ty==='all'?'<br>':''}الحركات السابقة (${sm.nh}) ما تنحسب، لأنها داخلة في الرصيد الافتتاحي`:''}${mav?`<br>المعدّل الشهري على ${mav.n} ${mav.n>2&&mav.n<11?'أشهر':'شهر'}، بدون الرصيد الافتتاحي`:''}</div>`:''}`}</div>
+  ${lock?'':`${arow}
+  ${ty==='all'?`<div class="sumnote">الصافي <b class="num">${fmt(tin-tout)}</b>${f==='all'?' = الرصيد الحالي':' = رصيد '+ACCTS[f].short}</div>`:''}`}</div>
   ${list.length?`<div class="rows" id="mvRows">${list.slice(0,MV_CHUNK).map(txRow).join('')}</div>${list.length>MV_CHUNK?`<button class="ghost" id="mvMore" data-act="mv-more" style="width:100%;margin-top:10px">عرض المزيد (${list.length-MV_CHUNK})</button>`:''}`:'<p class="empty">ما فيه حركات.</p>'}
   ${list.length?`<div class="actions"><button class="ghost" data-act="mv-export">تصدير القائمة PDF</button></div>`:''}`};
 };
@@ -1682,14 +1699,27 @@ function txRow(t){
   const sign=t.kind==='dep'?'+':'−', cls=t.kind==='dep'?'in':'out';
   let who=t.kind==='dist'?Object.keys(t.alloc||{}).filter(h=>+t.alloc[h]>0).length+' ورثة':(t.from||'');
   if(t.kind!=='dist'&&t.prop&&P[t.prop]) who=(who?who+' · ':'')+P[t.prop].name;
-  return `<button class="row${NEWS.cache&&NEWS.cache.ids[t.id]?' isnew':''}" data-go="tx" data-id="${esc(t.id)}"><span><span>${KIND[t.kind]}</span><span class="tag">${k}</span>${newsTag(t.id)}
+  const pq=(state.reqs||[]).find(q=>q.status==='pending'&&q.id===t.id&&q.op!=='close');
+  return `<button class="row${NEWS.cache&&NEWS.cache.ids[t.id]?' isnew':''}${pq&&pq.op==='del'?' pdel':''}" data-go="tx" data-id="${esc(t.id)}"><span><span>${KIND[t.kind]}</span><span class="tag">${k}</span>${pq?`<span class="tag ptag">${pq.op==='del'?'طلب حذف':'طلب تعديل'}</span>`:''}${newsTag(t.id)}
     <div class="m">${rcptOf(t.id)?'<span class="rclip" aria-label="عليها إيصال">'+I.clip+'</span>':''}${esc(who)}${who?' · ':''}${esc(dShort(t.date))}</div></span><span class="a ${cls}">${sign} <span class="num">${fmt(t.amount)}</span></span></button>`;
+}
+/* تحت الرصيد: الرصيد الافتتاحي منفصل، فالأرقام تجمع على الرصيد بالضبط */
+function walletSub(k,r){
+  let op=0;state.txs.forEach(t=>{if(!t.hist&&t.acct===k&&t.kind==='dep'&&t.from==='رصيد افتتاحي')op+=+t.amount||0;});
+  return `<div class="sub">${op?`<span>الرصيد الافتتاحي ${money(op)}</span>`:''}<span>الإيداعات ${money(r.dep[k]-op)}</span><span>المصروفات ${money(r.exp[k])}</span><span>الموزّع ${money(r.dist[k])}</span></div>`;
+}
+/* الطلبات المعلّقة على هذا الحساب: تبان بوضوح، وما تأثر على الرصيد إلا بعد الموافقة */
+function pendReqs(k){return (state.reqs||[]).filter(q=>q.status==='pending'&&q.op!=='close').map(q=>{const t=q.op==='del'?state.txs.find(x=>x.id===q.id):q.tx;return t&&t.acct===k?{q,t,edit:q.op!=='del'&&state.txs.some(x=>x.id===q.id)}:null;}).filter(Boolean);}
+function pendNote(k){
+  const L=pendReqs(k);if(!L.length)return '';
+  const who=x=>x.q.by==='agent'?(store.agent||'الوكيل'):'المدير',wait=x=>x.q.by==='agent'?'المدير':(store.agent||'الوكيل');
+  return `<button class="note pendnote" data-go="reqs"><b>⏳ ${L.length===1?'طلب معلّق':L.length+' طلبات معلّقة'} على ${esc(ACCTS[k].short)}</b>${L.slice(0,4).map(x=>`<span>${x.q.op==='del'?'حذف':x.edit?'تعديل':'إضافة'} ${esc(KIND[x.t.kind])} <bdi class="num">${fmt(x.t.amount)}</bdi> · من ${esc(who(x))} بانتظار ${esc(wait(x))}</span>`).join('')}<small>الرصيد فوق ما يتغيّر إلا بعد الموافقة. اضغط لفتح الطلبات.</small></button>`;
 }
 V.acct=({k})=>{
   const r=calc(),A=ACCTS[k];
   return {title:A.name,html:acctSwitch(k)+`
   <div class="wallet"><div class="lbl">الرصيد المتاح</div><div class="big"><span class="num">${fmt(r.bal[k])}</span> <small style="font-size:18px;color:var(--muted)">د.إ</small></div>
-    <div class="sub"><span>الإيداعات ${money(r.dep[k])}</span><span>المصروفات ${money(r.exp[k])}</span><span>الموزّع ${money(r.dist[k])}</span></div></div>
+    ${walletSub(k,r)}</div>${pendNote(k)}
   ${canEditNow()?`<div class="pair">
     <button class="mbtn gold" data-new="dep" data-k="${k}"><span class="l">${I.plus}إيداع</span></button>
     <button class="mbtn" data-new="out" data-k="${k}"><span class="l">${I.minus}خصم</span></button>
@@ -1697,8 +1727,8 @@ V.acct=({k})=>{
   <label class="scanbtn">${I.cam}<span>تسجيل من صورة فاتورة أو مستند<small>صوّرها أو اختر صورة/PDF، والتطبيق يعبّي المبلغ والتاريخ والبند</small></span><input type="file" id="scanFile" accept="image/*,application/pdf"></label>`:''}
   <div class="menu" style="margin-top:22px">
     <button class="mbtn" data-go="moves" data-k="${k}" data-lock="1"><span class="l"><span class="ic">${I.list}</span><span>سجل حركات ${A.short}<small class="msub">الإيداعات والمصروفات والتوزيعات</small></span></span>${I.chev}</button>
-    ${canEditNow()?`<button class="mbtn" data-go="bank" data-k="${k}"><span class="l"><span class="ic">${I.rep}</span><span>مطابقة كشف البنك<small class="msub">ارفع الكشف PDF أو صورة ويقارنه بالتطبيق</small></span></span>${I.chev}</button>`:''}
-    <button class="mbtn" data-go="close"><span class="l"><span class="ic">${I.lock}</span><span>الإقفال السنوي<small class="msub">${canEditNow()?'إقفال السنة واعتمادها':'الإقفالات المعتمدة'}${lockOf()?' · مقفول لين '+esc(dShort(lockOf())):''}</small></span></span>${I.chev}</button>
+    ${store.canWrite?`<button class="mbtn" data-go="bank" data-k="${k}"><span class="l"><span class="ic">${I.rep}</span><span>مطابقة كشف البنك<small class="msub">ارفع الكشف PDF أو صورة ويقارنه بالتطبيق</small></span></span>${I.chev}</button>`:''}
+    ${store.isAgent?'':`<button class="mbtn" data-go="close"><span class="l"><span class="ic">${I.lock}</span><span>الإقفال السنوي<small class="msub">${store.canWrite?'إقفال السنة وإرسالها لاعتماد '+esc(store.agent||'الوكيل'):'الإقفالات المعتمدة'}${lockOf()?' · مقفول لين '+esc(dShort(lockOf())):''}</small></span></span>${I.chev}</button>`}
   </div>`};
 };
 V.report=({k,type})=>{
@@ -2268,7 +2298,7 @@ V.props=()=>{
     <label class="scanbtn">${I.cam}<span>من سند أو مخطط<small>صورة أو PDF</small></span><input type="file" id="propScan" accept="image/*,application/pdf" multiple></label>
     ${pdocsOn()?`<label class="scanbtn wide pdocup">${PDOC_IC.plan}<span>رفع مخطط أو سند لعقار<small>اختر ملف أو أكثر، والتطبيق يعرف العقار وتاريخ الطباعة ومدة الصلاحية</small></span><input type="file" data-pdoc-up="" accept="image/*,application/pdf" multiple></label>`:''}</div>`:'';
   const grp=k=>{const l=PROPS.filter(p=>p.acct===k);return l.length?`<h3 class="sec">${ACCTS[k].name} <small class="num" style="color:var(--muted);font-weight:500">(${l.length})</small></h3>`+l.map(propCard).join(''):'';};
-  const cb=certBtn('اطلبها لأي بلدية، وتنزل PDF بعد الاعتماد');
+  const cb=heirView()&&certCanReq()?'':certBtn('اطلبها لأي بلدية، وتنزل PDF بعد الاعتماد');   // الوارث عنده زر الشهادة في الرئيسية
   return {title:'العقارات',html:(cb?`<div class="stick certstick">${cb}</div>`:'')+preqAdminCard()+add+grp('bld')+grp('farm')
     +(store.canWrite&&hid.length?`<details class="hidprops"><summary>عقارات مخفية (${hid.length})</summary>${hid.map(propCard).join('')}</details>`:'')
     +`<p class="note">حساب المزارع يوزّع حسب حصص سند ملكية مزرعة يو النظرة (12.5% لمي، 10.2941% لكل ابن، 5.147% لكل بنت). حصص كل عقار تطلع للمعلومية، والتوزيع يمشي على حصص الحساب.</p>`};
@@ -2327,27 +2357,29 @@ V.pdoc=({id,type})=>{
   const d=pdocOf(p,t),st=pdocSt(d),q=preqOpen(p,t),past=preqsOf(p,t).filter(r=>r.status!=='pending').slice(0,3);
   setTimeout(()=>pdocMarkSeen([d]),800);
   const up=(lab,cls)=>store.canWrite?`<label class="${cls||'ghost'} docup">${lab}<input type="file" accept="image/*,application/pdf" data-pdoc-up="${t}" data-prop="${esc(p.id)}"></label>`:'';
+  const mineQ=q&&(store.canWrite||q.who===whoName()||(store.isAgent&&q.who===store.agent));
+  // الطلب المعلّق يظهر داخل نفس البطاقة (سطر واحد)، بدل بطاقة ثانية فيها نفس زر الرفع
+  const qLine=q?`<div class="doc-warn soon preqin">⏳ ${store.canWrite?'طلب '+esc(q.who)+' '+T.s+' جديد':(mineQ?'طلبت '+T.s+' جديد':'طلب '+esc(q.who)+' '+T.s+' جديد')} · ${esc(fmtDT(new Date(q.at)))} · ${store.canWrite?'بانتظار رفعك':'بانتظار المدير'}</div>`:'';
+  const qMore=q?(store.canWrite?`<button class="linkbtn neg" data-act="pdoc-rej" data-rid="${esc(q.rid)}">رفض الطلب</button>`:mineQ?`<button class="linkbtn neg" data-act="pdoc-cancel" data-rid="${esc(q.rid)}">إلغاء طلبي</button>`:''):'';
   let main;
   if(!d)main=`<div class="card doc pdoccard none"><div class="doc-h"><span class="doc-ic">${PDOC_IC[t]}</span><div><h4>${T.n}</h4><div class="m">ما فيه ${T.s} مرفوع لهذا العقار للحين</div></div>${pdocPill(null)}</div>
-    <div class="actions">${store.canWrite?up(I.cam+'<span>رفع '+T.s+'</span>','primary docup-main'):(q?'':`<button class="primary" data-act="pdoc-req" data-id="${esc(p.id)}" data-type="${t}">طلب ${T.s}</button>`)}</div></div>`;
+    ${qLine}
+    <div class="actions">${store.canWrite?up(I.cam+'<span>رفع '+T.s+(q?' الجديد':'')+'</span>','primary docup-main'):(q?'':`<button class="primary" data-act="pdoc-req" data-id="${esc(p.id)}" data-type="${t}">طلب ${T.s}</button>`)}</div>
+    ${qMore?`<div class="doc-more">${qMore}</div>`:''}</div>`;
   else{
     const msg=st.k==='exp'?`<div class="doc-warn exp">⛔ ${T.a} منتهي الصلاحية: مرّ عليه ${esc(st.age)} من ${esc(d.dateKind||'تاريخه')}، والمسموح ${esc(pdocValidTxt(d))} بس. انتهت صلاحيته في ${esc(fmtDT(st.until))}، قبل ${esc(overTxt(-st.left,st.until))}.</div>`
       :st.k==='soon'?`<div class="doc-warn soon">⚠️ ${T.a} صالح بس قرب ينتهي: باقي ${st.left===0?'اليوم بس':daysTxt(st.left)} (ينتهي ${esc(fmtDT(st.until))}).</div>`
       :st.until?`<div class="doc-warn okk">✅ ${T.a} صالح حتى ${esc(fmtDT(st.until))} · باقي ${daysTxt(st.left)}. تقدر تعرضه وتنزّله الحين.</div>`:'';
     const dl=[[d.dateKind||'تاريخ المستند',fmtDT(d.date)],['مدة الصلاحية',pdocValidTxt(d)?pdocValidTxt(d)+' ('+(d.vsrc==='doc'?'مذكورة في المستند':d.vsrc==='manual'?'حددها المدير':'المدة المعتادة')+')':'بدون مدة'],['صالح حتى',st.until?fmtDT(st.until):''],['رقم الأرض',d.plot,1]].filter(x=>x[1]);
     main=`<div class="card doc pdoccard ${st.k}"><div class="doc-h"><span class="doc-ic">${PDOC_IC[t]}</span><div><h4>${T.n}${pdocIsNew(d)?' <span class="ntag">جديد</span>':''}</h4><div class="m">${esc(p.name)}</div></div>${pdocPill(d)}</div>
-      ${msg}<dl>${dl.map(([k,v,num])=>`<dt>${k}</dt><dd${num?' class="num"':''}>${esc(v)}</dd>`).join('')}</dl>
+      ${msg}${qLine}<dl>${dl.map(([k,v,num])=>`<dt>${k}</dt><dd${num?' class="num"':''}>${esc(v)}</dd>`).join('')}</dl>
       <div class="m doc-by">${d.mime==='application/pdf'?'ملف PDF':'صورة'} · رفعه ${esc(d.by||'المدير')}${d.updatedAt?' · '+esc(fmtDT(new Date(+d.updatedAt))):''}</div>
-      <div class="actions"><button class="${st.k==='exp'?'ghost':'primary'}" data-act="pdoc-view" data-id="${esc(d.id)}">عرض وتنزيل ${T.a}</button>${store.canWrite?up(st.k==='exp'?'رفع نسخة جديدة':'تحديث',st.k==='exp'?'primary docup-main':'ghost'):(q?'':`<button class="${st.k==='exp'?'primary':'ghost'}" data-act="pdoc-req" data-id="${esc(p.id)}" data-type="${t}">طلب ${T.s} جديد</button>`)}</div>
-      ${store.canWrite?`<div class="doc-more"><button class="linkbtn" data-act="pdoc-valid" data-id="${esc(d.id)}">تعديل التاريخ أو المدة</button><button class="linkbtn neg" data-act="pdoc-del" data-id="${esc(d.id)}">حذف</button></div>`:''}</div>`;
+      <div class="actions"><button class="${st.k==='exp'?'ghost':'primary'}" data-act="pdoc-view" data-id="${esc(d.id)}">عرض وتنزيل ${T.a}</button>${store.canWrite?up(st.k==='exp'||q?'رفع نسخة جديدة':'تحديث',st.k==='exp'||q?'primary docup-main':'ghost'):(q?'':`<button class="${st.k==='exp'?'primary':'ghost'}" data-act="pdoc-req" data-id="${esc(p.id)}" data-type="${t}">طلب ${T.s} جديد</button>`)}</div>
+      ${store.canWrite?`<div class="doc-more"><button class="linkbtn" data-act="pdoc-valid" data-id="${esc(d.id)}">تعديل التاريخ أو المدة</button>${qMore}<button class="linkbtn neg" data-act="pdoc-del" data-id="${esc(d.id)}">حذف</button></div>`:qMore?`<div class="doc-more">${qMore}</div>`:''}</div>`;
   }
-  const mineQ=q&&(store.canWrite||q.who===whoName()||(store.isAgent&&q.who===store.agent));
-  const reqCard=q?`<div class="card preqcard"><b>⏳ فيه طلب ${T.s} جديد بانتظار المدير</b><div class="m">طلبه ${esc(q.who)} · ${esc(fmtDT(new Date(q.at)))}</div>
-      ${store.canWrite?`<div class="actions">${up(I.cam+'<span>رفع '+T.s+' الجديد</span>','primary docup-main')}<button class="ghost" data-act="pdoc-rej" data-rid="${esc(q.rid)}">رفض الطلب</button></div>`
-        :mineQ?`<div class="actions"><button class="linkbtn neg" data-act="pdoc-cancel" data-rid="${esc(q.rid)}">إلغاء طلبي</button></div>`:''}</div>`:'';
   const hist=past.length?`<details class="preqhist"><summary>الطلبات السابقة (${past.length})</summary>${past.map(r=>`<div class="m">• ${esc(r.who)} · ${esc(fmtDT(new Date(r.at)))} – ${r.status==='done'?'تم':'مرفوض'}${r.reply?': '+esc(r.reply):''}</div>`).join('')}</details>`:'';
-  return {title:T.n+' – '+p.name,html:`${main}${reqCard}${hist}
-    <p class="note">${T.s} عادة صالح ${monthsTxt(PDOC_DEF_MONTHS)} من تاريخ طباعته. إذا المستند نفسه مكتوب فيه مدة ثانية، التطبيق يقرأها ويعتمدها. أي أحد يقدر يعرض الموجود وينزّله بدون طلب، والطلب بس إذا تحتاج نسخة أحدث.</p>`};
+  return {title:T.n+' – '+p.name,html:`${main}${hist}
+    ${d?'':`<p class="m pdochint">${T.s} عادة صالح ${monthsTxt(PDOC_DEF_MONTHS)} من تاريخ طباعته.</p>`}`};
 };
 /* ===== إيصالات الحركات: صورة أو PDF ينرفع مع الحركة ويتحفظ في Drive ===== */
 const RCPT_MAX=12*1024*1024;
@@ -2705,7 +2737,7 @@ V.reports=(p)=>{
       <option value="all"${acct==='all'?' selected':''}>الحسابين</option><option value="bld"${acct==='bld'?' selected':''}>البناية</option><option value="farm"${acct==='farm'?' selected':''}>المزارع</option></select></div>
     <div><label class="k" for="rYear" style="margin-top:0">السنة</label><select id="rYear">${years.map(y=>`<option${y===year?' selected':''}>${y}</option>`).join('')}</select></div>
   </div></div>
-  <button class="mbtn closebtn" data-go="close"><span class="l"><span class="ic">${I.lock}</span><span>الإقفال السنوي<small class="msub">${canEditNow()?'إقفال السنة واعتمادها':'الإقفالات المعتمدة'}${lockOf()?' · مقفول لين '+esc(dShort(lockOf())):''}</small></span></span>${I.chev}</button>
+  <button class="mbtn closebtn" data-go="close"><span class="l"><span class="ic">${I.lock}</span><span>الإقفال السنوي<small class="msub">${store.canWrite?'إقفال السنة وإرسالها للاعتماد':store.isAgent?'الإقفالات واعتمادها':'الإقفالات المعتمدة'}${lockOf()?' · مقفول لين '+esc(dShort(lockOf())):''}</small></span></span>${I.chev}</button>
   <div class="card" style="padding:10px 14px"><div class="kv"><span>رصيد أول السنة</span><b class="num">${yOpen==null?'—':fmt(yOpen)}</b></div>
     <div class="kv"><span>${year===String(new Date().getFullYear())?'الرصيد الحالي':'رصيد آخر السنة'}${cl?' · 🔒 مقفولة':''}</span><b class="num">${yClose==null?'—':fmt(yClose)}</b></div>${archNote}</div>
   <div class="grid2" style="margin-bottom:12px">
@@ -3261,6 +3293,7 @@ async function readStatement(files,k){
   render();
 }
 V.bank=(p)=>{
+  if(!store.canWrite)return {title:'مطابقة كشف البنك',html:'<p class="empty">مطابقة كشف البنك عند المدير.</p>'};
   const k=p.k==='farm'?'farm':'bld',A=ACCTS[k],b=state.bank&&state.bank.acct===k?state.bank:null,P=b&&b.P;
   const R=P&&P.rows.length?reconcile(k,P):null;
   const bankBal=b&&b.close!=null&&String(b.close).trim()!==''?parseAmt(b.close):null;
@@ -3323,10 +3356,12 @@ function closingCard(c){
       ${store.canWrite&&c.trial?`<button class="ghost danger" data-act="close-del" data-id="${esc(c.id)}">حذف التجربة</button>`:''}
       ${store.canWrite&&!c.trial&&c.status==='approved'&&c.date===lockOf()?`<button class="ghost danger" data-act="reopen" data-id="${esc(c.id)}">فتح السنة</button>`:''}</div></div>`;
 }
+const closeNeedsAgent=()=>store.canWrite&&store.ver>=12;   // الإقفال الفعلي: المدير يجهّزه والوكيل يعتمده
 V.close=()=>{
   const list=(store.closings||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.approvedAt||0)-(a.approvedAt||0));
   const hist=list.length?`<h3 class="sec">الإقفالات</h3>${list.map(closingCard).join('')}`:'';
-  if(!canEditNow())return {title:'الإقفال السنوي',html:hist||'<p class="empty">ما فيه إقفالات للحين.</p>'};
+  const forAgent=store.isAgent?state.reqs.filter(r=>r.op==='close'&&r.status==='pending'&&r.by!=='agent'):[];
+  if(!store.canWrite)return {title:'الإقفال السنوي',html:(forAgent.length?`<button class="note pendnote" data-go="reqs"><b>⏳ إقفال سنة ${esc((forAgent[0].tx||{}).year||'')} بانتظار اعتمادك</b><small>أعدّه المدير. اضغط لمراجعته واعتماده أو رفضه.</small></button>`:'')+(hist||'<p class="empty">ما فيه إقفالات للحين.</p>')};
   const f=cformInit(),c=buildClosing();
   const old=store.ver<4?`<div class="note warnbox">⚠️ الإقفال يحتاج تحديث كود الخادم للإصدار 4. حدّثه وانشر <b>إصدار جديد</b>.</div>`:'';
   const myPend=state.reqs.find(r=>r.op==='close'&&r.status==='pending');
@@ -3343,7 +3378,7 @@ V.close=()=>{
   const chk=(ok,txt)=>`<div class="kv"><span>${ok?'✅':'⚠️'} ${esc(txt)}</span></div>`;
   return {title:'الإقفال السنوي',html:`${old}
   <p class="note" style="margin-top:0">${f.trial?'<b>إقفال تجريبي:</b> يسجّل الأرقام ويطلع حزمة الإقفال، وما يقفل أي حركة. تقدر تحذفه بعدين.':'<b>إقفال فعلي:</b> بعد الاعتماد كل الحركات لين تاريخ الإقفال تصير للعرض بس، ورصيد الإقفال يصير رصيد بداية الفترة الجديدة.'}</p>
-  ${myPend?`<div class="note">⏳ فيه إقفال بانتظار اعتماد ${store.canWrite?'منك':'المدير'}. <button class="linkbtn" data-go="reqs">فتح الطلبات</button></div>`:''}
+  ${myPend?`<div class="note">⏳ فيه إقفال بانتظار ${myPend.by==='admin'?'اعتماد '+esc(store.agent||'الوكيل'):'اعتمادك'}. <button class="linkbtn" data-go="reqs">فتح الطلبات</button></div>`:''}
   <div class="card">
     <label class="k" for="cYear" style="margin-top:0">السنة المالية</label><select id="cYear">${years.map(y=>`<option${y===f.year?' selected':''}>${y}</option>`).join('')}</select>
     <label class="k">تاريخ الإقفال</label>${dtPicker('cDate',f.date,{yMin:f.year,yMax:f.year,noNow:true})}
@@ -3358,7 +3393,7 @@ V.close=()=>{
     ${lockOf()?chk(f.date>lockOf(),'آخر إقفال فعلي: '+dShort(lockOf())):''}</div>
   <label class="k" for="cNote">ملحوظة على الإقفال</label><textarea id="cNote" placeholder="اختياري">${esc(f.note)}</textarea>
   <div class="err" id="cErr"></div>
-  <button class="primary" data-act="close-submit"${store.ver<4||myPend?' disabled':''}>${store.canWrite?(f.trial?'اعتماد الإقفال التجريبي':'اعتماد الإقفال وقفل السنة'):'إرسال الإقفال للمدير للاعتماد'}</button>
+  <button class="primary" data-act="close-submit"${store.ver<4||myPend?' disabled':''}>${f.trial?'اعتماد الإقفال التجريبي':closeNeedsAgent()?'إرسال الإقفال لاعتماد '+esc(store.agent||'الوكيل'):'اعتماد الإقفال وقفل السنة'}</button>
   <div class="actions"><button class="ghost" data-act="close-preview">معاينة حزمة الإقفال PDF</button></div>
   ${hist}`};
 };
@@ -5103,15 +5138,16 @@ document.addEventListener('click',async e=>{
     const c=buildClosing();
     const warn=[];if(c.pending)warn.push(c.pending+' طلبات حركات معلّقة');['bld','farm'].forEach(k=>{const x=c.accts[k];if(x.bank==='')warn.push('رصيد بنك '+ACCTS[k].short+' ما انكتب');else if(Math.abs(x.diff)>=1)warn.push('فرق في '+ACCTS[k].short+': '+fmt(x.diff));});
     const msg=(f.trial?'إقفال تجريبي لسنة '+f.year+' حتى '+dShort(f.date)+'، وما يقفل الحركات.':'بعد الاعتماد ما تقدر تعدّل أو تحذف أي حركة لين '+dShort(f.date)+' إلا بفتح السنة.')+(warn.length?' تنبيه: '+warn.join('، ')+'.':'');
-    if(!(await ask(store.canWrite?(f.trial?'اعتماد الإقفال التجريبي؟':'اعتماد الإقفال وقفل السنة؟'):'إرسال الإقفال للمدير؟',msg,store.canWrite?'اعتماد':'إرسال')))return;
-    const done=busy(store.canWrite?'جاري الإقفال…':'جاري إرسال الإقفال…');
+    const viaAgent=!f.trial&&closeNeedsAgent(),agN=store.agent||'الوكيل';
+    if(!(await ask(f.trial?'اعتماد الإقفال التجريبي؟':viaAgent?'إرسال الإقفال لـ'+agN+'؟':'اعتماد الإقفال وقفل السنة؟',viaAgent?msg+' الإقفال ما يصير فعلي إلا بعد ما يعتمده '+agN+'.':msg,viaAgent?'إرسال':'اعتماد')))return;
+    const done=busy(viaAgent?'جاري إرسال الإقفال…':'جاري الإقفال…');
     try{
-      const res=store.canWrite?await api('close',{close:c}):await api('propose',{op:'close',tx:c});
+      const res=viaAgent?await api('propose',{op:'close',tx:c}):await api('close',{close:c});
       await store.sync(res);done();render();scrollTop0();
-      toast(store.canWrite?(f.trial?'تم الإقفال التجريبي':'تم الإقفال واعتماد السنة'):'انرسل الإقفال لاعتماد المدير');
+      toast(f.trial?'تم الإقفال التجريبي':viaAgent?'انرسل الإقفال لاعتماد '+agN:'تم الإقفال واعتماد السنة');
     }catch(e){
       // الطلب يمكن وصل وتنفّذ بس الرد تأخر: نتأكد قبل ما نقول إنه فشل
-      let ok=false;if(e&&(e.error==='timeout'||e.error==='network')){try{await store.refresh();ok=store.canWrite?(store.closings||[]).some(x=>x.id===c.id):state.reqs.some(r=>r.op==='close'&&r.id===c.id);}catch(x){}}
+      let ok=false;if(e&&(e.error==='timeout'||e.error==='network')){try{await store.refresh();ok=(f.trial||!closeNeedsAgent())?(store.closings||[]).some(x=>x.id===c.id):state.reqs.some(r=>r.op==='close'&&r.id===c.id);}catch(x){}}
       done();
       if(ok){render();scrollTop0();toast(store.canWrite?'تم الإقفال':'انرسل الإقفال لاعتماد المدير');}
       else{const er2=document.getElementById('cErr');if(er2)er2.textContent=apiErr(e);}
