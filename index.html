@@ -1142,6 +1142,9 @@ nav.tabs button[aria-current="true"]{text-shadow:none!important}
 .home.c4 .tile .ic{display:none}
 .home.c4 .banner.lux h2{font-size:17px}
 .home.c4 .banner.lux{gap:6px!important;padding-bottom:10px!important}
+
+/* حقل التاريخ: الأرقام بترتيبها الصحيح (يوم/شهر/سنة) */
+input[type="date"]{direction:ltr;text-align:right}
 </style>
 </head>
 <body>
@@ -1229,7 +1232,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='11.2';
+const APP_VER='11.3';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1285,7 +1288,7 @@ async function api__(action,payload){
   let res,text;
   try{
     const ac=typeof AbortController!=='undefined'?new AbortController():null;
-    const tm=setTimeout(()=>ac&&ac.abort(),60000);
+    const tm=setTimeout(()=>ac&&ac.abort(),/^(pdoc-put|doc-put|rcpt-put|cert-cfg|pdoc-file|doc-file|rcpt-file)/.test(action)?150000:60000);   // رفع الملفات ياخذ وقت أطول
     try{
       res=url.length<7500?await fetch(url,{method:'GET',cache:'no-store',signal:ac&&ac.signal})
         :await fetch(auth.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:q,signal:ac&&ac.signal});
@@ -1517,7 +1520,7 @@ const getMe=()=>{try{return localStorage.getItem(ME)}catch(e){return null}};
 const setMe=v=>{try{v?localStorage.setItem(ME,v):localStorage.removeItem(ME)}catch(e){}};
 const isForm=()=>['form','propform','userform','docform','certform','certcfg','pdocform','eidbulk'].includes(cur().v);
 const PREF='wareeth-prefs';
-const prefs=Object.assign({fs:1,ns:1,swipe:true,lock:false,notify:true,theme:'auto'},(()=>{try{return JSON.parse(localStorage.getItem(PREF)||'{}')}catch(e){return {}}})());
+const prefs=Object.assign({fs:1,ns:1,swipe:true,haptic:true,lock:false,notify:true,theme:'auto'},(()=>{try{return JSON.parse(localStorage.getItem(PREF)||'{}')}catch(e){return {}}})());
 prefs.fs=1;prefs.ns=1; // التكبير انشال من الإعدادات: الحجم ثابت ومريح
 function applyPrefs(){const de=document.documentElement;de.dataset.theme='navy'; // خلفية كحلي ناصع دائماً (البنر والشريط السفلي بخامتهم الغامقة)
   const a=document.getElementById('app');if(a)a.style.zoom=prefs.fs;document.documentElement.style.setProperty('--ns',prefs.ns);document.documentElement.style.setProperty('--fs',prefs.fs);}
@@ -2579,7 +2582,12 @@ async function pdocSaveAll(){
   try{for(const it of f.items){const p=P[it.prop];
       r=await api('pdoc-put',{doc:{plot:p.plot,type:it.type,propName:p.name,date:it.date,dateKind:it.dateKind,months:it.days?0:it.months,days:it.days||0,vsrc:it.vsrc},file:it.file});ok++;}
     done();state.pdf=null;if(!store.applyRes(r))await store.refresh();back();toast(ok>1?'✓ انحفظت '+ok+' مستندات، والكل يقدر يشوفها الحين':'✓ انحفظ، والكل يقدر يشوفه الحين');}
-  catch(e){done();err.textContent=(ok?'انحفظ '+ok+' والباقي ما انحفظ: ':'ما انحفظ: ')+apiErr(e);if(ok){f.items.splice(0,ok);await store.refresh().catch(()=>{});render();}}
+  catch(e){
+    // الخادم تأخر: يمكن الملف انحفظ فعلاً، نتأكد قبل ما نقول ما انحفظ
+    if(e&&(e.error==='timeout'||e.error==='network')){try{await store.refresh();const it=f.items[ok],p=it&&P[it.prop],t0=Date.now()-200000;
+        const saved=p&&(store.pdocs||[]).some(d=>plotKey(d.plot)===plotKey(p.plot)&&d.type===it.type&&+d.updatedAt>t0);
+        if(saved){ok++;if(ok>=f.items.length){done();state.pdf=null;back();toast('✓ انحفظ (الخادم تأخر بس الملف وصل)');return;}}}catch(x){}}
+    done();err.textContent=(ok?'انحفظ '+ok+' والباقي ما انحفظ: ':'ما انحفظ: ')+apiErr(e);if(ok){f.items.splice(0,ok);await store.refresh().catch(()=>{});render();}}
 }
 async function pdocActs(act,b){
   if(act==='pdoc-view'){pdocView(b.dataset.id);return true;}
@@ -2800,6 +2808,8 @@ V.settings=()=>({title:'الإعدادات',html:`
   ${idlCard()}
   <h3 class="sec">التنقل والتعديل</h3>
   <div class="card">
+    <button class="toggle" role="switch" aria-checked="${prefs.haptic}" data-pref="haptic"><span>الاهتزاز عند اللمس
+      <small>اهتزاز خفيف مع كل ضغطة زر (آيفون بنظام iOS 18 أو أحدث، وأجهزة أندرويد).</small></span><span class="sw"></span></button>
     <button class="toggle" role="switch" aria-checked="${prefs.swipe}" data-pref="swipe"><span>التنقل بالسحب
       <small>اسحب لليمين للعقارات، ولليسار للرئيسي. وفي الصفحات الداخلية أي سحب يرجعك.</small></span><span class="sw"></span></button>
     ${adminView()?`<hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
@@ -5657,18 +5667,35 @@ function swipeTarget(dx){
   return j>=0&&j<TABS.length?TABS[j]:null;
 }
 
+/* ===== الاهتزاز اللمسي مع كل ضغطة زر =====
+   أندرويد: navigator.vibrate. آيفون: سفاري ما يدعم vibrate، لكن مفتاح التبديل (input switch) يعطي اهتزاز النظام لما ينضغط،
+   فنضغط مفتاح مخفي في نفس لحظة لمسة المستخدم. */
+const haptic=(()=>{let lb=null,last=0;return ()=>{
+  if(!prefs.haptic)return;const now=Date.now();if(now-last<40)return;last=now;
+  try{if(navigator.vibrate&&!/iP(hone|ad|od)/.test(navigator.userAgent)){navigator.vibrate(10);return;}
+    if(!lb){lb=document.createElement('label');lb.setAttribute('aria-hidden','true');lb.style.cssText='position:fixed;left:-100px;top:-100px;width:1px;height:1px;opacity:0;overflow:hidden';
+      const i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');i.tabIndex=-1;lb.appendChild(i);document.body.appendChild(lb);}
+    lb.click();}catch(e){}};})();
+document.addEventListener('click',e=>{
+  const t=e.target;if(!t||!t.closest||(t.closest('label')&&t.closest('label').parentNode===document.body&&t.closest('label').style.left==='-100px'))return;
+  if(t.closest('button,[data-go],[data-act],[data-tab],label.scanbtn,label.filebtn,label.docup,summary,a[href],[role="switch"]'))haptic();
+},true);
+
 /* ===== سحب الصفحة لتحت للتحديث (مثل التطبيقات) ===== */
 (function(){
-  let y0=null,x0=0,dy=0,on=false,busy=false;const TH=70;
+  let y0=null,x0=0,dy=0,on=false,busy=false,lastScroll=0;const TH=80;
+  scroller.addEventListener('scroll',()=>{lastScroll=Date.now();},{passive:true});
   const el=document.createElement('div');el.id='ptr';el.setAttribute('aria-hidden','true');el.innerHTML=I.refresh;document.body.appendChild(el);
-  const atTop=()=>(document.scrollingElement||document.documentElement).scrollTop<=0;
+  // التحديث بس لما الصفحة واصلة أعلى حدها وواقفة، مو وأنت تتصفح وترجع لفوق
+  const atTop=()=>scroller.scrollTop<=0;
+  const settled=()=>Date.now()-lastScroll>350;
   const blocked=t=>store.mode!=='api'||busy||(typeof BIO!=='undefined'&&BIO.locked)||isForm()||document.querySelector('.modal-bg')||(t&&t.closest&&t.closest('input,select,textarea,.modal-bg,.table-wrap,canvas,.noptr'));
   function show(d){const k=Math.min(d,TH*1.6);el.classList.add('drag');el.style.opacity=String(Math.min(1,k/TH));el.style.transform=`translateY(${(k*0.9-60).toFixed(1)}px) rotate(${(k*4).toFixed(0)}deg)`;}
   function hide(){el.classList.remove('drag','go');el.style.opacity='0';el.style.transform='translateY(-70px)';}
-  document.addEventListener('touchstart',e=>{y0=null;on=false;dy=0;if(e.touches.length!==1||!atTop()||blocked(e.target))return;y0=e.touches[0].clientY;x0=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('touchstart',e=>{y0=null;on=false;dy=0;if(e.touches.length!==1||!atTop()||!settled()||blocked(e.target))return;y0=e.touches[0].clientY;x0=e.touches[0].clientX;},{passive:true});
   document.addEventListener('touchmove',e=>{
     if(y0==null)return;const p=e.touches[0];dy=p.clientY-y0;const dx=Math.abs(p.clientX-x0);
-    if(!on){if(dy>12&&dy>dx*1.4&&atTop())on=true;else if(dy<0||dx>14){y0=null;return;}else return;}
+    if(!on){if(dy>14&&dy>dx*1.6&&atTop()&&settled())on=true;else if(dy<0||dx>14||!atTop()||!settled()){y0=null;return;}else return;}
     if(e.cancelable)e.preventDefault();show(dy*0.55);
   },{passive:false});
   document.addEventListener('touchend',async()=>{
