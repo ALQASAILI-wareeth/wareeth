@@ -1114,6 +1114,34 @@ nav.tabs button[aria-current="true"]{text-shadow:none!important}
 .yrow+.yrow{margin-top:0}
 .preqin{margin:8px 0 4px}
 .pdochint{font-size:12.5px;color:var(--muted);margin:2px 4px 0}
+
+/* ===== الرئيسية ثابتة: كلها في شاشة وحدة بدون تمرير ===== */
+.home.fixed .tiles{flex:1 1 auto;grid-auto-rows:1fr;align-content:stretch;margin-bottom:0;min-height:0}
+.home.fixed .tile{min-height:0;justify-content:center}
+.home.c1 .banner.lux{padding-top:calc(env(safe-area-inset-top,0px) / var(--fs,1) + 10px)!important;padding-bottom:14px!important;gap:10px!important;min-height:0}
+.home.c1 .banner.lux .orn{display:none}
+.home.c1 .banner.lux .mark svg{width:60px;height:55px}
+.home.c1 .banner.lux h2{font-size:22px}
+.home.c1 .banner.lux p{font-size:15px}
+.home.c1 .hero{margin-bottom:10px}
+.home.c1 .hsplit{margin:8px 0 6px}.home.c1 .hsplit .hs{padding:8px 14px 9px}
+.home.c1 .tiles{gap:10px}
+.home.c1 .tile{padding:10px 12px!important;gap:3px!important}
+.home.c1 .tile .ic{width:38px;height:38px}
+.home.c2 .banner.lux .mark span{display:none}
+.home.c2 .banner.lux .mark svg{width:46px;height:42px}
+.home.c2 .banner.lux h2{font-size:19px}
+.home.c2 .banner.lux p{font-size:13.5px}
+.home.c2 .hero .big{font-size:min(29px,calc(8vw / var(--fs,1)))}
+.home.c2 .hsplit .hs b{font-size:18px}
+.home.c2 .tile small{display:none}
+.home.c3 .banner.lux .mark{display:none}
+.home.c3 .banner.lux p{display:none}
+.home.c3 .hero .upd{display:none}
+.home.c3 .tile .ic{width:32px;height:32px}
+.home.c4 .tile .ic{display:none}
+.home.c4 .banner.lux h2{font-size:17px}
+.home.c4 .banner.lux{gap:6px!important;padding-bottom:10px!important}
 </style>
 </head>
 <body>
@@ -1201,7 +1229,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='11.1';
+const APP_VER='11.2';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -5595,11 +5623,13 @@ function layoutHome(){
   const h=document.querySelector('.home'),fs=prefs.fs||1;
   syncBars();scroller.classList.remove('lock');
   if(h){
-    h.style.height='';
-    const avail=scroller.clientHeight/fs-16-14-1;
-    const fits=h.getBoundingClientRect().height/fs<=avail+1;
+    // الرئيسية ثابتة: تنضغط على مراحل لين تدخل كلها في الشاشة، والأزرار تعبّي الباقي
+    h.style.height='';h.classList.remove('fixed','c1','c2','c3','c4');
+    const avail=Math.floor(scroller.clientHeight/fs-16-14-1),H=()=>h.getBoundingClientRect().height/fs;
+    let lv=0;while(H()>avail+1&&lv<4){lv++;h.classList.add('c'+lv);}
+    const fits=H()<=avail+1;
     scroller.classList.toggle('lock',fits);
-    if(fits){scrollTop0();h.style.height=Math.floor(avail)+'px';}
+    if(fits){scrollTop0();h.style.height=avail+'px';h.classList.add('fixed');}
     return;
   }
   // باقي الصفحات: تثبت إذا محتواها كله داخل الشاشة (ما عدا الصفحات اللي فيها كتابة)
@@ -5612,6 +5642,7 @@ function layoutHome(){
   if(fits)scrollTop0();
 }
 window.addEventListener('resize',()=>{clearTimeout(layoutHome.t);layoutHome.t=setTimeout(layoutHome,120);});
+try{document.fonts&&document.fonts.ready.then(()=>layoutHome());document.fonts&&document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',()=>layoutHome());}catch(e){}
 // تحميل باقي الحركات تلقائياً لما يقرب المستخدم من آخر القائمة
 scroller.addEventListener('scroll',()=>{if(mvMore.t)return;mvMore.t=requestAnimationFrame(()=>{mvMore.t=0;if(document.getElementById('mvMore')&&scroller.scrollTop+scroller.clientHeight>scroller.scrollHeight-700)mvMore();});},{passive:true});
 
