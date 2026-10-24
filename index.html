@@ -1232,7 +1232,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='11.3';
+const APP_VER='11.4';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1303,6 +1303,7 @@ async function api__(action,payload){
 function apiErr(e){
   const c=e&&e.error;
   if(c==='wa')return e.detail||'صار خطأ في الواتساب.';
+  if(c==='upload_incomplete')return 'بعض أجزاء الملف ما وصلت للخادم. جرّب مرة ثانية.';
   if(c==='needs_agent')return 'الإقفال الفعلي يحتاج اعتماد '+(store.agent||'الوكيل')+'. حدّث الصفحة وأرسله له.';
   if(c==='income_changed')return 'الدخل تغيّر بعد آخر تحديث. حدّث الصفحة وأرسل مرة ثانية.';
   if(c==='pin')return auth.viaId?'انتهى الدخول بالهوية على هذا الجهاز (أو أوقفه المدير). صوّر هويتك مرة ثانية، أو ادخل بالرقم السري.':'الرقم السري غلط.';
@@ -2412,13 +2413,28 @@ V.pdoc=({id,type})=>{
   return {title:T.n+' – '+p.name,html:`${main}${hist}
     ${d?'':`<p class="m pdochint">${T.s} عادة صالح ${monthsTxt(PDOC_DEF_MONTHS)} من تاريخ طباعته.</p>`}`};
 };
+/* ===== رفع الملف على أجزاء صغيرة: كل جزء طلب سريع، والجزء اللي يفشل يعاد لحاله ===== */
+const UP_PART=90000;
+async function sendFile(f,prog){
+  if(!f||!f.data||f.data.length<=UP_PART*1.5||store.ver<12)return {mime:f.mime,data:f.data};
+  const u=Date.now().toString(36)+Math.random().toString(36).slice(2,10),n=Math.ceil(f.data.length/UP_PART);
+  for(let i=0;i<n;i++){
+    if(prog)prog('رفع الجزء '+(i+1)+' من '+n);
+    const d=f.data.slice(i*UP_PART,(i+1)*UP_PART);let tries=0;
+    for(;;){try{const r=await api('up-chunk',{u,i,n,d});if(r&&r.ok)break;throw r;}
+      catch(e){if(++tries>=3||(e&&e.error&&!['timeout','network','busy','bad_response'].includes(e.error)))throw e;await new Promise(r=>setTimeout(r,1200*tries));}}
+  }
+  if(prog)prog('جاري الحفظ…');
+  return {mime:f.mime,up:u,n,len:f.data.length};
+}
+const busyProg=m=>{const s=document.querySelector('#busy small');if(s)s.textContent=m;};
 /* ===== إيصالات الحركات: صورة أو PDF ينرفع مع الحركة ويتحفظ في Drive ===== */
 const RCPT_MAX=12*1024*1024;
 const rcptOf=id=>(store.rcpts||{})[id]||null;
 const canRcpt=()=>store.mode==='api'&&(store.canWrite||store.isAgent)&&store.ver>=12;
 async function rcptPrep(file){
   const pdf=file.type==='application/pdf'||/\.pdf$/i.test(file.name||'');
-  if(pdf){if(file.size>RCPT_MAX)throw new Error('الملف أكبر من 12 ميجا');return {mime:'application/pdf',data:await fileB64(file),name:file.name||'',thumb:''};}
+  if(pdf){if(file.size>RCPT_MAX)throw new Error('الملف أكبر من 12 ميجا');const u8=new Uint8Array(await file.arrayBuffer()),sm=await shrinkPdf(u8);return {mime:'application/pdf',data:u8b64(sm||u8),name:file.name||'',thumb:''};}
   if(!(file.type||'').startsWith('image/'))throw new Error('اختر صورة أو ملف PDF');
   const x=await imgFileB64(file,2000);
   return {mime:x.mime,data:x.data,name:file.name||'',thumb:'data:'+x.mime+';base64,'+x.data};
@@ -2437,7 +2453,7 @@ async function rcptPick(file){
 }
 /* بعد حفظ الحركة: نرفع الإيصال في الخلفية، والحركة نفسها محفوظة حتى لو تأخر */
 async function rcptSend(txId,file,del,label){
-  try{const r=file?await api('rcpt-put',{tx:txId,file:{mime:file.mime,data:file.data},label}):await api('rcpt-del',{tx:txId});
+  try{const r=file?await api('rcpt-put',{tx:txId,file:await sendFile(file),label}):await api('rcpt-del',{tx:txId});
     if(r&&r.list)store.applyRes(r);else await store.refresh();if(file)toast('✓ انرفع الإيصال');render();}
   catch(e){toast('الحركة انحفظت، لكن الإيصال ما ارتفع: '+apiErr(e)+'. ارفعه من صفحة الحركة.',6000);}
 }
@@ -2445,7 +2461,7 @@ async function rcptAttachNow(txId,file){
   let x;try{x=await rcptPrep(file);}catch(e){toast((e&&e.message)||'ما قدرت أقرأ الملف.');return;}
   const t=state.txs.find(y=>y.id===txId);
   const done=busy('جاري رفع الإيصال…');
-  try{const r=await api('rcpt-put',{tx:txId,file:{mime:x.mime,data:x.data},label:t?KIND[t.kind]+' '+fmt(t.amount)+' '+String(t.date||'').slice(0,10):txId});done();
+  try{const r=await api('rcpt-put',{tx:txId,file:await sendFile(x,busyProg),label:t?KIND[t.kind]+' '+fmt(t.amount)+' '+String(t.date||'').slice(0,10):txId});done();
     if(!store.applyRes(r))await store.refresh();render();toast('✓ انرفع الإيصال');}
   catch(e){done();toast('ما انرفع الإيصال: '+apiErr(e));}
 }
@@ -2518,6 +2534,39 @@ function pdocParse(lines0){
   if(m&&take(m[1],m[2]))return r;
   r.months=PDOC_DEF_MONTHS;return r;
 }
+/* ===== تصغير ملفات PDF الكبيرة قبل الرفع =====
+   ملف المخطط أو السند الممسوح يكون عادة صور ثقيلة (عدة ميجا)، ورفعه لخادم Google يتأخر أو ينقطع.
+   نرسم كل صفحة صورة JPEG واضحة (2200 بكسل) ونجمعها في PDF جديد بنفس شكل الصفحات، فيصير الحجم أصغر بكثير. */
+const PDF_SHRINK_AT=900*1024;
+async function jpegPdf(b64s){
+  const enc=new TextEncoder(),parts=[],offs=[];let len=0;
+  const put=x=>{const b=typeof x==='string'?enc.encode(x):x;parts.push(b);len+=b.length;};
+  const obj=(n,body)=>{offs[n]=len;put(n+' 0 obj\n');if(Array.isArray(body))body.forEach(put);else put(body);put('\nendobj\n');};
+  const dims=b64=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res([i.naturalWidth,i.naturalHeight]);i.onerror=rej;i.src='data:image/jpeg;base64,'+b64;});
+  put('%PDF-1.4\n%âãÏÓ\n');
+  const n=b64s.length,kids=[];for(let i=0;i<n;i++)kids.push((3+i*3)+' 0 R');
+  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');obj(2,`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${n} >>`);
+  for(let i=0;i<n;i++){
+    const [w,h]=await dims(b64s[i]),k=842/Math.max(w,h),pw=(w*k).toFixed(2),ph=(h*k).toFixed(2);
+    const bin=atob(b64s[i]),img=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)img[j]=bin.charCodeAt(j);
+    const pg=3+i*3,content=`q ${pw} 0 0 ${ph} 0 0 cm /Im0 Do Q`;
+    obj(pg,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im0 ${pg+2} 0 R >> >> /Contents ${pg+1} 0 R >>`);
+    obj(pg+1,`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+    obj(pg+2,[`<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.length} >>\nstream\n`,img,'\nendstream']);
+  }
+  const xref=len,size=3+n*3;let x=`xref\n0 ${size}\n0000000000 65535 f \n`;for(let i=1;i<size;i++)x+=String(offs[i]).padStart(10,'0')+' 00000 n \n';
+  put(x+`trailer\n<< /Size ${size} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  return new Uint8Array(await new Blob(parts).arrayBuffer());
+}
+const u8b64=u8=>{let bin='';for(let k=0;k<u8.length;k+=0x8000)bin+=String.fromCharCode.apply(null,u8.subarray(k,k+0x8000));return btoa(bin);};
+async function shrinkPdf(u8,prog){
+  if(u8.length<=PDF_SHRINK_AT)return null;
+  try{const R=await pdfDoc(u8,prog||(()=>{}),{max:8,ocr:0,imgs:true});
+    if(!R.imgs.length||R.total>8)return null;
+    const out=await jpegPdf(R.imgs.map(x=>x.data));
+    return out.length<u8.length*0.85?out:null;}catch(e){console.error(e);return null;}
+}
+const mbTxt=n=>(n/1048576).toFixed(n<1048576*10?1:0)+' ميجا';
 /* ---------- المدير: رفع مخطط أو سند (ملف واحد أو عدة ملفات مرة وحدة) ---------- */
 async function pdocScan(files,preset){
   files=[...files].slice(0,10);if(!files.length)return;
@@ -2527,11 +2576,12 @@ async function pdocScan(files,preset){
   try{for(const [i,f] of files.entries()){
       const pre=files.length>1?`ملف ${i+1} من ${files.length}: `:'',isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name||'');
       let lines=[],file,thumb='';
-      if(isPdf){if(f.size>12*1024*1024)throw new Error('الملف '+(f.name||'')+' أكبر من 12 ميجا.');
+      if(isPdf){if(f.size>40*1024*1024)throw new Error('الملف '+(f.name||'')+' أكبر من 40 ميجا.');
         const u8=new Uint8Array(await f.arrayBuffer());lines=await pdfLines(f,m=>prog(pre+m));
-        let bin='';for(let k=0;k<u8.length;k+=0x8000)bin+=String.fromCharCode.apply(null,u8.subarray(k,k+0x8000));file={mime:'application/pdf',data:btoa(bin)};
+        const sm=await shrinkPdf(u8,m=>prog(pre+'أصغّر الملف للرفع · '+m));
+        file={mime:'application/pdf',data:u8b64(sm||u8),size:(sm||u8).length,orig:u8.length};
         try{const R=await pdfDoc(u8,()=>{}, {max:1,ocr:0});thumb=(R.imgs[0]||{}).thumb||'';}catch(e){}}
-      else{const cv=await imgCanvas(f,2400);thumb=cvThumb(cv);file={mime:'image/jpeg',data:b64of(cv.toDataURL('image/jpeg',.88))};lines=await ocrLines(cv,m=>prog(pre+m));cv.width=cv.height=1;}
+      else{const cv=await imgCanvas(f,2400);thumb=cvThumb(cv);file={mime:'image/jpeg',data:b64of(cv.toDataURL('image/jpeg',.88))};file.size=Math.round(file.data.length*.75);lines=await ocrLines(cv,m=>prog(pre+m));cv.width=cv.height=1;}
       const dd=parseDeed(lines),pv=pdocParse(lines);
       let prop=preset&&preset.prop?P[preset.prop]:null;
       const byPlot=dd.plot?(state.propsAll||[]).find(x=>!x.hidden&&plotKey(x.plot)===plotKey(dd.plot)):null;
@@ -2556,7 +2606,7 @@ V.pdocform=()=>{
   const props=(state.propsAll||[]).filter(p=>!p.hidden&&p.plot);
   const card=(it,i)=>{const p=P[it.prop],st=it.date?pdocSt({date:it.date,months:it.months,days:it.days}):null;
     return `<div class="card pdocitem"><div class="pdi-h">${it.thumb?`<img src="${esc(it.thumb)}" alt="">`:''}<div><b>${esc(it.name)}</b>
-      <div class="m">${it.plot?'رقم الأرض في المستند: <bdi class="num">'+esc(it.plot)+'</bdi>':'ما لقيت رقم الأرض في المستند'}${it.vsrc==='doc'?' · مدة الصلاحية مقروءة من المستند':''}</div>
+      <div class="m">${it.file&&it.file.size?'<bdi class="num">'+mbTxt(it.file.size)+'</bdi>'+(it.file.orig&&it.file.orig>it.file.size?' (كان '+mbTxt(it.file.orig)+')':'')+' · ':''}${it.plot?'رقم الأرض في المستند: <bdi class="num">'+esc(it.plot)+'</bdi>':'ما لقيت رقم الأرض في المستند'}${it.vsrc==='doc'?' · مدة الصلاحية مقروءة من المستند':''}</div>
       ${it.mismatch?`<div class="m" style="color:var(--neg)">⚠️ رقم الأرض في المستند (${esc(it.mismatch)}) غير رقم هذا العقار. تأكد إنه المستند الصحيح.</div>`:''}</div>
       ${f.items.length>1?`<button class="iconbtn" data-act="pdf-rm" data-i="${i}" aria-label="شيل الملف">✕</button>`:''}</div>
       <label class="k" for="pd_p${i}">العقار</label><select id="pd_p${i}"><option value="">اختر العقار…</option>${props.map(x=>`<option value="${esc(x.id)}"${x.id===it.prop?' selected':''}>${esc(x.name)} (${esc(x.plot)})</option>`).join('')}</select>
@@ -2578,16 +2628,19 @@ async function pdocSaveAll(){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(it.date||'')||it.date>todayStr()){err.textContent='اكتب تاريخ المستند'+n+'.';return;}
   }
   const seen={};for(const it of f.items){const k=it.prop+'|'+it.type;if(seen[k]){err.textContent='فيه ملفين لنفس العقار ونفس النوع. خلّ واحد بس (الأحدث).';return;}seen[k]=1;}
-  const done=busy('جاري الحفظ…');let ok=0,r=null;
+  const tot=f.items.reduce((a,it)=>a+(it.file&&it.file.size||0),0),T0=Date.now();
+  const done=busy('جاري رفع '+(f.items.length>1?f.items.length+' ملفات':'الملف')+'…',tot?'الحجم '+mbTxt(tot)+' · لا تقفل التطبيق':'');let ok=0,r=null;
   try{for(const it of f.items){const p=P[it.prop];
-      r=await api('pdoc-put',{doc:{plot:p.plot,type:it.type,propName:p.name,date:it.date,dateKind:it.dateKind,months:it.days?0:it.months,days:it.days||0,vsrc:it.vsrc},file:it.file});ok++;}
+      const pre=f.items.length>1?'الملف '+(ok+1)+' من '+f.items.length+': ':'';
+      const fp=await sendFile(it.file,m=>busyProg(pre+m));
+      r=await api('pdoc-put',{doc:{plot:p.plot,type:it.type,propName:p.name,date:it.date,dateKind:it.dateKind,months:it.days?0:it.months,days:it.days||0,vsrc:it.vsrc},file:fp});ok++;}
     done();state.pdf=null;if(!store.applyRes(r))await store.refresh();back();toast(ok>1?'✓ انحفظت '+ok+' مستندات، والكل يقدر يشوفها الحين':'✓ انحفظ، والكل يقدر يشوفه الحين');}
   catch(e){
     // الخادم تأخر: يمكن الملف انحفظ فعلاً، نتأكد قبل ما نقول ما انحفظ
     if(e&&(e.error==='timeout'||e.error==='network')){try{await store.refresh();const it=f.items[ok],p=it&&P[it.prop],t0=Date.now()-200000;
         const saved=p&&(store.pdocs||[]).some(d=>plotKey(d.plot)===plotKey(p.plot)&&d.type===it.type&&+d.updatedAt>t0);
         if(saved){ok++;if(ok>=f.items.length){done();state.pdf=null;back();toast('✓ انحفظ (الخادم تأخر بس الملف وصل)');return;}}}catch(x){}}
-    done();err.textContent=(ok?'انحفظ '+ok+' والباقي ما انحفظ: ':'ما انحفظ: ')+apiErr(e);if(ok){f.items.splice(0,ok);await store.refresh().catch(()=>{});render();}}
+    done();err.textContent=(ok?'انحفظ '+ok+' والباقي ما انحفظ: ':'ما انحفظ: ')+apiErr(e)+' ['+(e&&e.error||'?')+' · '+Math.round((Date.now()-T0)/1000)+' ث'+(tot?' · '+mbTxt(tot):'')+']';if(ok){f.items.splice(0,ok);await store.refresh().catch(()=>{});render();}}
 }
 async function pdocActs(act,b){
   if(act==='pdoc-view'){pdocView(b.dataset.id);return true;}
