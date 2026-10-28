@@ -339,6 +339,9 @@ nav.tabs[hidden]{display:none}
 .linkbtn{background:none;border:0;color:var(--gold);cursor:pointer;padding:4px 0;font-weight:500}
 .actions{display:flex;gap:10px;margin-top:14px}
 .actions .ghost{flex:1}
+.sbatch .sb-r{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.sbatch .m{white-space:normal}
+.linkbtn.danger{color:var(--neg)}
+.actions a.btnlink{display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink)}
 
 .fair{display:flex;align-items:center;gap:10px;font-size:14px}
 .dot{width:10px;height:10px;border-radius:50%;flex:none}
@@ -1276,7 +1279,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='12.4';
+const APP_VER='12.6';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1365,6 +1368,7 @@ function apiErr(e){
   if(c==='drive_auth')return store.canWrite?'حفظ المستندات يحتاج صلاحية Google Drive: افتح Apps Script وشغّل الدالة setupDocs مرة واحدة ووافق، ثم انشر إصداراً جديداً.':'حفظ المستندات غير مفعّل في الخادم حتى الآن. تواصل مع المدير.';
   if(c==='locked')return 'أُقفل هذا الجهاز مؤقتاً بسبب كثرة المحاولات الخاطئة. انتظر نصف ساعة، أو اطلب من المدير فك القفل. الأجهزة الأخرى لا تتأثر.';
   if(c==='forbidden')return 'ليست لديك صلاحية لهذه العملية.';
+  if(c==='backup_failed')return 'تعذّر نسخ الجدول'+(e.detail?': '+e.detail:'')+'.';
   if(c==='busy')return 'الخادم مشغول بطلب آخر. حاول بعد ثوانٍ.';
   if(c==='timeout')return 'الخادم تأخر في الرد. اضغط تحديث ↻ وتأكد قبل أن تعيد المحاولة.';
   if(c==='owned')return 'هذه الحركة باسم '+(store.agent||'الوكيل')+'، وأي تعديل عليها يحتاج موافقته.';
@@ -1493,7 +1497,7 @@ const store={
     const prevIds=!fromCache&&this.loadedAt&&NEWS.base?new Set(state.txs.map(t=>t.id)):null;
     state.txs=(j.txs||[]);
     if(!fromCache)this.overlay();   // حركات انحفظت للتو ولسا ما وصلت في رد الخادم: تبقى ظاهرة
-    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.onlineNames=j.onlineNames||null;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;this.docs=Array.isArray(j.docs)?j.docs:null;this.certs=Array.isArray(j.certs)?j.certs:null;if(j.idLogin!=null){this.idLogin=!!j.idLogin;this.idTokens=+j.idTokens||0;this.idPending=Array.isArray(j.idPending)?j.idPending:[];}this.pdocs=Array.isArray(j.pdocs)?j.pdocs:null;this.rcpts=j.rcpts&&typeof j.rcpts==='object'?j.rcpts:{};this.preqs=Array.isArray(j.preqs)?j.preqs:[];if(j.certCfg)this.certCfg=j.certCfg;if(j.users)this.users=j.users;if(this.user&&H[this.user.heir])setMe(this.user.heir);
+    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.onlineNames=j.onlineNames||null;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;this.docs=Array.isArray(j.docs)?j.docs:null;this.certs=Array.isArray(j.certs)?j.certs:null;if(j.idLogin!=null){this.idLogin=!!j.idLogin;this.idTokens=+j.idTokens||0;this.idPending=Array.isArray(j.idPending)?j.idPending:[];}this.pdocs=Array.isArray(j.pdocs)?j.pdocs:null;this.rcpts=j.rcpts&&typeof j.rcpts==='object'?j.rcpts:{};this.preqs=Array.isArray(j.preqs)?j.preqs:[];if(j.certCfg)this.certCfg=j.certCfg;if(j.users)this.users=j.users;this.backup=j.backup||null;if(this.user&&H[this.user.heir])setMe(this.user.heir);
     if(!fromCache){this.loadedAt=Date.now();saveCache(j);setTimeout(()=>{if(!state.certToast&&typeof certNewApproved==='function'&&certNewApproved()){state.certToast=1;toast('📜 تغيّرت حالة إحدى شهادات الدخل. راجعها من التقارير.');}},2500);if(prevIds)setTimeout(()=>newsToast(prevIds),0);}
     if(j.cfg)notif.cfg=j.cfg;
     this.groups=Array.isArray(j.groups)?j.groups:(j.cfg&&j.cfg.groups)||[];
@@ -1564,7 +1568,16 @@ const store={
     const P=this.pend;P[id]={op:'del',until:Date.now()+180000};
     const bg=api('del',{id}).then(r=>{if(P[id]){P[id].ok=true;P[id].until=Date.now()+90000;}return r;})
       .catch(e=>{delete P[id];state.txs=prev;render();toast('لم تُحذَف الحركة: '+apiErr(e));throw e;});
-    return {bg};}
+    return {bg};},
+  /* حذف عدة حركات مرة واحدة (المدير). الخادم القديم: واحدة واحدة */
+  async delMany(ids){
+    const prev=state.txs.slice(),P=this.pend,now=Date.now();
+    ids.forEach(id=>{const o=state.txs.find(x=>x.id===id);if(o)NEWS.gone[id]=o;P[id]={op:'del',until:now+180000};});
+    state.txs=state.txs.filter(x=>!ids.includes(x.id));
+    try{if(this.ver>=18)await api('dels',{ids});else for(const id of ids)await api('del',{id});
+      ids.forEach(id=>{if(P[id]){P[id].ok=true;P[id].until=Date.now()+90000;}});return {ok:ids.length};}
+    catch(e){ids.forEach(id=>delete P[id]);state.txs=prev;render();throw e;}
+  }
 };
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&Date.now()-store.loadedAt>15000)store.refresh(false,true).catch(()=>{});});
 setInterval(()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&!isForm()&&navigator.onLine!==false){store.refresh(false,true).catch(()=>{});if(cur().v==='activity'||cur().v==='actperson'||cur().v==='actold')loadActivity(true);}},30000);
@@ -2316,7 +2329,7 @@ function dtPicker(id,value,o){
   return `<div class="dtp" id="${id}_w"><input type="hidden" id="${id}" value="${val}">
     ${time?`<div class="dtp-row">${sel('h',rng(1,12).map(n=>[n,String(n)]),((v.h+11)%12)+1,'الساعة')}${sel('mi',rng(0,59).map(n=>[n,pad(n)]),v.mi,'الدقيقة')}${sel('ap',[['am','ص'],['pm','م']],v.h<12?'am':'pm','الفترة')}</div>`:''}
     <div class="dtp-row">${sel('d',days,v.d,'اليوم')}${sel('mo',rng(1,12).map(n=>[n,`${n} – ${AR_MON[n-1]}`]),v.mo,'الشهر','wide')}${sel('y',rng(yMin,yMax).reverse().map(n=>[n,String(n)]),v.y,'السنة')}</div>
-    ${o.noNow?'':`<button type="button" class="dtp-now" data-dt-now="${id}" data-dt-time="${time?1:0}">${time?'الآن':'اليوم'}</button>`}</div>`;
+    ${o.noNow||!time?'':`<button type="button" class="dtp-now" data-dt-now="${id}" data-dt-time="${time?1:0}">${time?'الآن':'اليوم'}</button>`}</div>`;
 }
 function dtSync(id,set){
   const w=document.getElementById(id+'_w');if(!w)return;const g=p=>w.querySelector(`[data-part="${p}"]`);
@@ -3061,6 +3074,26 @@ async function grpDel(btn){
   try{await grpSaveAll(grpList().filter(x=>x.id!==f.id),'تم حذف المجموعة');done();state.gf=null;back();}
   catch(e){done();toast('لم يتم: '+apiErr(e));}
 }
+/* النسخ الاحتياطي للجدول: يعمل تلقائياً في الخادم، وهنا حالته وزر لنسخة فورية */
+function backupCard(){
+  if(!store.canWrite||store.mode!=='api')return '';
+  if(store.ver<17)return `<h3 class="sec">النسخ الاحتياطي</h3><div class="card"><p class="m" style="font-size:13px;color:var(--muted);margin:0">⚠️ النسخ الاحتياطي التلقائي يحتاج تحديث كود الخادم (Code) إلى الإصدار 18.</p></div>`;
+  const b=store.backup||{},ago=b.last?Math.floor((Date.now()-b.last)/864e5):-1;
+  return `<h3 class="sec">النسخ الاحتياطي</h3>
+  <div class="card">
+    <div class="kv"><span>آخر نسخة</span><b>${b.last?esc(fmtDT(new Date(b.last),true)):'لم تُؤخذ بعد'}${ago>0?` <small style="color:var(--muted);font-weight:500">(قبل ${ago===1?'يوم':ago===2?'يومين':ago+(ago<11?' أيام':' يوماً')})</small>`:''}</b></div>
+    ${b.n!=null?`<div class="kv"><span>النسخ المحفوظة</span><b><span class="num">${b.n}</span>${b.ng!=null?` <small style="color:var(--muted);font-weight:500">+ <span class="num">${b.ng}</span> من شيت Glide</small>`:''}</b></div>`:''}
+    ${b.gerr?`<div class="kv"><span>شيت Glide</span><b style="color:var(--neg);font-size:13px">لم يُنسخ: ${esc(b.gerr)}</b></div>`:''}
+    ${b.err?`<div class="kv"><span>آخر خطأ</span><b style="color:var(--neg);font-size:13px">${esc(b.err)}</b></div>`:''}
+    <p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">ينسخ الخادم الجدول كاملاً كل ليلة الساعة 3 إذا تغيّرت البيانات، إلى مجلد «وريث – نسخ احتياطية للجدول» في Google Drive الخاص بك، ومعه نسخة من شيت Glide القديم «GLAID APPS». تبقى آخر 30 نسخة من كل منهما، وأول نسخة من كل شهر تبقى سنتين.</p>
+    <div class="actions"><button class="ghost" data-act="bk-now">نسخة الآن</button>${b.url?`<a class="ghost btnlink" href="${esc(b.url)}" target="_blank" rel="noopener">فتح المجلد</a>`:''}</div>
+  </div>`;
+}
+async function bkNow(btn){
+  btn.disabled=true;const done=busy('جاري نسخ الجدول…');
+  try{const j=await api('backup',{});done();store.backup=Object.assign({},store.backup,{last:j.last,n:j.n,ng:j.ng,gerr:j.gerr||'',url:j.url||(store.backup||{}).url,err:''});render();toast('تم أخذ نسخة احتياطية');}
+  catch(e){done();btn.disabled=false;toast('لم تُؤخذ النسخة: '+apiErr(e));}
+}
 function featCard(){
   if(!store.canWrite)return '';
   const old=store.ver<14;
@@ -3078,11 +3111,10 @@ async function featToggle(k,btn){
 }
 V.settings=()=>({title:'الإعدادات',html:`
   ${featCard()}
+  ${backupCard()}
   ${store.canWrite?`<h3 class="sec">المستخدمين والأرقام السرية</h3>
   <div class="propadd"><button class="scanbtn" data-act="user-new">${I.plus}<span>إضافة مستخدم<small>وإنشاء رقم سري له</small></span></button>
     <button class="scanbtn" data-go="users">${I.users}<span>المستخدمين${(store.users||[]).length?` (${store.users.length})`:''}<small>تعديل، رقم جديد، إيقاف</small></span></button></div>
-  ${feat('sale')?`<h3 class="sec">بيع الرطب للورثة</h3>
-  <button class="mbtn" data-go="items"><span class="l"><span class="ic">🌴</span><span>أصناف البيع وأسعارها<small class="msub">${(store.items||[]).length?(store.items||[]).map(x=>esc(x.name)+' '+fmt(x.price)).join('، '):'مثل «رطب خلاص – كرتون» بـ 60'}</small></span></span>${I.chev}</button>`:''}
   ${feat('priv')?`<h3 class="sec">المصاريف الخاصة</h3>
   <button class="mbtn" data-go="grps"><span class="l"><span class="ic">🐪</span><span>مجموعات المصاريف الخاصة<small class="msub">${grpList().length?grpList().map(g=>esc(g.name)).join('، '):'مثل «أصحاب الإبل»'}</small></span></span>${I.chev}</button>`:''}`:''}
   ${bioSettings()}
@@ -3400,9 +3432,10 @@ V.form=()=>{
 };
 
 /* ===== الإدخال المتعدد: عدة إيداعات أو مصروفات في صفحة واحدة ===== */
-const bRow=d=>({date:d||todayStr(),amount:'',cat:'',note:''});
-function bfInit(k){if(!state.bf||state.bf.k!==k)state.bf={k,kind:'exp',rows:[bRow(),bRow(),bRow()]};return state.bf;}
-function readBF(){const f=state.bf;if(!f)return;document.querySelectorAll('[data-bf]').forEach(i=>{const [n,f2]=i.dataset.bf.split(':');if(f.rows[+n])f.rows[+n][f2]=i.value;});
+const bRow=(d,cat,other)=>({date:d||todayStr(),amount:'',cat:cat||'',other:!!other,note:''});
+function bfInit(k){if(!state.bf||state.bf.k!==k)state.bf={k,kind:'exp',rows:[bRow()]};return state.bf;}
+function readBF(){const f=state.bf;if(!f)return;document.querySelectorAll('[data-bf]').forEach(i=>{const [n,f2]=i.dataset.bf.split(':'),r=f.rows[+n];if(!r)return;
+    if(f2==='catsel'){if(i.value==='__other'){if(!r.other){r.other=true;r.cat='';}}else{r.other=false;r.cat=i.value;}}else if(f2==='catx'){if(r.other)r.cat=i.value;}else r[f2]=i.value;});
   f.rows.forEach((r,i)=>{const d=document.getElementById('bd_'+i);if(d&&d.value)r.date=d.value;});}
 V.batch=({k})=>{
   if(!ACCTS[k]||k==='old')return {title:'إدخال متعدد',html:''};
@@ -3412,13 +3445,14 @@ V.batch=({k})=>{
   return {title:'إدخال متعدد – '+ACCTS[k].short,html:`
   <div class="seg"><button data-bkind="exp" aria-pressed="${!dep}">مصروفات</button><button data-bkind="dep" aria-pressed="${dep}">إيداعات</button></div>
   <p class="m" style="font-size:13px;color:var(--muted);margin:6px 0 10px">اكتب كل ${dep?'إيداع':'فاتورة'} في سطر، ثم احفظها كلها مرة واحدة. السطور الفارغة لا تُحفظ.</p>
-  <datalist id="bCats">${cats.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
   ${f.rows.map((r,i)=>`<div class="card brow"><div class="brow-h"><b>${i+1}</b>${f.rows.length>1?`<button class="iconbtn sm" data-brm="${i}" aria-label="حذف السطر">✕</button>`:''}</div>
     <div class="frow2"><div><label class="k">المبلغ (د.إ)</label><input data-bf="${i}:amount" inputmode="decimal" placeholder="0.00" value="${esc(r.amount)}"></div>
-      <div><label class="k">${dep?'من':'البند'}</label><input data-bf="${i}:cat" list="bCats" placeholder="${dep?'اختر الجهة':'اختر أو اكتب البند'}" value="${esc(r.cat)}"></div></div>
+      <div><label class="k">${dep?'من':'البند'}</label>${(()=>{const inL=r.cat&&cats.some(c=>normCat(c)===normCat(r.cat)),oth=r.other||(r.cat&&!inL);
+        return `<select data-bf="${i}:catsel" aria-label="${dep?'الجهة':'البند'}"><option value=""${!r.cat&&!oth?' selected':''}>${dep?'اختر الجهة':'اختر البند'}</option>${cats.map(c=>`<option value="${esc(c)}"${!oth&&inL&&normCat(c)===normCat(r.cat)?' selected':''}>${esc(c)}</option>`).join('')}<option value="__other"${oth?' selected':''}>أخرى…</option></select>
+        ${oth?`<input data-bf="${i}:catx" style="margin-top:8px" placeholder="${dep?'اكتب اسم الجهة':'اكتب اسم البند'}" value="${esc(r.cat)}">`:''}`;})()}</div></div>
     <label class="k">التاريخ</label>${dtPicker('bd_'+i,r.date,{})}
     <label class="k">ملحوظة</label><input data-bf="${i}:note" placeholder="اختياري" value="${esc(r.note)}"></div>`).join('')}
-  <div class="pair"><button class="ghost" data-act="b-add">+ سطر جديد</button><button class="ghost" data-act="b-dup">تكرار آخر سطر</button></div>
+  <button class="ghost" data-act="b-add" style="width:100%">+ سطر جديد <small style="color:var(--muted);font-weight:400">(بنفس تاريخ وبند السطر الأخير)</small></button>
   <div class="total-line" style="margin-top:14px"><span class="t">${ok.length} ${dep?'إيداع':'مصروف'}</span><span class="v" id="bSum">${money(sum)}</span></div>
   <div class="err" id="bErr"></div>
   <button class="primary" data-act="b-save">حفظ الكل</button>
@@ -3428,7 +3462,7 @@ function updBSum(){const f=state.bf,el=document.getElementById('bSum');if(!f||!e
   const t=el.parentElement.querySelector('.t');if(t)t.textContent=ok.length+' '+(f.kind==='dep'?'إيداع':'مصروف');}
 async function bSave(btn){
   readBF();const f=state.bf,er=document.getElementById('bErr');er.textContent='';
-  const rows=f.rows.map((r,i)=>Object.assign({i},r)).filter(r=>parseAmt(r.amount)>0||r.cat.trim());
+  const rows=f.rows.map((r,i)=>Object.assign({i},r)).filter(r=>parseAmt(r.amount)>0||String(r.note||'').trim());   // سطر بلا مبلغ (حتى لو ورث البند) لا يُحفظ
   if(!rows.length){er.textContent='اكتب مبلغاً في سطر واحد على الأقل.';return;}
   for(const r of rows){
     if(!(parseAmt(r.amount)>0)){er.textContent='السطر '+(r.i+1)+': اكتب المبلغ.';return;}
@@ -3471,7 +3505,7 @@ V.sale=({k})=>{
     <select id="sf_item">${IT.map(x=>`<option value="${esc(x.id)}"${f.item===x.id?' selected':''}>${esc(x.name)}</option>`).join('')}<option value=""${!it?' selected':''}>صنف آخر…</option></select>
     ${!it?`<input id="sf_name" style="margin-top:8px" placeholder="اسم الصنف (مثل: رطب خلاص – كرتون)" value="${esc(f.name)}">`:''}
     <div class="sprice"><label class="k" for="sf_price">سعر الكرتون (د.إ)</label><input id="sf_price" inputmode="decimal" placeholder="0.00" value="${esc(f.price)}"></div>
-    ${IT.length?'':`<p class="m" style="font-size:12px;color:var(--muted);margin:8px 0 0"><button class="linkbtn" data-go="items">احفظ الأصناف وأسعارها</button> ليُكتب السعر تلقائياً في كل مرة.</p>`}
+    ${IT.length?`<p class="m" style="font-size:12px;color:var(--muted);margin:8px 0 0"><button class="linkbtn" data-go="items">تعديل الأصناف وأسعارها ←</button></p>`:`<p class="m" style="font-size:12px;color:var(--muted);margin:8px 0 0"><button class="linkbtn" data-go="items">احفظ الأصناف وأسعارها</button> ليُكتب السعر تلقائياً في كل مرة.</p>`}
   </div>
   <label class="k">التاريخ</label>${dtPicker('sf_date',f.date,{})}
   <label class="k">حدّد الورثة واكتب عدد الكراتين أمام كل اسم</label>
@@ -3482,8 +3516,33 @@ V.sale=({k})=>{
   <div class="total-line" style="margin-top:14px"><span class="t"><span id="sCnt">${sCnt(f)}</span> ورثة · <span id="sQty">${cnt0(sQty(f))}</span> كرتون</span><span class="v" id="sTot">${money(sTotal(f))}</span></div>
   <p class="note">🌴 يُخصم ثمن ما أخذه كل وارث من نصيبه هو، ويُسجَّل المبلغ دخلاً للمزرعة يتقاسمه جميع الورثة حسب حصصهم. رصيد البنك لا يتغيّر.<br>🔒 الدخل يراه جميع الورثة، أما الخصم فلا يراه إلا صاحبه (والمدير والوكيل).</p>
   <div class="err" id="sErr"></div>
-  <button class="primary" data-act="s-save">حفظ البيع</button>`};
+  <button class="primary" data-act="s-save">حفظ البيع</button>
+  ${saleBatchesHtml(k)}`};
 };
+/* المبيعات المسجّلة، مجمّعة حسب كل عملية حفظ. حذف عملية كاملة يُلغي الدخل والخصم معاً، فيعود نصيب كل وارث كما كان قبلها
+   (مثلاً إذا كان ثمن الرطب قد خُصم من الورثة يدوياً خارج التطبيق) */
+function saleBatches(k){
+  const G={};
+  state.txs.forEach(t=>{if(!isSale(t)||t.acct!==k)return;const b=String(t.id).slice(0,-2);(G[b]=G[b]||{id:b,date:t.date,deps:[],dists:[]})[t.kind==='dep'?'deps':'dists'].push(t);});
+  return Object.values(G).map(g=>Object.assign(g,{ids:g.deps.concat(g.dists).map(t=>t.id),total:r2(g.deps.reduce((a,t)=>a+(+t.amount||0),0)),
+    heirs:g.dists.map(t=>saleHeir(t)).filter(Boolean).map(h=>h.n)})).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.id).localeCompare(String(a.id)));
+}
+function saleBatchesHtml(k){
+  const L=saleBatches(k);if(!L.length)return '';const all=cur().sball,shown=all?L:L.slice(0,5);
+  return `<h3 class="sec">المبيعات المسجّلة</h3>
+  <div class="rows">${shown.map(g=>`<div class="row static sbatch"><span>${esc(dShort(g.date))} · ${g.heirs.length} ${g.heirs.length>2&&g.heirs.length<11?'ورثة':'وارث'}
+    <div class="m">${esc(g.heirs.join('، '))}</div></span><span class="sb-r"><b class="num">${fmt(g.total)}</b><button class="linkbtn danger" data-act="sb-del" data-id="${esc(g.id)}">حذف</button></span></div>`).join('')}</div>
+  ${L.length>5?`<div class="actions" style="margin-top:8px"><button class="ghost" data-act="sb-all">${all?'عرض آخر 5 فقط':'عرض الكل ('+L.length+')'}</button></div>`:''}
+  <p class="m" style="font-size:12px;color:var(--muted);margin:8px 2px 0">حذف عملية بيع يلغي الدخل والخصم معاً، فيعود نصيب كل وارث فيها كما كان قبلها. استعمله إذا سُجّل البيع خطأً أو كان الثمن قد خُصم من الورثة يدوياً.</p>`;
+}
+async function sbDel(id){readSF();
+  const g=saleBatches(state.sf?state.sf.k:'farm').find(x=>x.id===id);if(!g)return;
+  if(g.ids.some(x=>{const t=state.txs.find(y=>y.id===x);return t&&txLocked(t);})){toast('هذه العملية داخل فترة مقفلة ولا يمكن حذفها.');return;}
+  if(!(await ask('حذف عملية بيع الرطب كاملة؟',`بيع ${dShort(g.date)} لـ ${g.heirs.length} ${g.heirs.length>2&&g.heirs.length<11?'ورثة':'وارث'} (${g.heirs.join('، ')}) بمجموع ${fmt(g.total)} د.إ. يُحذف الدخل والخصم معاً، ويعود نصيب كل واحد منهم كما كان قبل هذا البيع. المبيعات الأخرى لا تتأثر.`,'حذف')))return;
+  const done=busy('جاري الحذف…');
+  try{await store.delMany(g.ids);done();toast('حُذفت عملية البيع، وعادت الأنصبة كما كانت');render();}
+  catch(e){done();toast('لم تُحذَف: '+apiErr(e));}
+}
 function updSTot(){const f=state.sf,el=document.getElementById('sTot');if(!f||!el)return;readSF();el.innerHTML=money(sTotal(f));
   HEIRS.forEach(h=>{const c=document.querySelector(`[data-sa="${h.id}"]`);if(c){const v=sAmt(f,h.id);c.textContent=v?fmt(v):'—';}
     const r=document.querySelector(`[data-son="${h.id}"]`);if(r)r.closest('.srow').classList.toggle('on',!!f.on[h.id]);});
@@ -5720,6 +5779,9 @@ document.addEventListener('click',async e=>{
   if(d.act==='pc-all'){cur().pall=!cur().pall;render();return;}
   if(d.mv){const [k,v]=d.mv.split(':');cur()[k]=v;render();scrollTop0();return;}
   if(d.act==='mv-more'){mvMore();return;}
+  if(d.act==='bk-now'){bkNow(b);return;}
+  if(d.act==='sb-del'){sbDel(d.id);return;}
+  if(d.act==='sb-all'){cur().sball=!cur().sball;readSF();render();return;}
   if(d.act==='mv-qx'){const i=document.getElementById('mvQ');if(i){i.value='';i.focus();}mvSearch('');return;}
   if(d.act==='mv-export'){
     const c=cur(),f=c.f||'all',ty=c.t||'all';
@@ -5742,8 +5804,7 @@ document.addEventListener('click',async e=>{
   if(d.feat){featToggle(d.feat,b);return;}
   if(d.bkind&&state.bf){readBF();state.bf.kind=d.bkind;render();return;}
   if(d.brm!==undefined&&state.bf){readBF();state.bf.rows.splice(+d.brm,1);render();return;}
-  if(d.act==='b-add'&&state.bf){readBF();state.bf.rows.push(bRow((state.bf.rows[state.bf.rows.length-1]||{}).date));render();const L=document.querySelectorAll('[data-bf$=":amount"]');if(L.length)L[L.length-1].focus();return;}
-  if(d.act==='b-dup'&&state.bf){readBF();const r=state.bf.rows[state.bf.rows.length-1]||bRow();state.bf.rows.push(Object.assign({},r));render();return;}
+  if(d.act==='b-add'&&state.bf){readBF();const lr=state.bf.rows.slice().reverse().find(r=>r.cat||parseAmt(r.amount)>0)||state.bf.rows[state.bf.rows.length-1]||{};state.bf.rows.push(bRow(lr.date,lr.cat,lr.other));render();const L=document.querySelectorAll('[data-bf$=":amount"]');if(L.length)L[L.length-1].focus();return;}
   if(d.act==='b-save'){bSave(b);return;}
 
   if(d.act==='s-save'){sSave(b);return;}
@@ -5947,6 +6008,7 @@ document.addEventListener('toggle',e=>{
   document.querySelectorAll('details[data-acc][open]').forEach(x=>{if(x!==d)x.open=false;});
 },true);
 document.addEventListener('change',e=>{
+  if(state.bf&&e.target.dataset&&/:catsel$/.test(e.target.dataset.bf||'')){const n=e.target.dataset.bf.split(':')[0];readBF();render();if(e.target.value==='__other'){const x=document.querySelector(`[data-bf="${n}:catx"]`);if(x)x.focus();}return;}
   {const ds=e.target.dataset||{};
     if(e.target.id==='idlFile'&&e.target.files&&e.target.files.length){const fl=[...e.target.files];e.target.value='';idLogin(fl);return;}
     if(ds.eidBulk!=null&&e.target.files&&e.target.files.length){const fl=[...e.target.files];e.target.value='';eidBulk(fl);return;}
