@@ -1258,7 +1258,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='12.1';
+const APP_VER='12.2';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1588,7 +1588,7 @@ function calc(list){
      adj = (حصة الوارث من المصروف لو كان عاماً − الجزء الذي يتحمّله فعلاً) − ما أخذه زيادة أو نقصاً في التوزيعات اللاحقة.
      فنصيب الوارث = الرصيد × حصته + adj، ومجموع الأنصبة يساوي الرصيد دائماً. */
   const L=list||state.txs,t0={};
-  for(const t of L){if((isPriv(t)||(t.kind==='dist'&&isSale(t)))&&r.bal.hasOwnProperty(t.acct)){const d=String(t.date||'');if(!t0[t.acct]||d<t0[t.acct])t0[t.acct]=d;}}
+  for(const t of L){if((isPriv(t)||isAdv(t)||(t.kind==='dist'&&isSale(t)))&&r.bal.hasOwnProperty(t.acct)){const d=String(t.date||'');if(!t0[t.acct]||d<t0[t.acct])t0[t.acct]=d;}}
   for(const t of L){
     const a=+t.amount||0,k=t.acct;
     if(t.hist){if(t.kind==='dist'){r.distHist+=a;HEIRS.forEach(h=>r.received[h.id]+=+(t.alloc&&t.alloc[h.id])||0);}continue;}
@@ -1612,14 +1612,19 @@ function calc(list){
 const isSale=t=>!!t&&/^sl[a-z0-9]+[dr]$/.test(String(t.id||''));
 const salePair=t=>state.txs.find(x=>x.id===String(t.id).slice(0,-1)+(String(t.id).slice(-1)==='d'?'r':'d'));
 const saleHeir=t=>{const r=t&&String(t.id).slice(-1)==='r'?t:salePair(t);const k=r&&Object.keys(r.alloc||{}).find(h=>+r.alloc[h]>0);return k&&H[k]?H[k]:null;};
+/* السلفة: مبلغ صُرف من الحساب على ورثة محددين (مثل علف الإبل)، يُسجَّل استلاماً مقدَّماً عليهم فيُخصم من نصيبهم هم فقط،
+   وعند التوزيع القادم «حسب الحصص» يأخذون أقل بقدرها. تُعرف بأنها توزيع له بند (التوزيع العادي بلا بند) */
+const isAdv=t=>!!t&&t.kind==='dist'&&!t.hist&&!isSale(t)&&!!String(t.from||'').trim();
+const kindName=t=>isAdv(t)?'سلفة':isSale(t)?(t.kind==='dep'?'دخل رطب':'رطب'):KIND[t.kind];
 const isPriv=t=>!!t&&t.kind==='exp'&&!t.hist&&(!!t.priv||!!(t.alloc&&Object.keys(t.alloc).some(h=>+t.alloc[h]>0)));
 const privHeirs=t=>HEIRS.filter(h=>+((t.alloc||{})[h.id])>0);
 /* نصيب الوارث من رصيد حساب = حصته من الرصيد + تسوية المصاريف الخاصة */
 const shareOf=(r,k,id)=>r.bal[k]*W[k][id]+((r.adj&&r.adj[k])?r.adj[k][id]:0);
 const shareAll=(r,id)=>shareOf(r,'bld',id)+shareOf(r,'farm',id);
 const anyPriv=()=>state.txs.some(isPriv);
-function privCharges(id){return state.txs.filter(t=>(isPriv(t)||(t.kind==='dist'&&isSale(t)))&&+((t.alloc||{})[id])>0).sort((a,b)=>byDate(b,a)).map(t=>({t,amt:+t.alloc[id]}));}
-const chargeLabel=t=>isSale(t)?'شراء رطب'+(t.note?' – '+String(t.note).replace(/^رطب من المزرعة:?\s*/,''):''):(t.from||'مصروف');
+function privCharges(id){return state.txs.filter(t=>(isPriv(t)||isAdv(t)||(t.kind==='dist'&&isSale(t)))&&+((t.alloc||{})[id])>0).sort((a,b)=>byDate(b,a)).map(t=>({t,amt:+t.alloc[id]}));}
+const chargeLabel=t=>isAdv(t)?'سلفة: '+(t.from||''):isSale(t)?'شراء رطب'+(t.note?' – '+String(t.note).replace(/^رطب من المزرعة:?\s*/,''):''):(t.from||'مصروف');
+const rcLabel=(t,i,rc)=>isAdv(t)?'سلفة – '+t.from:isSale(t)?'رطب من المزرعة':'الاستلام '+ord(rc?rc.slice(0,i+1).filter(x=>!isAdv(x.t)&&!isSale(x.t)).length-1:i);
 function receipts(id){
   return state.txs.filter(t=>t.kind==='dist'&&t.alloc&&+t.alloc[id]>0).sort(byDate).map(t=>({t,amt:+t.alloc[id]}));
 }
@@ -1810,19 +1815,20 @@ function saleNote(t){
 /* تفاصيل المصروف الخاص: من يتحمّله وكم */
 function privRows(t){
   const L=privHeirs(t),own=ownOnly();
-  return `<div class="card privcard"><h4>🐪 مصروف خاص</h4><p class="m">يُخصم من نصيب ${own?'المحددين':'هؤلاء'} فقط، ولا يتأثر باقي الورثة.</p>
+  const adv=isAdv(t);
+  return `<div class="card privcard"><h4>🐪 ${adv?'سلفة على بعض الورثة':'مصروف خاص'}</h4><p class="m">${adv?'صُرف من الحساب، ويُخصم من نصيب '+(own?'المحددين':'هؤلاء')+' فقط كسلفة، وعند التوزيع القادم يأخذون أقل بقدرها. باقي الورثة لا يتأثرون.':'يُخصم من نصيب '+(own?'المحددين':'هؤلاء')+' فقط، ولا يتأثر باقي الورثة.'}</p>
     ${L.length?`<div class="rows">${L.map(h=>`<div class="row static"><span>${h.n}</span><span class="a">${money(t.alloc[h.id])}</span></div>`).join('')}</div>`
       :'<p class="m" style="margin:6px 0 0">لا يُخصم من نصيبك شيء من هذا المصروف.</p>'}</div>`;
 }
 function txRow(t){
   const k=(ACCTS[t.acct]?ACCTS[t.acct].short:'')+(t.hist&&t.acct!=='old'?' · سابق':'');
   const sign=t.kind==='dep'?'+':'−', cls=t.kind==='dep'?'in':'out';
-  let who=t.kind==='dist'?Object.keys(t.alloc||{}).filter(h=>+t.alloc[h]>0).length+' ورثة':(t.from||'');
+  let who=isAdv(t)?t.from+' · على '+privHeirs(t).length+' ورثة':t.kind==='dist'?Object.keys(t.alloc||{}).filter(h=>+t.alloc[h]>0).length+' ورثة':(t.from||'');
   if(t.kind!=='dist'&&t.prop&&P[t.prop]) who=(who?who+' · ':'')+P[t.prop].name;
   const pv=isPriv(t),sl=isSale(t);
   if(sl&&t.kind==='dist'){const h=saleHeir(t);who=h?h.n:who;}
   const pq=(state.reqs||[]).find(q=>q.status==='pending'&&q.id===t.id&&q.op!=='close');
-  return `<button class="row${NEWS.cache&&NEWS.cache.ids[t.id]?' isnew':''}${pq&&pq.op==='del'?' pdel':''}" data-go="tx" data-id="${esc(t.id)}"><span><span>${KIND[t.kind]}</span><span class="tag">${k}</span>${pv?'<span class="tag privtag">خاص</span>':''}${sl?'<span class="tag privtag">رطب</span>':''}${pq?`<span class="tag ptag">${pq.op==='del'?'طلب حذف':'طلب تعديل'}</span>`:''}${newsTag(t.id)}
+  return `<button class="row${NEWS.cache&&NEWS.cache.ids[t.id]?' isnew':''}${pq&&pq.op==='del'?' pdel':''}" data-go="tx" data-id="${esc(t.id)}"><span><span>${kindName(t)}</span><span class="tag">${k}</span>${pv?'<span class="tag privtag">خاص</span>':''}${sl?'<span class="tag privtag">رطب</span>':''}${pq?`<span class="tag ptag">${pq.op==='del'?'طلب حذف':'طلب تعديل'}</span>`:''}${newsTag(t.id)}
     <div class="m">${rcptOf(t.id)?'<span class="rclip" aria-label="عليها إيصال">'+I.clip+'</span>':''}${esc(who)}${who?' · ':''}${esc(dShort(t.date))}</div></span><span class="a ${cls}">${sign} <span class="num">${fmt(t.amount)}</span></span></button>`;
 }
 /* تحت الرصيد: الرصيد الافتتاحي منفصل، فالأرقام تجمع على الرصيد بالضبط */
@@ -1887,7 +1893,7 @@ function heirExport(id){const d={id};
     const h=H[d.id],r=calc(),rc=receipts(d.id),nb=shareOf(r,'bld',d.id),nf=shareOf(r,'farm',d.id);
     exportPdf({title:'كشف '+h.n,sub:h.full||h.n,cards:[['عدد الاستلامات',String(rc.length)],['مجموع المستلم',fmt(r.received[d.id]),'#B08A44'],['نصيبه من الرصيد الحالي',fmt(nb+nf),'#16244F']],
       sections:[{title:'الاستلامات',cols:[{h:'#',w:22},{h:'التاريخ',w:30},{h:'الحساب',w:22},{h:'المبلغ',w:26,al:'l'}],
-        rows:rc.map((x,i)=>['الاستلام '+ord(i),dShort(x.t.date),ACCTS[x.t.acct].short,fmt(x.amt)]),foot:['المجموع','','',fmt(r.received[d.id])]},
+        rows:rc.map((x,i)=>[rcLabel(x.t,i,rc),dShort(x.t.date),ACCTS[x.t.acct].short,fmt(x.amt)]),foot:['المجموع','','',fmt(r.received[d.id])]},
        {title:'نصيبه من الرصيد الحالي',cols:[{h:'الحساب',w:40},{h:'الحصة',w:25,al:'c'},{h:'المبلغ',w:35,al:'l'}],
         rows:[['البناية',ACCTS.bld.shares[d.id]+'%',fmt(nb)],['المزارع',ACCTS.farm.shares[d.id]+'%',fmt(nf)]],foot:['المجموع','',fmt(nb+nf)]}]
        .concat((()=>{const pc=privCharges(d.id);return pc.length?[{title:'مصاريف خاصة عليه (خُصمت من نصيبه فقط)',cols:[{h:'البند',w:34},{h:'التاريخ',w:26},{h:'الحساب',w:18},{h:'جزؤه',w:22,al:'l'}],
@@ -1994,9 +2000,9 @@ V.heir=({id})=>{
   else fair=`<div class="fair"><span class="dot" style="background:var(--gold)"></span>استلم أكثر من حصته بـ ${money(diff)}</div>`;
   const own=isHeirUser()&&store.user.heir===id;
   const pc=privCharges(id),pTot=r2(pc.reduce((a,x)=>a+x.amt,0));
-  const privBox=pc.length?`<h3 class="sec">${pc.some(x=>isSale(x.t))?'خصومات خاصة':'مصاريف خاصة'} ${own?'عليك':'عليه'}</h3>
+  const privBox=pc.length?`<h3 class="sec">${pc.some(x=>isSale(x.t)||isAdv(x.t))?'سلف وخصومات خاصة':'مصاريف خاصة'} ${own?'عليك':'عليه'}</h3>
     <div class="card privcard"><div class="kv"><span>المجموع</span><b class="num out">${fmt(pTot)}</b></div>
-    <p class="m">${own?'مصاريف أو مشتريات تخصك (مثل علف الإبل أو رطب من المزرعة)، خُصمت من نصيبك وحدك أو مع شركائك فيها، لا من باقي الورثة.':'مصاريف أو مشتريات تخصه (مثل علف الإبل أو رطب من المزرعة)، خُصمت من نصيبه وحده أو مع شركائه فيها، لا من باقي الورثة.'}</p>
+    <p class="m">${own?'سلف أو مشتريات تخصك (مثل علف الإبل أو رطب من المزرعة)، خُصمت من نصيبك وحدك أو مع شركائك فيها، لا من باقي الورثة. عند التوزيع القادم تأخذ أقل بقدرها.':'سلف أو مشتريات تخصه (مثل علف الإبل أو رطب من المزرعة)، خُصمت من نصيبه وحده أو مع شركائه فيها، لا من باقي الورثة. عند التوزيع القادم يأخذ أقل بقدرها.'}</p>
     <div class="rows">${pc.slice(0,cur().pall?999:5).map(x=>`<button class="row" data-go="tx" data-id="${esc(x.t.id)}"><span>${esc(chargeLabel(x.t))}<div class="m">${esc(dShort(x.t.date))} · ${ACCTS[x.t.acct].short} · من أصل <span class="num">${fmt(x.t.amount)}</span></div></span><span class="a num out">${fmt(x.amt)}</span></button>`).join('')}</div>
     ${pc.length>5?`<div class="actions" style="margin-top:8px"><button class="ghost" data-act="pc-all">${cur().pall?'عرض آخر 5 فقط':'عرض الكل ('+pc.length+')'}</button></div>`:''}</div>`:'';
   const shareBanner=`<div class="sharebanner"><div class="sb-l">${own?'نصيبك':'نصيبه'} من الرصيد الحالي</div><div class="sb-big"><span class="num">${fmt(nb+nf)}</span> <small>د.إ</small></div>
@@ -2016,7 +2022,7 @@ V.heir=({id})=>{
   return {title:h.n,html:`
   <div class="total-line"><span class="t">المبالغ المستلمة</span><span class="v">${money(r.received[id])}</span></div>
   ${rc.length?(()=>{const all=cur().all,items=rc.map((x,i)=>({x,i})).reverse(),shown=all?items:items.slice(0,3);
-    return `<div class="rows">${shown.map(({x,i})=>`<button class="row" data-go="tx" data-id="${esc(x.t.id)}"><span>الاستلام ${ord(i)}<div class="m">${esc(dShort(x.t.date))} · ${ACCTS[x.t.acct].short}</div></span><span class="a num">${fmt(x.amt)}</span></button>`).join('')}</div>
+    return `<div class="rows">${shown.map(({x,i})=>`<button class="row" data-go="tx" data-id="${esc(x.t.id)}"><span>${esc(rcLabel(x.t,i,rc))}<div class="m">${esc(dShort(x.t.date))} · ${ACCTS[x.t.acct].short}</div></span><span class="a num">${fmt(x.amt)}</span></button>`).join('')}</div>
     ${items.length>3?`<div class="actions" style="margin-top:8px"><button class="ghost" data-act="rc-all">${all?'عرض آخر 3 فقط':'عرض كل الاستلامات ('+items.length+')'}</button></div>`:''}`})()
     :'<p class="empty">ما استلم أي مبلغ بعد.</p>'}
   ${own?'':`<h3 class="sec">نصيبه من الرصيد الحالي</h3>
@@ -2033,7 +2039,7 @@ V.heir=({id})=>{
 V.rcpts=({id})=>{
   const h=H[id];if(!h)return {title:'الاستلامات',html:''};const r=calc(),rc=receipts(id),own=isHeirUser()&&store.user.heir===id;
   return {title:own?'استلاماتي':'استلامات '+h.n,html:`<div class="total-line"><span class="t">المبالغ المستلمة</span><span class="v">${money(r.received[id])}</span></div>
-  ${rc.length?`<div class="rows">${rc.map((x,i)=>({x,i})).reverse().map(({x,i})=>`<button class="row" data-go="tx" data-id="${esc(x.t.id)}"><span>الاستلام ${ord(i)}<div class="m">${esc(dShort(x.t.date))} · ${ACCTS[x.t.acct].short}${x.t.note?' · '+esc(x.t.note):''}</div></span><span class="a num">${fmt(x.amt)}</span></button>`).join('')}</div>`:'<p class="empty">ما استلم أي مبلغ بعد.</p>'}`};
+  ${rc.length?`<div class="rows">${rc.map((x,i)=>({x,i})).reverse().map(({x,i})=>`<button class="row" data-go="tx" data-id="${esc(x.t.id)}"><span>${esc(rcLabel(x.t,i,rc))}<div class="m">${esc(dShort(x.t.date))} · ${ACCTS[x.t.acct].short}${x.t.note?' · '+esc(x.t.note):''}</div></span><span class="a num">${fmt(x.amt)}</span></button>`).join('')}</div>`:'<p class="empty">ما استلم أي مبلغ بعد.</p>'}`};
 };
 /* حسابي ← مقارنة التوزيعات بالحصة */
 V.cmp=({id})=>{
@@ -2067,7 +2073,7 @@ V.txgone=({id})=>{
   const o=NEWS.base&&NEWS.base.txd&&NEWS.base.txd[id];
   if(!o)return {title:'حركة محذوفة',html:'<p class="empty">تفاصيل هذه الحركة لم تعد محفوظة على هذا الجهاز.</p>'};
   const t=txFromMini(id,o),A=ACCTS[t.acct]||{short:'',name:''};
-  const allocRows=t.kind==='dist'?`<div class="rows" style="margin-bottom:10px">${HEIRS.filter(h=>+(t.alloc||{})[h.id]>0).map(h=>`<div class="row static"><span>${h.n}</span><span class="a">${money(t.alloc[h.id])}</span></div>`).join('')}</div>`
+  const allocRows=isAdv(t)?privRows(t):t.kind==='dist'?`<div class="rows" style="margin-bottom:10px">${HEIRS.filter(h=>+(t.alloc||{})[h.id]>0).map(h=>`<div class="row static"><span>${h.n}</span><span class="a">${money(t.alloc[h.id])}</span></div>`).join('')}</div>`
     :isPriv(t)?privRows(t):'';
   const saleBox=isSale(t)?saleNote(t):'';
   return {title:(KIND[t.kind]||'حركة')+' محذوفة',html:`
@@ -2087,15 +2093,15 @@ V.tx=({id})=>{
   if(!t) return {title:'الحركة',html:'<p class="empty">هذه الحركة محذوفة.</p>'};
   const nk=NEWS.cache&&NEWS.cache.ids[t.id];if(nk)setTimeout(()=>seenTx(t.id),0);
   const A=ACCTS[t.acct];
-  const allocRows=t.kind==='dist'?`<div class="rows" style="margin-bottom:10px">${HEIRS.filter(h=>+(t.alloc||{})[h.id]>0).map(h=>`<div class="row static"><span>${h.n}</span><span class="a">${money(t.alloc[h.id])}</span></div>`).join('')}</div>`
+  const allocRows=isAdv(t)?privRows(t):t.kind==='dist'?`<div class="rows" style="margin-bottom:10px">${HEIRS.filter(h=>+(t.alloc||{})[h.id]>0).map(h=>`<div class="row static"><span>${h.n}</span><span class="a">${money(t.alloc[h.id])}</span></div>`).join('')}</div>`
     :isPriv(t)?privRows(t):'';
   const saleBox=isSale(t)?saleNote(t):'';
   const rcpt=rcptCard(t);
-  return {title:(isSale(t)?(t.kind==='dep'?'دخل بيع رطب':'بيع رطب'):KIND[t.kind])+' – '+A.short,html:`
+  return {title:(isSale(t)?(t.kind==='dep'?'دخل بيع رطب':'بيع رطب'):kindName(t))+' – '+A.short,html:`
   ${nk?`<div class="note newsnote">🔔 هذه الحركة ${nk==='new'?'جديدة':'عُدّلت'} بعد آخر زيارة لك${whoDid(t)?' · أدخلها '+esc(whoDid(t)):''}.</div>`:''}
   ${nk==='edit'?txDiff(t):''}
   <div class="field"><div class="k">المبلغ</div><div class="v num ${t.kind==='dep'?'in':'out'}">${fmt(t.amount)}</div></div>
-  ${t.from?`<div class="field"><div class="k">${t.kind==='dep'?'من':'الجهة'}</div><div class="v">${esc(t.from)}</div></div>`:''}
+  ${t.from?`<div class="field"><div class="k">${t.kind==='dep'?'من':isAdv(t)?'البند':'الجهة'}</div><div class="v">${esc(t.from)}</div></div>`:''}
   ${t.kind!=='dist'&&t.prop&&P[t.prop]?`<div class="field"><div class="k">العقار</div><div class="v">${esc(P[t.prop].name)}</div></div>`:''}
   <div class="field"><div class="k">التاريخ</div><div class="v" style="font-size:17px">${esc(dTime(t.date))}</div></div>
   ${allocRows}${saleBox}
@@ -3306,9 +3312,9 @@ V.login=()=>({title:'وريث',html:`<div class="gate"><div class="gmark">${mark
 
 /* ===== النماذج ===== */
 function newForm(kind,acct,t){
-  if(t){return {edit:t.id,kind:t.kind==='dep'?'dep':'out',out:t.kind==='dep'?'dist':t.kind,acct:t.acct,amount:String(t.amount),date:t.date,from:t.from||'',prop:t.prop||'',note:t.note||'',receipt:t.receipt||null,
+  if(t){const av=isAdv(t);return {edit:t.id,kind:t.kind==='dep'?'dep':'out',out:av?'exp':t.kind==='dep'?'dist':t.kind,acct:t.acct,amount:String(t.amount),date:t.date,from:t.from||'',prop:t.prop||'',note:t.note||'',receipt:t.receipt||null,
     mode:'manual',total:'',per:'',inc:Object.fromEntries(HEIRS.map(h=>[h.id,+(t.alloc||{})[h.id]>0])),alloc:Object.fromEntries(HEIRS.map(h=>[h.id,(t.alloc||{})[h.id]?String(t.alloc[h.id]):''])),
-    priv:isPriv(t),grp:isPriv(t)?((grpList().find(g=>{const a=Object.keys(g.members).sort().join(),b=privHeirs(t).map(h=>h.id).sort().join();return a===b;})||{}).id||''):'',pinc:Object.fromEntries(HEIRS.map(h=>[h.id,isPriv(t)&&+(t.alloc||{})[h.id]>0])),palloc:Object.fromEntries(HEIRS.map(h=>[h.id,isPriv(t)&&(t.alloc||{})[h.id]?String(t.alloc[h.id]):'']))};}
+    priv:isPriv(t)||av,grp:isPriv(t)||av?((grpList().find(g=>{const a=Object.keys(g.members).sort().join(),b=privHeirs(t).map(h=>h.id).sort().join();return a===b;})||{}).id||''):'',pinc:Object.fromEntries(HEIRS.map(h=>[h.id,(isPriv(t)||av)&&+(t.alloc||{})[h.id]>0])),palloc:Object.fromEntries(HEIRS.map(h=>[h.id,(isPriv(t)||av)&&(t.alloc||{})[h.id]?String(t.alloc[h.id]):'']))};}
   return {kind,out:'dist',acct,amount:'',date:nowLocal(),from:'',prop:'',note:'',receipt:null,mode:'share',total:'',per:'',
     inc:Object.fromEntries(HEIRS.map(h=>[h.id,true])),alloc:Object.fromEntries(HEIRS.map(h=>[h.id,''])),
     priv:false,grp:'',pinc:Object.fromEntries(HEIRS.map(h=>[h.id,false])),palloc:Object.fromEntries(HEIRS.map(h=>[h.id,'']))};
@@ -3497,8 +3503,8 @@ function privUI(f){
   if(!feat('priv')&&!f.priv)return '';
   if(store.ver<13&&!f.priv)return `<p class="m" style="font-size:12px;color:var(--muted);margin:10px 0 0">🐪 المصروف الخاص ببعض الورثة يحتاج تحديث كود الخادم (Code) إلى الإصدار 13.</p>`;
   const on=!!f.priv;
-  const sw=`<button class="toggle privtg" role="switch" aria-checked="${on}" data-act="priv-toggle"><span>مصروف خاص ببعض الورثة
-    <small>يُخصم من نصيب المحددين فقط، ولا يتأثر باقي الورثة.</small></span><span class="sw"></span></button>`;
+  const sw=`<button class="toggle privtg" role="switch" aria-checked="${on}" data-act="priv-toggle"><span>سلفة على بعض الورثة
+    <small>مثل علف الإبل: يُدفع من الحساب، ويُخصم من نصيب المحددين فقط كسلفة، وعند التوزيع القادم يأخذون أقل بقدرها. باقي الورثة لا يتأثرون.</small></span><span class="sw"></span></button>`;
   if(!on)return sw;
   const G=grpList(),g=G.find(x=>x.id===f.grp),A=parseAmt(f.amount),S=privSum(f);
   return sw+`<div class="privbox">
@@ -3507,7 +3513,7 @@ function privUI(f){
     <p class="m" style="font-size:13px;color:var(--muted);margin:0 0 6px">${g?'يُقسَّم المبلغ حسب العدد المسجّل لكل واحد في «'+esc(g.name)+'»، ويمكنك تعديل أي مبلغ.':'يُقسَّم المبلغ بالتساوي على المحددين، ويمكنك تعديل أي مبلغ.'}</p>
     <div class="card" style="padding:4px 14px">${HEIRS.map(h=>{const c=g&&g.members[h.id];return `<div class="alloc"><input type="checkbox" data-pinc="${h.id}" aria-label="${h.n}"${f.pinc[h.id]?' checked':''}>
       <span class="nm">${h.n}${c?`<small>العدد: <span class="num">${cnt0(c)}</span></small>`:''}</span><input class="amt" data-pal="${h.id}" inputmode="decimal" value="${esc(f.palloc[h.id])}" placeholder="0"${f.pinc[h.id]?'':' disabled'}></div>`;}).join('')}</div>
-    <div class="total-line" style="margin-top:10px"><span class="t">مجموع ما يتحمّله المحددون</span><span class="v" id="privSum" style="font-size:20px">${money(S)}</span></div>
+    <div class="total-line" style="margin-top:10px"><span class="t">مجموع السلفة على المحددين</span><span class="v" id="privSum" style="font-size:20px">${money(S)}</span></div>
     <div id="privWarn" class="note warn"${A>0&&Math.abs(S-A)>=0.01?'':' hidden'}>المجموع لا يساوي مبلغ المصروف (${money(A)}).</div></div>`;
 }
 const cnt0=v=>String(+v===Math.round(+v)?Math.round(+v):r2(+v));
@@ -3593,10 +3599,10 @@ async function save(btn){
     if(t.kind==='exp'&&f.priv&&store.ver<13){err.textContent='المصروف الخاص يحتاج تحديث كود الخادم (Code) إلى الإصدار 13.';return;}
     if(t.kind==='exp'&&f.priv){
       const al={};HEIRS.forEach(h=>{const v=parseAmt(f.palloc[h.id]);if(f.pinc[h.id]&&v>0)al[h.id]=r2(v);});
-      if(!Object.keys(al).length){err.textContent='حدّد الورثة الذين يتحمّلون هذا المصروف، أو أوقف خيار «مصروف خاص».';return;}
+      if(!Object.keys(al).length){err.textContent='حدّد الورثة الذين تُسجَّل عليهم السلفة، أو أوقف خيار «سلفة على بعض الورثة».';return;}
       const S=r2(Object.values(al).reduce((x,y)=>x+y,0));
-      if(Math.abs(S-t.amount)>=0.01){err.textContent='مجموع ما يتحمّله المحددون ('+fmt(S)+') لا يساوي مبلغ المصروف ('+fmt(t.amount)+').';return;}
-      t.alloc=al;t.priv=true;
+      if(Math.abs(S-t.amount)>=0.01){err.textContent='مجموع السلفة على المحددين ('+fmt(S)+') لا يساوي المبلغ ('+fmt(t.amount)+').';return;}
+      t.alloc=al;t.kind='dist';   // سلفة: استلام مقدَّم على المحددين (يُخصم من نصيبهم، ويُسوّى في التوزيع القادم)
     }
   }
   if(old&&old.hist)t.hist=true;
@@ -5955,6 +5961,7 @@ function txLines(t){
   if(t.kind==='dep'){L.push('📥 إيداع في '+A.name,'المبلغ: '+fmt(t.amount)+' د.إ');if(t.from)L.push('من: '+t.from);}
   else if(t.kind==='exp'){L.push('📤 مصروف من '+A.name,'البند: '+(t.from||'—'),'المبلغ: '+fmt(t.amount)+' د.إ');
     if(isPriv(t)){L.push('مصروف خاص، يُخصم من نصيب:');privHeirs(t).forEach(h=>L.push('• '+h.n+': '+fmt(t.alloc[h.id])));}}
+  else if(isAdv(t)){L.push('🐪 سلفة من '+A.name+' على بعض الورثة','البند: '+t.from,'المبلغ: '+fmt(t.amount)+' د.إ','تُخصم من نصيب:');privHeirs(t).forEach(h=>L.push('• '+h.n+': '+fmt(t.alloc[h.id])));}
   else if(t.kind==='dist'){L.push(t.hist?'💰 توزيع سابق على الورثة':'💰 توزيع على الورثة من '+A.name,'الإجمالي: '+fmt(t.amount)+' د.إ');
     HEIRS.forEach(h=>{const v=+((t.alloc||{})[h.id])||0;if(v>0)L.push('• '+h.n+': '+fmt(v));});}
   L.push('التاريخ: '+dTime(t.date));if(t.note)L.push('ملحوظة: '+t.note);
@@ -6071,10 +6078,11 @@ function waOn(){const w=notif.cfg&&notif.cfg.wa;return !!(w&&w.ready&&w.auto&&w.
 /* بيانات الرسالة التلقائية (القالب المعتمد عند ميتا) */
 function waPayload(action,t,list){
   const A=ACCTS[t.acct]||{name:''},r=calc(list);
-  const base=t.kind==='dep'?['إيداع','في '+A.name]:t.kind==='exp'?['مصروف','من '+A.name]:t.hist?['توزيع سابق على الورثة','']:['توزيع على الورثة','من '+A.name];
+  const base=isAdv(t)?['سلفة على بعض الورثة','من '+A.name]:t.kind==='dep'?['إيداع','في '+A.name]:t.kind==='exp'?['مصروف','من '+A.name]:t.hist?['توزيع سابق على الورثة','']:['توزيع على الورثة','من '+A.name];
   const what=(action==='edit'?'تعديل ':action==='del'?'حذف ':'')+base[0]+(action==='new'&&!t.hist?' جديد':'')+(base[1]?' '+base[1]:'');
   let detail=t.kind==='dep'?(t.from?'من: '+t.from:''):t.kind==='exp'?'البند: '+(t.from||'—')+(isPriv(t)?' (خاص بـ: '+privHeirs(t).map(h=>h.n).join('، ')+')':''):'';
-  const alloc={};if(t.kind==='dist'){let n=0;HEIRS.forEach(h=>{const v=+((t.alloc||{})[h.id])||0;if(v>0){alloc[h.id]=fmt(v);n++;}});detail='على '+n+' ورثة';}
+  if(isAdv(t))detail='البند: '+t.from+' (تُخصم من نصيب: '+privHeirs(t).map(h=>h.n).join('، ')+')';
+  const alloc={};if(t.kind==='dist'&&!isAdv(t)){let n=0;HEIRS.forEach(h=>{const v=+((t.alloc||{})[h.id])||0;if(v>0){alloc[h.id]=fmt(v);n++;}});detail='على '+n+' ورثة';}
   if(t.note)detail=(detail?detail+' — ':'')+t.note;
   return {wa:{what,amount:fmt(t.amount),detail:(detail||'—').slice(0,200),date:dTime(t.date),bld:fmt(r.bal.bld),farm:fmt(r.bal.farm),alloc}};
 }
