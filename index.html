@@ -341,6 +341,7 @@ nav.tabs[hidden]{display:none}
 .actions .ghost{flex:1}
 .sbatch .sb-r{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.sbatch .m{white-space:normal}
 .linkbtn.danger{color:var(--neg)}
+.row .a.mute{color:var(--muted)!important;opacity:.75}
 .actions a.btnlink{display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink)}
 
 .fair{display:flex;align-items:center;gap:10px;font-size:14px}
@@ -1279,7 +1280,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='12.6';
+const APP_VER='12.7';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1619,11 +1620,11 @@ function calc(list){
      adj = (حصة الوارث من المصروف لو كان عاماً − الجزء الذي يتحمّله فعلاً) − ما أخذه زيادة أو نقصاً في التوزيعات اللاحقة.
      فنصيب الوارث = الرصيد × حصته + adj، ومجموع الأنصبة يساوي الرصيد دائماً. */
   const L=list||state.txs,t0={};
-  for(const t of L){if((isPriv(t)||isAdv(t)||(t.kind==='dist'&&isSale(t)))&&r.bal.hasOwnProperty(t.acct)){const d=String(t.date||'');if(!t0[t.acct]||d<t0[t.acct])t0[t.acct]=d;}}
+  for(const t of L){if((isPriv(t)||isAdv(t)||(t.kind==='dist'&&isSale(t)&&!saleManual(t)))&&r.bal.hasOwnProperty(t.acct)){const d=String(t.date||'');if(!t0[t.acct]||d<t0[t.acct])t0[t.acct]=d;}}
   for(const t of L){
     const a=+t.amount||0,k=t.acct;
     if(t.hist){if(t.kind==='dist'){r.distHist+=a;HEIRS.forEach(h=>r.received[h.id]+=+(t.alloc&&t.alloc[h.id])||0);}continue;}
-    if(!r.bal.hasOwnProperty(k))continue;
+    if(!r.bal.hasOwnProperty(k)||saleManual(t))continue;
     r.last=Math.max(r.last,t.updatedAt||t.createdAt||0);
     if(t.kind==='dep'){r.bal[k]+=a;r.dep[k]+=a;}
     else if(t.kind==='exp'){r.bal[k]-=a;r.out[k]+=a;r.exp[k]+=a;
@@ -1641,6 +1642,11 @@ function calc(list){
 /* المصروف الخاص: مصروف يتحمّله ورثة محددون فقط (alloc = جزء كل واحد منهم) */
 /* بيع رطب لوارث: حركتان بنفس الرقم: إيداع (دخل يتقاسمه الجميع) + توزيع عيني للوارث بنفس المبلغ. لا تدخلان البنك */
 const isSale=t=>!!t&&/^sl[a-z0-9]+[dr]$/.test(String(t.id||''));
+/* بيع رطب 28 أكتوبر 2026 (المسجّل قبل هذا التحديث): ثمنه حُصّل من الورثة يدوياً خارج التطبيق،
+   فيبقى في السجل للعلم فقط، ولا يدخل في الرصيد ولا في الأنصبة ولا في المجاميع. ما بعده يُخصم عن طريق التطبيق */
+const SALE_MANUAL_DAY='2026-10-28',SALE_MANUAL_BEFORE=Date.parse('2026-10-28T19:40:00Z');
+const saleMade=t=>parseInt(String(t&&t.id||'').slice(2,10),36)||0;
+const saleManual=t=>isSale(t)&&String(t.date||'').slice(0,10)<=SALE_MANUAL_DAY&&saleMade(t)<SALE_MANUAL_BEFORE;
 const salePair=t=>state.txs.find(x=>x.id===String(t.id).slice(0,-1)+(String(t.id).slice(-1)==='d'?'r':'d'));
 const saleHeir=t=>{const r=t&&String(t.id).slice(-1)==='r'?t:salePair(t);const k=r&&Object.keys(r.alloc||{}).find(h=>+r.alloc[h]>0);return k&&H[k]?H[k]:null;};
 /* السلفة: مبلغ صُرف من الحساب على ورثة محددين (مثل علف الإبل)، يُسجَّل استلاماً مقدَّماً عليهم فيُخصم من نصيبهم هم فقط،
@@ -1653,7 +1659,7 @@ const privHeirs=t=>HEIRS.filter(h=>+((t.alloc||{})[h.id])>0);
 const shareOf=(r,k,id)=>r.bal[k]*W[k][id]+((r.adj&&r.adj[k])?r.adj[k][id]:0);
 const shareAll=(r,id)=>shareOf(r,'bld',id)+shareOf(r,'farm',id);
 const anyPriv=()=>state.txs.some(isPriv);
-function privCharges(id){return state.txs.filter(t=>(isPriv(t)||isAdv(t)||(t.kind==='dist'&&isSale(t)))&&+((t.alloc||{})[id])>0).sort((a,b)=>byDate(b,a)).map(t=>({t,amt:+t.alloc[id]}));}
+function privCharges(id){return state.txs.filter(t=>(isPriv(t)||isAdv(t)||(t.kind==='dist'&&isSale(t)&&!saleManual(t)))&&+((t.alloc||{})[id])>0).sort((a,b)=>byDate(b,a)).map(t=>({t,amt:+t.alloc[id]}));}
 const chargeLabel=t=>isAdv(t)?'سلفة: '+(t.from||''):isSale(t)?'شراء رطب'+(t.note?' – '+String(t.note).replace(/^رطب من المزرعة:?\s*/,''):''):(t.from||'مصروف');
 const rcLabel=(t,i,rc)=>isAdv(t)?'سلفة – '+t.from:isSale(t)?'رطب من المزرعة':'الاستلام '+ord(rc?rc.slice(0,i+1).filter(x=>!isAdv(x.t)&&!isSale(x.t)).length-1:i);
 /* الاستلامات: المبالغ النقدية فقط. ثمن الرطب والسلف ليست استلاماً، بل خصم من النصيب (privCharges) */
@@ -1749,17 +1755,17 @@ V.moves=(p)=>{
   const f=p.f||'all',ty=p.t||'all';
   const all=state.txs.filter(t=>(f==='all'||t.acct===f)&&(ty==='all'||(ty==='dep'?t.kind==='dep':t.kind!=='dep')))
     .sort((a,b)=>byDate(b,a));
-  const list=all.filter(t=>!t.hid),nHid=all.length-list.length;
+  const list=all.filter(t=>!t.hid),nHid=all.filter(t=>t.hid&&!saleManual(t)).length;
   const sm=moveSums(all),tin=sm.tin,tout=sm.tout,mav=monthlyAvg(list);
   const since=k=>{const ds=list.filter(t=>!t.hist&&(k==='in'?t.kind==='dep':t.kind!=='dep')).map(t=>(t.date||'').slice(0,10)).filter(Boolean).sort();return ds.length?`<small class="since">من ${esc(dShort(ds[0]))}</small>`:'';};
   const seg=(key,opts,cur)=>`<div class="seg seg3">${opts.map(([k,l])=>`<button data-mv="${key}:${k}" aria-pressed="${k===cur}">${l}</button>`).join('')}</div>`;
   const lock=!!p.lock&&!!ACCTS[f]&&f!=='all';   // جاي من صفحة الحساب: حركات هذا الحساب بس
   const Y=String(new Date().getFullYear());let yIn=0,yOut=0;
-  state.txs.forEach(t=>{if(t.hist||(f!=='all'&&t.acct!==f)||!(t.date||'').startsWith(Y)||t.from==='رصيد افتتاحي')return;const a=+t.amount||0;if(t.kind==='dep')yIn+=a;else yOut+=a;});
+  state.txs.forEach(t=>{if(t.hist||saleManual(t)||(f!=='all'&&t.acct!==f)||!(t.date||'').startsWith(Y)||t.from==='رصيد افتتاحي')return;const a=+t.amount||0;if(t.kind==='dep')yIn+=a;else yOut+=a;});
   const yrow=`<div class="yrow"><span class="yl">من بداية ${Y}</span><div><span>الداخل</span><b class="num in">${fmt(yIn)}</b></div><div><span>الخارج</span><b class="num out">${fmt(yOut)}</b></div></div>`;
   // من بداية 2023 لين اليوم: كل الحركات (السابقة والحالية) بدون الرصيد الافتتاحي
   const Y0='2023',tdy=todayStr();let aIn=0,aOut=0;
-  state.txs.forEach(t=>{if((f!=='all'&&t.acct!==f)||t.from==='رصيد افتتاحي')return;const d=(t.date||'').slice(0,10);if(!d||d<Y0+'-01-01'||d>tdy)return;const a=+t.amount||0;if(t.kind==='dep')aIn+=a;else aOut+=a;});
+  state.txs.forEach(t=>{if(saleManual(t)||(f!=='all'&&t.acct!==f)||t.from==='رصيد افتتاحي')return;const d=(t.date||'').slice(0,10);if(!d||d<Y0+'-01-01'||d>tdy)return;const a=+t.amount||0;if(t.kind==='dep')aIn+=a;else aOut+=a;});
   const arow=`<div class="yrow"><span class="yl">من بداية ${Y0}</span><div><span>الداخل</span><b class="num in">${fmt(aIn)}</b></div><div><span>الخارج</span><b class="num out">${fmt(aOut)}</b></div></div>`;
   return {title:lock?'سجل حركات '+ACCTS[f].short:'سجل الحركات',html:`
   <div class="stick${p.q?' qon':''}" id="mvStick"><div class="qbar">${I.search}<input id="mvQ" type="search" enterkeyhint="search" autocomplete="off" placeholder="ابحث: اسم، بند، مبلغ، تاريخ" value="${esc(p.q||'')}" aria-label="بحث في الحركات"><button class="sbx" id="mvQx" data-act="mv-qx" aria-label="مسح البحث"${p.q?'':' hidden'}>✕</button></div>
@@ -1773,7 +1779,7 @@ V.moves=(p)=>{
   ${all.length?`<div class="actions"><button class="ghost" data-act="mv-export">تصدير القائمة PDF</button></div>`:''}`};
 };
 /* مجاميع الداخل والخارج: الحركات اللي تأثر على الرصيد بس (السابقة داخلة في الرصيد الافتتاحي) */
-function moveSums(list){let tin=0,tout=0,nh=0;list.forEach(t=>{if(t.hist){nh++;return;}if(t.kind==='dep')tin+=+t.amount||0;else tout+=+t.amount||0;});return {tin:r2(tin),tout:r2(tout),nh};}
+function moveSums(list){let tin=0,tout=0,nh=0;list.forEach(t=>{if(t.hist){nh++;return;}if(saleManual(t))return;if(t.kind==='dep')tin+=+t.amount||0;else tout+=+t.amount||0;});return {tin:r2(tin),tout:r2(tout),nh};}
 const moveList=(f,ty,q)=>state.txs.filter(t=>!t.hid&&(f==='all'||t.acct===f)&&(ty==='all'||(ty==='dep'?t.kind==='dep':t.kind!=='dep'))&&qMatch(t,q));
 /* البحث في السجل: الاسم، البند، الملحوظة، المبلغ، التاريخ. يتجاهل الهمزات والتشكيل والفواصل، ويقبل الأرقام العربية */
 const qN=s=>String(s==null?'':s).replace(/[ً-ْـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي')
@@ -1860,6 +1866,8 @@ function splitBar(r){
 }
 function saleNote(t){
   const h=saleHeir(t),pr=salePair(t),nm=h?h.n:'الوارث';
+  if(saleManual(t))return `<div class="card privcard"><h4>🌴 بيع رطب${h?' لـ '+esc(nm):''} – حُصّل يدوياً</h4>
+    <p class="m">ثمن هذا البيع حُصّل من ${h?esc(nm):'المشتري'} يدوياً خارج التطبيق، فالحركة هنا للعلم فقط: لا تدخل في الرصيد ولا في نصيب أي وارث ولا في المجاميع.</p></div>`;
   if(!h)return `<div class="card privcard"><h4>🌴 دخل بيع رطب</h4>
     <p class="m">دخل للمزرعة يتقاسمه جميع الورثة حسب حصصهم. ثمنه خُصم من نصيب المشتري، والخصم لا يظهر إلا له وللمدير.</p></div>`;
   return `<div class="card privcard"><h4>🌴 بيع رطب لـ ${esc(nm)}</h4>
@@ -1882,8 +1890,8 @@ function txRow(t){
   const pv=isPriv(t),sl=isSale(t);
   if(sl&&t.kind==='dist'){const h=saleHeir(t);who=h?h.n:who;}
   const pq=(state.reqs||[]).find(q=>q.status==='pending'&&q.id===t.id&&q.op!=='close');
-  return `<button class="row${NEWS.cache&&NEWS.cache.ids[t.id]?' isnew':''}${pq&&pq.op==='del'?' pdel':''}" data-go="tx" data-id="${esc(t.id)}"><span><span>${kindName(t)}</span><span class="tag">${k}</span>${pv?'<span class="tag privtag">خاص</span>':''}${sl?'<span class="tag privtag">رطب</span>':''}${pq?`<span class="tag ptag">${pq.op==='del'?'طلب حذف':'طلب تعديل'}</span>`:''}${newsTag(t.id)}
-    <div class="m">${rcptOf(t.id)?'<span class="rclip" aria-label="عليها إيصال">'+I.clip+'</span>':''}${esc(who)}${who?' · ':''}${esc(dShort(t.date))}</div></span><span class="a ${cls}">${sign} <span class="num">${fmt(t.amount)}</span></span></button>`;
+  return `<button class="row${NEWS.cache&&NEWS.cache.ids[t.id]?' isnew':''}${pq&&pq.op==='del'?' pdel':''}" data-go="tx" data-id="${esc(t.id)}"><span><span>${kindName(t)}</span><span class="tag">${k}</span>${pv?'<span class="tag privtag">خاص</span>':''}${sl?'<span class="tag privtag">رطب</span>':''}${saleManual(t)?'<span class="tag">حُصّل يدوياً</span>':''}${pq?`<span class="tag ptag">${pq.op==='del'?'طلب حذف':'طلب تعديل'}</span>`:''}${newsTag(t.id)}
+    <div class="m">${rcptOf(t.id)?'<span class="rclip" aria-label="عليها إيصال">'+I.clip+'</span>':''}${esc(who)}${who?' · ':''}${esc(dShort(t.date))}</div></span><span class="a ${saleManual(t)?'mute':cls}">${sign} <span class="num">${fmt(t.amount)}</span></span></button>`;
 }
 /* تحت الرصيد: الرصيد الافتتاحي منفصل، فالأرقام تجمع على الرصيد بالضبط */
 function walletSub(k,r){
@@ -2947,7 +2955,7 @@ function monthData(acct,year){
   const m=Array.from({length:12},()=>({dep:0,exp:0,dist:0,n:0}));
   const heirs=Object.fromEntries(HEIRS.map(h=>[h.id,0]));
   state.txs.forEach(t=>{
-    if(t.from==='رصيد افتتاحي')return; // الرصيد الافتتاحي مو إيداع فعلي
+    if(t.from==='رصيد افتتاحي'||saleManual(t))return; // الرصيد الافتتاحي مو إيداع فعلي
     if(!inAcct(t,acct))return;   // التوزيعات السابقة تحسب على البناية
     if(!(t.date||'').startsWith(year))return;
     const i=+(t.date.slice(5,7))-1;if(!(i>=0&&i<12))return;
@@ -3531,7 +3539,7 @@ function saleBatchesHtml(k){
   const L=saleBatches(k);if(!L.length)return '';const all=cur().sball,shown=all?L:L.slice(0,5);
   return `<h3 class="sec">المبيعات المسجّلة</h3>
   <div class="rows">${shown.map(g=>`<div class="row static sbatch"><span>${esc(dShort(g.date))} · ${g.heirs.length} ${g.heirs.length>2&&g.heirs.length<11?'ورثة':'وارث'}
-    <div class="m">${esc(g.heirs.join('، '))}</div></span><span class="sb-r"><b class="num">${fmt(g.total)}</b><button class="linkbtn danger" data-act="sb-del" data-id="${esc(g.id)}">حذف</button></span></div>`).join('')}</div>
+    <div class="m">${esc(g.heirs.join('، '))}</div></span><span class="sb-r"><b class="num">${fmt(g.total)}</b>${g.deps.concat(g.dists).some(saleManual)?'<small class="tag">حُصّل يدوياً</small>':''}<button class="linkbtn danger" data-act="sb-del" data-id="${esc(g.id)}">حذف</button></span></div>`).join('')}</div>
   ${L.length>5?`<div class="actions" style="margin-top:8px"><button class="ghost" data-act="sb-all">${all?'عرض آخر 5 فقط':'عرض الكل ('+L.length+')'}</button></div>`:''}
   <p class="m" style="font-size:12px;color:var(--muted);margin:8px 2px 0">حذف عملية بيع يلغي الدخل والخصم معاً، فيعود نصيب كل وارث فيها كما كان قبلها. استعمله إذا سُجّل البيع خطأً أو كان الثمن قد خُصم من الورثة يدوياً.</p>`;
 }
@@ -3724,8 +3732,8 @@ const txLocked=t=>!!(t&&isLocked(t.date));
 const todayStr=()=>nowLocal().slice(0,10);
 const dayDiff=(a,b)=>Math.round((new Date(String(a).slice(0,10)+'T00:00')-new Date(String(b).slice(0,10)+'T00:00'))/864e5);
 /* رصيد حساب لين تاريخ (شامل) أو قبله (strict) — الحركات السابقة ما تنحسب لأنها داخلة في الرصيد الافتتاحي */
-function balAt(acct,d,strict){let b=0;state.txs.forEach(t=>{if(t.hist||t.acct!==acct)return;const x=(t.date||'').slice(0,10);if(strict?x>=d:x>d)return;const a=+t.amount||0;b+=t.kind==='dep'?a:-a;});return r2(b);}
-function periodSums(acct,from,to){const s={dep:0,exp:0,dist:0,open:0,n:0};state.txs.forEach(t=>{if(t.hist||t.acct!==acct)return;const x=(t.date||'').slice(0,10);if(x<from||x>to)return;const a=+t.amount||0;s.n++;
+function balAt(acct,d,strict){let b=0;state.txs.forEach(t=>{if(t.hist||saleManual(t)||t.acct!==acct)return;const x=(t.date||'').slice(0,10);if(strict?x>=d:x>d)return;const a=+t.amount||0;b+=t.kind==='dep'?a:-a;});return r2(b);}
+function periodSums(acct,from,to){const s={dep:0,exp:0,dist:0,open:0,n:0};state.txs.forEach(t=>{if(t.hist||saleManual(t)||t.acct!==acct)return;const x=(t.date||'').slice(0,10);if(x<from||x>to)return;const a=+t.amount||0;s.n++;
   if(t.kind==='dep'){if(t.from==='رصيد افتتاحي')s.open+=a;else s.dep+=a;}else if(t.kind==='exp')s.exp+=a;else if(t.kind==='dist')s.dist+=a;});return s;}
 /* السنوات قبل بداية وريث (الرصيد الافتتاحي المنقول من Glide): نحسب الرصيد من الحركات السابقة المسجلة */
 function liveStart(){let d='';state.txs.forEach(t=>{if(!t.hist&&t.kind==='dep'&&t.from==='رصيد افتتاحي'){const x=(t.date||'').slice(0,10);if(x&&(!d||x<d))d=x;}});return d;}
@@ -3742,7 +3750,7 @@ function yearSummary(acct,year,to){
 }
 /* المعدّل الشهري (بدون الرصيد الافتتاحي والحركات السابقة) */
 function monthlyAvg(list){
-  const xs=list.filter(t=>!t.hist&&t.from!=='رصيد افتتاحي');if(!xs.length)return null;
+  const xs=list.filter(t=>!t.hist&&!saleManual(t)&&t.from!=='رصيد افتتاحي');if(!xs.length)return null;
   const ds=xs.map(t=>(t.date||'').slice(0,7)).filter(Boolean).sort();const a=ds[0],b=ds[ds.length-1];
   const n=Math.max(1,(+b.slice(0,4)-+a.slice(0,4))*12+(+b.slice(5,7)-+a.slice(5,7))+1);
   let tin=0,tout=0;xs.forEach(t=>{if(t.kind==='dep')tin+=+t.amount||0;else tout+=+t.amount||0;});
@@ -3921,7 +3929,7 @@ function buildClosing(){
   ['bld','farm'].forEach(k=>{const s=yearSummary(k,f.year,f.date);const bv=parseAmt(f.bank[k]);const has=String(f.bank[k]||'').trim()!==''&&isFinite(bv);
     accts[k]=Object.assign(s,{bank:has?r2(bv):'',diff:has?r2(s.close-bv):'',stmt:cdraft.bank[k]||null});});
   const heirs={};HEIRS.forEach(h=>heirs[h.id]=0);
-  state.txs.forEach(t=>{const x=(t.date||'').slice(0,10);if(t.kind==='dist'&&!t.hist&&x>=f.year+'-01-01'&&x<=f.date)HEIRS.forEach(h=>heirs[h.id]+=+((t.alloc||{})[h.id])||0);});
+  state.txs.forEach(t=>{const x=(t.date||'').slice(0,10);if(t.kind==='dist'&&!t.hist&&!saleManual(t)&&x>=f.year+'-01-01'&&x<=f.date)HEIRS.forEach(h=>heirs[h.id]+=+((t.alloc||{})[h.id])||0);});
   const pend=state.reqs.filter(r=>r.status==='pending'&&r.op!=='close').length;
   return {id:'c'+Date.now().toString(36),year:f.year,date:f.date,trial:!!f.trial,accts,heirs,total:r2(accts.bld.close+accts.farm.close),note:(f.note||'').trim().slice(0,500),at:Date.now(),pending:pend};
 }
