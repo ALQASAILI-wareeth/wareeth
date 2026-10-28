@@ -562,6 +562,10 @@ nav.tabs button.hasnew::after{content:"";position:absolute;top:8px;left:calc(50%
 .iconbtn.sm{width:30px;height:30px;font-size:14px}
 :root[data-bright="1"][data-theme="navy"]{--bg:#1B2E66;--bg2:#14265C;--glow:rgba(235,207,143,.12)}
 :root[data-bright="1"] #app,:root[data-bright="1"] header.bar,:root[data-bright="1"] nav.tabs{filter:brightness(1.17) saturate(1.12) contrast(1.03)}
+:root[data-bright="2"][data-theme="navy"]{--bg:#25408C;--bg2:#1C3478;--glow:rgba(245,220,160,.18)}
+:root[data-bright="2"] #app,:root[data-bright="2"] header.bar,:root[data-bright="2"] nav.tabs{filter:brightness(1.36) saturate(1.22) contrast(1.05)}
+.brightset{display:flex;flex-direction:column;gap:8px;padding:4px 0 12px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.brightset>span{font-weight:600}.brightset small{display:block;font-weight:400;font-size:13px;color:var(--muted)}
 .sbuyer{padding:10px 14px 12px;margin:12px 0 10px}
 .sline{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
 .sline-h{display:flex;gap:8px;align-items:center}.sline-h select{flex:1}
@@ -1254,7 +1258,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='12.0';
+const APP_VER='12.1';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1565,9 +1569,9 @@ const getMe=()=>{try{return localStorage.getItem(ME)}catch(e){return null}};
 const setMe=v=>{try{v?localStorage.setItem(ME,v):localStorage.removeItem(ME)}catch(e){}};
 const isForm=()=>['form','propform','userform','docform','certform','certcfg','pdocform','eidbulk','grpform','batch','sale','items'].includes(cur().v);
 const PREF='wareeth-prefs';
-const prefs=Object.assign({fs:1,ns:1,swipe:true,haptic:true,lock:false,notify:true,theme:'auto',bright:true},(()=>{try{return JSON.parse(localStorage.getItem(PREF)||'{}')}catch(e){return {}}})());
+const prefs=Object.assign({fs:1,ns:1,swipe:true,haptic:true,lock:false,notify:true,theme:'auto',bright:2},(()=>{try{return JSON.parse(localStorage.getItem(PREF)||'{}')}catch(e){return {}}})());
 prefs.fs=1;prefs.ns=1; // التكبير انشال من الإعدادات: الحجم ثابت ومريح
-function applyPrefs(){const de=document.documentElement;de.dataset.theme='navy';de.dataset.bright=prefs.bright?'1':'0'; // خلفية كحلي ناصع دائماً (البنر والشريط السفلي بخامتهم الغامقة)
+function applyPrefs(){const de=document.documentElement;de.dataset.theme='navy';if(prefs.bright===true)prefs.bright=2;if(prefs.bright===false)prefs.bright=0;de.dataset.bright=String(+prefs.bright||0); // خلفية كحلي ناصع دائماً (البنر والشريط السفلي بخامتهم الغامقة)
   const a=document.getElementById('app');if(a)a.style.zoom=prefs.fs;document.documentElement.style.setProperty('--ns',prefs.ns);document.documentElement.style.setProperty('--fs',prefs.fs);}
 function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify(prefs))}catch(e){}applyPrefs();}
 const adminView=()=>store.canWrite;
@@ -1593,6 +1597,9 @@ function calc(list){
     if(t.kind==='dep'){r.bal[k]+=a;r.dep[k]+=a;}
     else if(t.kind==='exp'){r.bal[k]-=a;r.out[k]+=a;r.exp[k]+=a;
       if(isPriv(t)){r.priv[k]+=a;HEIRS.forEach(h=>{const x=+(t.alloc[h.id])||0,d=a*W[k][h.id]-x;r.adj[k][h.id]+=d;r.entitled[h.id]+=d;});}}
+    else if(t.kind==='dist'&&t.hid&&!ownOnly()){r.bal[k]-=a;r.out[k]+=a;r.dist[k]+=a;   // خصم رطب لغيرك: يُحسب في الرصيد، وأنصبة الباقين تُعرض كأن البيع لم يحدث
+      const me=isHeirUser()&&store.user&&H[store.user.heir]?store.user.heir:'';   // وارث يرى كل الحسابات: نصيبه هو صحيح (له حصته من الدخل)، والفرق يُوزَّع على الباقين بلا تحديد المشتري
+      if(me){const wm=W[k][me],d=a*wm;r.adj[k][me]+=d;if(wm<1)HEIRS.forEach(h=>{if(h.id!==me)r.adj[k][h.id]-=d*W[k][h.id]/(1-wm);});}}
     else if(t.kind==='dist'){r.bal[k]-=a;r.out[k]+=a;r.dist[k]+=a;const aft=t0[k]&&String(t.date||'')>=t0[k];
       HEIRS.forEach(h=>{const v=+(t.alloc&&t.alloc[h.id])||0;r.received[h.id]+=v;r.recvLedger[h.id]+=v;r.entitled[h.id]+=a*W[k][h.id];if(aft)r.adj[k][h.id]-=v-a*W[k][h.id];});}
   }
@@ -1670,7 +1677,7 @@ function roleBadge(){
 }
 V.home=()=>{
   const r=calc();
-  const recent=state.txs.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,1);
+  const recent=state.txs.filter(t=>!t.hid).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,1);
   return {title:'الرئيسي',html:`<div class="home">
   <div class="banner lux"><button class="iconbtn bgear" data-act="settings" aria-label="الإعدادات">${I.gear}</button>
     <button class="iconbtn bref" data-act="refresh" aria-label="تحديث البيانات">${I.refresh}</button>
@@ -1702,9 +1709,10 @@ function mvMore(){
 }
 V.moves=(p)=>{
   const f=p.f||'all',ty=p.t||'all';
-  const list=state.txs.filter(t=>(f==='all'||t.acct===f)&&(ty==='all'||(ty==='dep'?t.kind==='dep':t.kind!=='dep')))
+  const all=state.txs.filter(t=>(f==='all'||t.acct===f)&&(ty==='all'||(ty==='dep'?t.kind==='dep':t.kind!=='dep')))
     .sort((a,b)=>byDate(b,a));
-  const sm=moveSums(list),tin=sm.tin,tout=sm.tout,mav=monthlyAvg(list);
+  const list=all.filter(t=>!t.hid),nHid=all.length-list.length;
+  const sm=moveSums(all),tin=sm.tin,tout=sm.tout,mav=monthlyAvg(list);
   const since=k=>{const ds=list.filter(t=>!t.hist&&(k==='in'?t.kind==='dep':t.kind!=='dep')).map(t=>(t.date||'').slice(0,10)).filter(Boolean).sort();return ds.length?`<small class="since">من ${esc(dShort(ds[0]))}</small>`:'';};
   const seg=(key,opts,cur)=>`<div class="seg seg3">${opts.map(([k,l])=>`<button data-mv="${key}:${k}" aria-pressed="${k===cur}">${l}</button>`).join('')}</div>`;
   const lock=!!p.lock&&!!ACCTS[f]&&f!=='all';   // جاي من صفحة الحساب: حركات هذا الحساب بس
@@ -1722,11 +1730,12 @@ V.moves=(p)=>{
   ${lock?'':`${arow}
   ${ty==='all'?`<div class="sumnote">الصافي <b class="num">${fmt(tin-tout)}</b>${f==='all'?' = الرصيد الحالي':' = رصيد '+ACCTS[f].short}</div>`:''}`}</div>
   ${list.length?`<div class="rows" id="mvRows">${list.slice(0,MV_CHUNK).map(txRow).join('')}</div>${list.length>MV_CHUNK?`<button class="ghost" id="mvMore" data-act="mv-more" style="width:100%;margin-top:10px">عرض المزيد (${list.length-MV_CHUNK})</button>`:''}`:'<p class="empty">لا توجد حركات.</p>'}
+  ${nHid?`<p class="m" style="font-size:12px;color:var(--muted);margin:10px 2px 0">🔒 تشمل المجاميع ${nHid===1?'خصماً خاصاً':nHid+' خصومات خاصة'} (ثمن رطب) لا ${nHid===1?'يظهر':'تظهر'} إلا لصاحبها.</p>`:''}
   ${list.length?`<div class="actions"><button class="ghost" data-act="mv-export">تصدير القائمة PDF</button></div>`:''}`};
 };
 /* مجاميع الداخل والخارج: الحركات اللي تأثر على الرصيد بس (السابقة داخلة في الرصيد الافتتاحي) */
 function moveSums(list){let tin=0,tout=0,nh=0;list.forEach(t=>{if(t.hist){nh++;return;}if(t.kind==='dep')tin+=+t.amount||0;else tout+=+t.amount||0;});return {tin:r2(tin),tout:r2(tout),nh};}
-const moveList=(f,ty)=>state.txs.filter(t=>(f==='all'||t.acct===f)&&(ty==='all'||(ty==='dep'?t.kind==='dep':t.kind!=='dep')));
+const moveList=(f,ty)=>state.txs.filter(t=>!t.hid&&(f==='all'||t.acct===f)&&(ty==='all'||(ty==='dep'?t.kind==='dep':t.kind!=='dep')));
 V.reqs=()=>{
   const me=store.canWrite?'admin':'agent',other=store.canWrite?(store.agent||'الوكيل'):'المدير';
   const toMe=state.reqs.filter(r=>r.by!==me&&r.status==='pending').sort((a,b)=>(b.at||0)-(a.at||0));
@@ -1792,9 +1801,11 @@ function splitBar(r){
 }
 function saleNote(t){
   const h=saleHeir(t),pr=salePair(t),nm=h?h.n:'الوارث';
+  if(!h)return `<div class="card privcard"><h4>🌴 دخل بيع رطب</h4>
+    <p class="m">دخل للمزرعة يتقاسمه جميع الورثة حسب حصصهم. ثمنه خُصم من نصيب المشتري، والخصم لا يظهر إلا له وللمدير.</p></div>`;
   return `<div class="card privcard"><h4>🌴 بيع رطب لـ ${esc(nm)}</h4>
-    <p class="m">سُجّل المبلغ دخلاً للمزرعة يتقاسمه جميع الورثة حسب حصصهم، وخُصم كاملاً من نصيب ${esc(nm)} كاستلام عيني. لا يدخل البنك ولا يخرج منه.</p>
-    ${pr?`<button class="row" data-go="tx" data-id="${esc(pr.id)}"><span>${pr.kind==='dep'?'حركة الدخل المقابلة':'حركة الخصم المقابلة'}<div class="m">${esc(dShort(pr.date))}</div></span><span class="a num">${fmt(pr.amount)}</span></button>`:''}</div>`;
+    <p class="m">سُجّل المبلغ دخلاً للمزرعة يتقاسمه جميع الورثة حسب حصصهم، وخُصم كاملاً من نصيب ${esc(nm)} كاستلام عيني. لا يدخل البنك ولا يخرج منه.${store.canWrite||store.isAgent?' <b>الخصم لا يظهر لباقي الورثة، ويراه '+esc(nm)+' في حسابه.</b>':''}</p>
+    ${pr&&!pr.hid?`<button class="row" data-go="tx" data-id="${esc(pr.id)}"><span>${pr.kind==='dep'?'حركة الدخل المقابلة':'حركة الخصم المقابلة'}<div class="m">${esc(dShort(pr.date))}</div></span><span class="a num">${fmt(pr.amount)}</span></button>`:''}</div>`;
 }
 /* تفاصيل المصروف الخاص: من يتحمّله وكم */
 function privRows(t){
@@ -1847,7 +1858,7 @@ V.acct=({k})=>{
   </div>`};
 };
 V.report=({k,type})=>{
-  const list=state.txs.filter(t=>t.acct===k&&(type==='dep'?t.kind==='dep':t.kind!=='dep')).sort((a,b)=>byDate(b,a));
+  const list=state.txs.filter(t=>!t.hid&&t.acct===k&&(type==='dep'?t.kind==='dep':t.kind!=='dep')).sort((a,b)=>byDate(b,a));
   const total=list.reduce((a,t)=>a+(t.hist?0:+t.amount||0),0);
   return {title:(type==='dep'?'تقرير الإيداعات – ':'تقرير المصروفات – ')+ACCTS[k].short,html:acctSwitch(k)+`
   <div class="total-line"><span class="t">المجموع (${list.length})</span><span class="v">${money(total)}</span></div>
@@ -2072,7 +2083,7 @@ V.txgone=({id})=>{
   <div class="actions"><button class="ghost" data-act="gone-ok" data-id="${esc(id)}">تم الاطلاع على الحذف</button></div>`};
 };
 V.tx=({id})=>{
-  const t=state.txs.find(x=>x.id===id);
+  const t0_=state.txs.find(x=>x.id===id),t=t0_&&t0_.hid?null:t0_;
   if(!t) return {title:'الحركة',html:'<p class="empty">هذه الحركة محذوفة.</p>'};
   const nk=NEWS.cache&&NEWS.cache.ids[t.id];if(nk)setTimeout(()=>seenTx(t.id),0);
   const A=ACCTS[t.acct];
@@ -2949,7 +2960,7 @@ V.reports=(p)=>{
   :`<p class="empty">لا توجد حركات في ${year}${acct!=='all'?' في '+ACCTS[acct].short:''}.</p>`}`};
 };
 V.month=({k,id})=>{
-  const list=state.txs.filter(t=>(k==='all'||t.acct===k)&&(t.date||'').startsWith(id)).sort((a,b)=>byDate(b,a));
+  const list=state.txs.filter(t=>!t.hid&&(k==='all'||t.acct===k)&&(t.date||'').startsWith(id)).sort((a,b)=>byDate(b,a));
   const mi=+id.slice(5,7)-1;
   return {title:MONTHS[mi]+' '+id.slice(0,4),html:list.length?`<div class="rows">${list.map(txRow).join('')}</div>`:'<p class="empty">لا توجد حركات.</p>'};
 };
@@ -3031,8 +3042,8 @@ V.settings=()=>({title:'الإعدادات',html:`
   ${idlCard()}
   <h3 class="sec">التنقل والتعديل</h3>
   <div class="card">
-    <button class="toggle" role="switch" aria-checked="${prefs.bright}" data-pref="bright"><span>إضاءة عالية
-      <small>ألوان أسطع ونصوص أوضح، مناسبة للشمس والإضاءة القوية. لا تغيّر إضاءة شاشة الجوال نفسها.</small></span><span class="sw"></span></button>
+    <div class="brightset"><span>الإضاءة<small>سطوع ألوان التطبيق. لا تغيّر إضاءة شاشة الجوال نفسها.</small></span>
+      <div class="seg seg3">${[[0,'عادية'],[1,'عالية'],[2,'قصوى']].map(([v,l])=>`<button data-bright="${v}" aria-pressed="${(+prefs.bright||0)===v}">${l}</button>`).join('')}</div></div>
     <button class="toggle" role="switch" aria-checked="${prefs.haptic}" data-pref="haptic"><span>الاهتزاز عند اللمس
       <small>اهتزاز خفيف مع كل ضغطة زر (آيفون بنظام iOS 18 أو أحدث، وأجهزة أندرويد).</small></span><span class="sw"></span></button>
     <button class="toggle" role="switch" aria-checked="${prefs.swipe}" data-pref="swipe"><span>التنقل بالسحب
@@ -3421,7 +3432,7 @@ V.sale=({k})=>{
   <button class="ghost" data-act="s-addb" style="width:100%">+ وارث آخر</button>
   <label class="k" for="sf_note">ملحوظة</label><input id="sf_note" placeholder="اختياري" value="${esc(f.note)}">
   <div class="total-line" style="margin-top:14px"><span class="t">المجموع (<span id="sCnt">${f.buyers.filter(B=>B.heir&&bTot(B)>0).length}</span> ورثة)</span><span class="v" id="sTot">${money(sTotal(f))}</span></div>
-  <p class="note">🌴 يُخصم ثمن ما أخذه كل وارث من نصيبه هو، ويُسجَّل المبلغ دخلاً للمزرعة يتقاسمه جميع الورثة حسب حصصهم. رصيد البنك لا يتغيّر.</p>
+  <p class="note">🌴 يُخصم ثمن ما أخذه كل وارث من نصيبه هو، ويُسجَّل المبلغ دخلاً للمزرعة يتقاسمه جميع الورثة حسب حصصهم. رصيد البنك لا يتغيّر.<br>🔒 الدخل يراه جميع الورثة، أما الخصم فلا يراه إلا صاحبه (والمدير والوكيل).</p>
   <div class="err" id="sErr"></div>
   <button class="primary" data-act="s-save">حفظ البيع</button>`};
 };
@@ -4074,7 +4085,7 @@ function newsCalc(){
   const b=NEWS.base;if(!b||store.mode!=='api')return null;
   const n={txNew:[],txEdit:[],txDel:0,txGone:[],prNew:[],prEdit:[],prDel:0,clNew:[],bal:null,share:null,ids:{}};
   const cur=new Set();
-  state.txs.forEach(t=>{cur.add(t.id);if(NEWS.mine.has(t.id)||t.hist)return;
+  state.txs.forEach(t=>{cur.add(t.id);if(NEWS.mine.has(t.id)||t.hist||t.hid)return;
     if(!(t.id in b.tx)){n.txNew.push(t);n.ids[t.id]='new';}else if(stampTx(t)>b.tx[t.id]){n.txEdit.push(t);n.ids[t.id]='edit';}});
   Object.keys(b.tx).forEach(id=>{if(!cur.has(id)&&!NEWS.mine.has(id)){n.txDel++;n.txGone.push({id,t:b.txd&&b.txd[id]?txFromMini(id,b.txd[id]):null});}});
   n.txGone.sort((x,y)=>String((y.t||{}).date||'').localeCompare(String((x.t||{}).date||'')));
@@ -5807,9 +5818,10 @@ document.addEventListener('click',async e=>{
   if(d.act==='notify'){const t=state.txs.find(x=>x.id===d.id);if(t)openNotify(notifyMsg('new',t,state.txs),null,waPayload('new',t,state.txs));return;}
   if(d.act==='sync'){clearTimeout(sheet.timer);syncSheet();return;}
   if(d.themeSet){prefs.theme=d.themeSet;savePrefs();render();return;}
-  if(d.act==='reset-prefs'){Object.assign(prefs,{fs:1,ns:1,swipe:true,lock:false,notify:true,theme:'auto',bright:true});savePrefs();render();toast('أُعيدت الإعدادات الافتراضية');return;}
+  if(d.act==='reset-prefs'){Object.assign(prefs,{fs:1,ns:1,swipe:true,lock:false,notify:true,theme:'auto',bright:2});savePrefs();render();toast('أُعيدت الإعدادات الافتراضية');return;}
   if(d.step){const k=d.step,lim=k==='fs'?[0.8,1.5]:[0.9,1.8];prefs[k]=Math.min(lim[1],Math.max(lim[0],Math.round((prefs[k]+(+d.by))*100)/100));savePrefs();updPrefUI();return;}
   if(d.pref){prefs[d.pref]=!prefs[d.pref];savePrefs();render();return;}
+  if(d.bright!==undefined&&!d.k){prefs.bright=+d.bright;savePrefs();render();return;}
   if(d.act==='edit'&&isSale({id:d.id})){toast('بيع الرطب لا يُعدَّل. احذفه وسجّله من جديد.');return;}
   if(d.act==='edit'){if(!canEditNow())return;const t=state.txs.find(x=>x.id===d.id);if(!t)return;state.form=newForm(null,null,t);go('form');return;}
   if(d.act==='del'&&isSale({id:d.id})){
