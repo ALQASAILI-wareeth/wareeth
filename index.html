@@ -299,6 +299,9 @@ header.bar h1{font-family:"Amiri","IBM Plex Sans Arabic",serif;font-size:21px;le
 .rcl .o{color:var(--gold);font-weight:600;min-width:74px}
 .rcl .d{color:var(--muted)}
 .rcl b{font-weight:600;font-size:14px}
+.rcl b.out{color:var(--neg)}
+.rcl.rcl2{grid-template-columns:1fr auto;grid-template-areas:"o b" "d d";row-gap:2px}.rcl.rcl2 .o{grid-area:o;min-width:0;font-size:inherit}.rcl.rcl2 b{grid-area:b}.rcl.rcl2 .d{grid-area:d}
+.hc-sec{margin:14px 2px 6px;font-size:14px;font-weight:600;color:var(--ink)}.hc-sec small{font-weight:400;color:var(--muted);font-size:12px}
 .kv{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:14px;color:var(--muted)}
 .kv b{color:var(--ink);font-weight:600}
 .gate{display:flex;flex-direction:column;align-items:stretch;text-align:center;max-width:380px;margin:8vh auto 0}
@@ -435,6 +438,14 @@ nav.tabs button[aria-current="true"]{color:#E3C27A;font-weight:600}
 .sumrow small.mav .num{font-size:11px;display:inline-block}
 .sumrow small.mav span{display:inline}
 .sumnote{font-size:12px;color:var(--muted);margin:-4px 2px 0;line-height:1.6}
+.qbar{position:relative;display:flex;align-items:center;margin:0 0 10px}
+.stick.qon .yrow,.stick.qon .sumnote{display:none}
+.qbar>svg{position:absolute;inset-inline-start:12px;width:18px;height:18px;color:var(--muted);pointer-events:none}
+.qbar input{width:100%;min-height:44px;padding:10px 42px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;font-size:16px;-webkit-appearance:none;appearance:none}
+.qbar input::-webkit-search-cancel-button{display:none}
+.qbar input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 22%,transparent)}
+.sbx{position:absolute;inset-inline-end:6px;width:34px;height:34px;border:0;border-radius:50%;background:var(--card2);color:var(--muted);font-size:14px;cursor:pointer}
+.sres{font-size:13px;color:var(--muted);margin:-2px 2px 10px;line-height:1.7}.sres b{color:var(--ink)}.sres b.in{color:var(--pos)}.sres b.out{color:var(--neg)}
 .sumnote b{color:var(--ink);font-weight:700}
 .pdfic{width:58px;height:70px;margin:14px auto 4px;border-radius:8px;background:linear-gradient(180deg,#C9473A,#9E3127);color:#fff;font-weight:800;display:grid;place-items:center;letter-spacing:.06em;box-shadow:0 8px 18px rgba(158,49,39,.3)}
 .modal .actions a.ghost{flex:1;display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink)}
@@ -1265,7 +1276,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='12.3';
+const APP_VER='12.4';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1590,7 +1601,7 @@ state.reqs=[];
 function calc(list){
   const z=()=>Object.fromEntries(HEIRS.map(h=>[h.id,0]));
   const r={bal:{bld:0,farm:0},dep:{bld:0,farm:0},out:{bld:0,farm:0},exp:{bld:0,farm:0},dist:{bld:0,farm:0},received:z(),recvLedger:z(),entitled:z(),last:0,distHist:0,
-    adj:{bld:z(),farm:z()},priv:{bld:0,farm:0}};
+    adj:{bld:z(),farm:z()},priv:{bld:0,farm:0},charged:z()};
   /* المصروف الخاص يخرج من رصيد الحساب، لكن يتحمّله المحددون فقط:
      adj = (حصة الوارث من المصروف لو كان عاماً − الجزء الذي يتحمّله فعلاً) − ما أخذه زيادة أو نقصاً في التوزيعات اللاحقة.
      فنصيب الوارث = الرصيد × حصته + adj، ومجموع الأنصبة يساوي الرصيد دائماً. */
@@ -1608,7 +1619,7 @@ function calc(list){
       const me=isHeirUser()&&store.user&&H[store.user.heir]?store.user.heir:'';   // وارث يرى كل الحسابات: نصيبه هو صحيح (له حصته من الدخل)، والفرق يُوزَّع على الباقين بلا تحديد المشتري
       if(me){const wm=W[k][me],d=a*wm;r.adj[k][me]+=d;if(wm<1)HEIRS.forEach(h=>{if(h.id!==me)r.adj[k][h.id]-=d*W[k][h.id]/(1-wm);});}}
     else if(t.kind==='dist'){r.bal[k]-=a;r.out[k]+=a;r.dist[k]+=a;const aft=t0[k]&&String(t.date||'')>=t0[k];
-      HEIRS.forEach(h=>{const v=+(t.alloc&&t.alloc[h.id])||0;r.received[h.id]+=v;r.recvLedger[h.id]+=v;r.entitled[h.id]+=a*W[k][h.id];if(aft)r.adj[k][h.id]-=v-a*W[k][h.id];});}
+      const cash=!isAdv(t)&&!isSale(t);HEIRS.forEach(h=>{const v=+(t.alloc&&t.alloc[h.id])||0;if(cash)r.received[h.id]+=v;else r.charged[h.id]+=v;r.recvLedger[h.id]+=v;r.entitled[h.id]+=a*W[k][h.id];if(aft)r.adj[k][h.id]-=v-a*W[k][h.id];});}
   }
   r.total=r.bal.bld+r.bal.farm;
   r.distTotal=r.dist.bld+r.dist.farm+r.distHist;
@@ -1632,8 +1643,9 @@ const anyPriv=()=>state.txs.some(isPriv);
 function privCharges(id){return state.txs.filter(t=>(isPriv(t)||isAdv(t)||(t.kind==='dist'&&isSale(t)))&&+((t.alloc||{})[id])>0).sort((a,b)=>byDate(b,a)).map(t=>({t,amt:+t.alloc[id]}));}
 const chargeLabel=t=>isAdv(t)?'سلفة: '+(t.from||''):isSale(t)?'شراء رطب'+(t.note?' – '+String(t.note).replace(/^رطب من المزرعة:?\s*/,''):''):(t.from||'مصروف');
 const rcLabel=(t,i,rc)=>isAdv(t)?'سلفة – '+t.from:isSale(t)?'رطب من المزرعة':'الاستلام '+ord(rc?rc.slice(0,i+1).filter(x=>!isAdv(x.t)&&!isSale(x.t)).length-1:i);
+/* الاستلامات: المبالغ النقدية فقط. ثمن الرطب والسلف ليست استلاماً، بل خصم من النصيب (privCharges) */
 function receipts(id){
-  return state.txs.filter(t=>t.kind==='dist'&&t.alloc&&+t.alloc[id]>0).sort(byDate).map(t=>({t,amt:+t.alloc[id]}));
+  return state.txs.filter(t=>t.kind==='dist'&&!isAdv(t)&&!isSale(t)&&t.alloc&&+t.alloc[id]>0).sort(byDate).map(t=>({t,amt:+t.alloc[id]}));
 }
 
 /* ===== التنقل ===== */
@@ -1651,6 +1663,7 @@ function back(){if(state.stack.length>1){state.stack.pop();state.form=null;rende
 function tab(v){state.stack=[{v}];state.form=null;render();scrollTop0();}
 
 const I={
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>',
   back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   bld:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V5l8-2v18M12 21V9l8 2v10M3 21h18M7 8h2M7 12h2M7 16h2M15 13h2M15 17h2"/></svg>',
   farm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21v-9M12 12c0-4 2.5-7 7-7 0 4.5-3 7-7 7zM12 14c0-3.2-2-5.5-6-5.5 0 3.6 2.4 5.5 6 5.5zM4 21h16"/></svg>',
@@ -1715,7 +1728,7 @@ V.home=()=>{
 const MV_CHUNK=60;
 function mvMore(){
   const c=cur(),box=document.getElementById('mvRows'),btn=document.getElementById('mvMore');if(c.v!=='moves'||!box||!btn)return;
-  const f=c.f||'all',ty=c.t||'all',list=moveList(f,ty).sort((a,b)=>byDate(b,a)),n=box.children.length;
+  const f=c.f||'all',ty=c.t||'all',list=moveList(f,ty,c.q).sort((a,b)=>byDate(b,a)),n=box.children.length;
   box.insertAdjacentHTML('beforeend',list.slice(n,n+120).map(txRow).join(''));
   const left=list.length-box.children.length;if(left>0)btn.textContent='عرض المزيد ('+left+')';else btn.remove();
 }
@@ -1736,18 +1749,39 @@ V.moves=(p)=>{
   state.txs.forEach(t=>{if((f!=='all'&&t.acct!==f)||t.from==='رصيد افتتاحي')return;const d=(t.date||'').slice(0,10);if(!d||d<Y0+'-01-01'||d>tdy)return;const a=+t.amount||0;if(t.kind==='dep')aIn+=a;else aOut+=a;});
   const arow=`<div class="yrow"><span class="yl">من بداية ${Y0}</span><div><span>الداخل</span><b class="num in">${fmt(aIn)}</b></div><div><span>الخارج</span><b class="num out">${fmt(aOut)}</b></div></div>`;
   return {title:lock?'سجل حركات '+ACCTS[f].short:'سجل الحركات',html:`
-  <div class="stick">${lock?'':seg('f',[['all','الحسابين'],['bld','البناية'],['farm','المزارع']],f)}
+  <div class="stick${p.q?' qon':''}" id="mvStick"><div class="qbar">${I.search}<input id="mvQ" type="search" enterkeyhint="search" autocomplete="off" placeholder="ابحث: اسم، بند، مبلغ، تاريخ" value="${esc(p.q||'')}" aria-label="بحث في الحركات"><button class="sbx" id="mvQx" data-act="mv-qx" aria-label="مسح البحث"${p.q?'':' hidden'}>✕</button></div>
+  ${lock?'':seg('f',[['all','الحسابين'],['bld','البناية'],['farm','المزارع']],f)}
   ${seg('t',[['all','الكل'],['dep','إيداعات'],['out','مصروفات']],ty)}
   ${yrow}
   ${lock?'':`${arow}
   ${ty==='all'?`<div class="sumnote">الصافي <b class="num">${fmt(tin-tout)}</b>${f==='all'?' = الرصيد الحالي':' = رصيد '+ACCTS[f].short}</div>`:''}`}</div>
-  ${list.length?`<div class="rows" id="mvRows">${list.slice(0,MV_CHUNK).map(txRow).join('')}</div>${list.length>MV_CHUNK?`<button class="ghost" id="mvMore" data-act="mv-more" style="width:100%;margin-top:10px">عرض المزيد (${list.length-MV_CHUNK})</button>`:''}`:'<p class="empty">لا توجد حركات.</p>'}
+  <div id="mvBody">${mvBody(p)}</div>
   ${nHid?`<p class="m" style="font-size:12px;color:var(--muted);margin:10px 2px 0">🔒 تشمل المجاميع ${nHid===1?'خصماً خاصاً':nHid+' خصومات خاصة'} (ثمن رطب) لا ${nHid===1?'يظهر':'تظهر'} إلا لصاحبها.</p>`:''}
-  ${list.length?`<div class="actions"><button class="ghost" data-act="mv-export">تصدير القائمة PDF</button></div>`:''}`};
+  ${all.length?`<div class="actions"><button class="ghost" data-act="mv-export">تصدير القائمة PDF</button></div>`:''}`};
 };
 /* مجاميع الداخل والخارج: الحركات اللي تأثر على الرصيد بس (السابقة داخلة في الرصيد الافتتاحي) */
 function moveSums(list){let tin=0,tout=0,nh=0;list.forEach(t=>{if(t.hist){nh++;return;}if(t.kind==='dep')tin+=+t.amount||0;else tout+=+t.amount||0;});return {tin:r2(tin),tout:r2(tout),nh};}
-const moveList=(f,ty)=>state.txs.filter(t=>!t.hid&&(f==='all'||t.acct===f)&&(ty==='all'||(ty==='dep'?t.kind==='dep':t.kind!=='dep')));
+const moveList=(f,ty,q)=>state.txs.filter(t=>!t.hid&&(f==='all'||t.acct===f)&&(ty==='all'||(ty==='dep'?t.kind==='dep':t.kind!=='dep'))&&qMatch(t,q));
+/* البحث في السجل: الاسم، البند، الملحوظة، المبلغ، التاريخ. يتجاهل الهمزات والتشكيل والفواصل، ويقبل الأرقام العربية */
+const qN=s=>String(s==null?'':s).replace(/[ً-ْـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي')
+  .replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[,،٬]/g,'').toLowerCase();
+function txHay(t){
+  const a=+t.amount||0,hs=Object.keys(t.alloc||{}).filter(h=>+t.alloc[h]>0&&H[h]).map(h=>H[h].n+' '+(H[h].full||'')).join(' ');
+  return qN([kindName(t),KIND[t.kind],t.from,t.note,ACCTS[t.acct]?ACCTS[t.acct].name+' '+ACCTS[t.acct].short:'',t.prop&&P[t.prop]?P[t.prop].name:'',
+    hs,dShort(t.date),String(t.date||'').slice(0,10),String(a),fmt(a),isSale(t)?'بيع رطب':'',isPriv(t)?'خاص':'',t.hist?'سابق':''].join(' '));
+}
+function qMatch(t,q){const w=qN(q).trim().split(/\s+/).filter(Boolean);if(!w.length)return true;const h=txHay(t);return w.every(x=>h.includes(x));}
+function mvBody(p){
+  const f=p.f||'all',ty=p.t||'all',q=String(p.q||'').trim();
+  const list=moveList(f,ty,q).sort((a,b)=>byDate(b,a));
+  let res='';
+  if(q){const sm=moveSums(list);const n=list.length,nl=n===1?'نتيجة واحدة':n===2?'نتيجتان':`<b class="num">${n}</b> ${n<11?'نتائج':'نتيجة'}`,sums=sm.tin||sm.tout;
+    res=`<div class="sres">${n?`${nl}${sm.tin?` · داخل <b class="num in">${fmt(sm.tin)}</b>`:''}${sm.tout?` · خارج <b class="num out">${fmt(sm.tout)}</b>`:''}${sm.nh?`<small> · ${sums?'المجموع لا يشمل الحركات السابقة ('+sm.nh+')':'حركات سابقة قبل نوفمبر 2025'}</small>`:''}`:'لا توجد نتائج لـ «'+esc(q)+'»'}</div>`;}
+  return res+(list.length?`<div class="rows" id="mvRows">${list.slice(0,MV_CHUNK).map(txRow).join('')}</div>${list.length>MV_CHUNK?`<button class="ghost" id="mvMore" data-act="mv-more" style="width:100%;margin-top:10px">عرض المزيد (${list.length-MV_CHUNK})</button>`:''}`:(q?'':'<p class="empty">لا توجد حركات.</p>'));
+}
+let mvT=0;
+function mvSearch(v){const c=cur();if(c.v!=='moves')return;c.q=v;clearTimeout(mvT);mvT=setTimeout(()=>{const b=document.getElementById('mvBody');if(b)b.innerHTML=mvBody(cur());
+  const on=!!String(cur().q||'').trim(),x=document.getElementById('mvQx');if(x)x.hidden=!cur().q;const st=document.getElementById('mvStick');if(st)st.classList.toggle('qon',on);},120);}
 V.reqs=()=>{
   const me=store.canWrite?'admin':'agent',other=store.canWrite?(store.agent||'الوكيل'):'المدير';
   const toMe=state.reqs.filter(r=>r.by!==me&&r.status==='pending').sort((a,b)=>(b.at||0)-(a.at||0));
@@ -1903,8 +1937,8 @@ function heirExport(id){const d={id};
         rows:rc.map((x,i)=>[rcLabel(x.t,i,rc),dShort(x.t.date),ACCTS[x.t.acct].short,fmt(x.amt)]),foot:['المجموع','','',fmt(r.received[d.id])]},
        {title:'نصيبه من الرصيد الحالي',cols:[{h:'الحساب',w:40},{h:'الحصة',w:25,al:'c'},{h:'المبلغ',w:35,al:'l'}],
         rows:[['البناية',ACCTS.bld.shares[d.id]+'%',fmt(nb)],['المزارع',ACCTS.farm.shares[d.id]+'%',fmt(nf)]],foot:['المجموع','',fmt(nb+nf)]}]
-       .concat((()=>{const pc=privCharges(d.id);return pc.length?[{title:'مصاريف خاصة عليه (خُصمت من نصيبه فقط)',cols:[{h:'البند',w:34},{h:'التاريخ',w:26},{h:'الحساب',w:18},{h:'جزؤه',w:22,al:'l'}],
-         rows:pc.map(x=>[x.t.from||'مصروف',dShort(x.t.date),ACCTS[x.t.acct].short,fmt(x.amt)]),foot:['المجموع','','',fmt(pc.reduce((a,x)=>a+x.amt,0))]}]:[];})()),
+       .concat((()=>{const pc=privCharges(d.id);return pc.length?[{title:'خُصم من نصيبه: سلف ورطب ومصاريف خاصة (ليست استلاماً)',cols:[{h:'البند',w:34},{h:'التاريخ',w:26},{h:'الحساب',w:18},{h:'جزؤه',w:22,al:'l'}],
+         rows:pc.map(x=>[chargeLabel(x.t),dShort(x.t.date),ACCTS[x.t.acct].short,fmt(x.amt)]),foot:['المجموع','','',fmt(pc.reduce((a,x)=>a+x.amt,0))]}]:[];})()),
       note:'حصته من التوزيعات المسجلة في الحسابين حسب السند: '+fmt(r.entitled[d.id])+' د.إ، واستلم منها '+fmt(r.recvLedger[d.id])+' د.إ.'},pdfName('كشف '+h.n));
 }
 /* سحب النافذة لفوق أو لتحت يسكّرها (مثل تطبيقات الجوال) */
@@ -1971,7 +2005,7 @@ function pageZoom(sh){
 document.addEventListener('touchmove',e=>{if(e.touches.length>1&&e.cancelable)e.preventDefault();},{passive:false});
 /* بطاقة الوريث: تطلع فوق الصفحة بدون ما تفتح صفحة جديدة */
 function heirCard(id){
-  const h=H[id];if(!h)return;const r=calc(),rc=receipts(id),n=rc.length,share=shareAll(r,id);
+  const h=H[id];if(!h)return;const r=calc(),rc=receipts(id),n=rc.length,share=shareAll(r,id),pc=privCharges(id);
   const bg=document.createElement('div');bg.className='modal-bg';
   bg.innerHTML=`<div class="modal sheet" role="dialog" aria-modal="true" aria-labelledby="hcT">
     <div class="sheet-grip"></div>
@@ -1982,7 +2016,7 @@ function heirCard(id){
       <div><span>مجموع المستلم</span><b class="num">${fmt(r.received[id])}</b></div>
       <div><span>نصيبه من الرصيد الآن</span><b class="num">${fmt(share)}</b></div>
     </div>
-    <div class="hc-list">${n?`<div class="rclist">${rc.map((x,i)=>({x,i})).reverse().map(({x,i})=>`<div class="rcl"><span class="o">${ord(i)}</span><span class="d">${esc(dShort(x.t.date))} · ${esc(ACCTS[x.t.acct]?ACCTS[x.t.acct].short:'')}</span><b class="num">${fmt(x.amt)}</b></div>`).join('')}</div>`:'<p class="empty" style="padding:14px">لم يستلم أي مبلغ بعد.</p>'}</div></div></div></div>
+    <div class="hc-list">${n?`<div class="rclist">${rc.map((x,i)=>({x,i})).reverse().map(({x,i})=>`<div class="rcl"><span class="o">${ord(i)}</span><span class="d">${esc(dShort(x.t.date))} · ${esc(ACCTS[x.t.acct]?ACCTS[x.t.acct].short:'')}</span><b class="num">${fmt(x.amt)}</b></div>`).join('')}</div>`:'<p class="empty" style="padding:14px">لم يستلم أي مبلغ بعد.</p>'}${pc.length?`<h5 class="hc-sec">خُصم من نصيبه <small>(ليس استلاماً)</small></h5><div class="rclist">${pc.map(x=>`<div class="rcl rcl2"><span class="o">${esc(chargeLabel(x.t))}</span><span class="d">${esc(dShort(x.t.date))} · ${esc(ACCTS[x.t.acct]?ACCTS[x.t.acct].short:'')}</span><b class="num out">${fmt(x.amt)}</b></div>`).join('')}</div>`:''}</div></div></div></div>
     <div class="actions">${downloadsApi?`<button class="ghost" data-hc="pdf">كشف ${esc(h.n)} PDF</button>`:''}<button class="ghost" data-hc="close">إغلاق</button></div></div>`;
   const close=()=>{bg.remove();document.removeEventListener('keydown',onKey);};
   const onKey=e=>{if(e.key==='Escape')close();};
@@ -2023,7 +2057,7 @@ V.heir=({id})=>{
       ${downloadsApi?`<button class="sbbtn" data-act="heir-export" data-id="${id}">${I.pdfx}<span>تصدير الكشف<small>ملف PDF</small></span></button>`:''}</div></div>
     <div class="card mycmp"><div class="fair"><span class="dot" style="background:${Math.abs(diff)<1?'var(--pos)':diff<0?'var(--neg)':'var(--gold)'}"></span>${fairTxt}</div>
       <div class="kv"><span>حصتك من التوزيعات حسب السند</span><b>${money(r.entitled[id])}</b></div>
-      <div class="kv"><span>ما استلمته منها</span><b>${money(r.recvLedger[id])}</b></div>
+      <div class="kv"><span>ما استلمته منها${r.charged[id]?' (مع السلف والرطب)':''}</span><b>${money(r.recvLedger[id])}</b></div>
       <p class="m">المقارنة تشمل التوزيعات المسجلة من حساب البناية والمزارع، بدون التوزيعات السابقة${anyPriv()?'، وتحتسب المصاريف الخاصة':''}.</p></div>${privBox}</div>`};
   }
   return {title:h.n,html:`
@@ -2039,7 +2073,7 @@ V.heir=({id})=>{
     <div class="row sum"><span>المجموع</span><span>${money(nb+nf)}</span></div></div>`}
   ${privBox}
   <h3 class="sec">مقارنة التوزيعات بحصته</h3>
-  <div class="card">${fair}<p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">المقارنة تشمل التوزيعات المسجلة من حساب البناية والمزارع فقط، بدون التوزيعات السابقة. حصته منها حسب السند ${money(r.entitled[id])}، واستلم ${money(r.recvLedger[id])}.</p></div>
+  <div class="card">${fair}<p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">المقارنة تشمل التوزيعات المسجلة من حساب البناية والمزارع فقط، بدون التوزيعات السابقة. حصته منها حسب السند ${money(r.entitled[id])}، واستلم ${money(r.recvLedger[id])}${r.charged[id]?' (منها '+money(r.charged[id])+' سلف ورطب)':''}.</p></div>
   ${downloadsApi?`<div class="actions"><button class="ghost" data-act="heir-export" data-id="${id}">تصدير كشف ${h.n} PDF</button></div>`:''}`};
 };
 /* حسابي ← عرض الاستلامات: كل الاستلامات هنا */
@@ -2056,7 +2090,7 @@ V.cmp=({id})=>{
     :`<div class="fair"><span class="dot" style="background:var(--gold)"></span>${own?'استلمت':'استلم'} أكثر من ${own?'حصتك':'حصته'} بـ ${money(diff)}</div>`;
   return {title:'مقارنة التوزيعات',html:`<div class="card">${fair}
     <div class="kv" style="margin-top:10px"><span>${own?'حصتك':'حصته'} من التوزيعات حسب السند</span><b>${money(r.entitled[id])}</b></div>
-    <div class="kv"><span>${own?'ما استلمته':'ما استلمه'} منها</span><b>${money(r.recvLedger[id])}</b></div>
+    <div class="kv"><span>${own?'ما استلمته':'ما استلمه'} منها${r.charged[id]?' (مع السلف والرطب)':''}</span><b>${money(r.recvLedger[id])}</b></div>
     <div class="kv"><span>الفرق</span><b class="${diff<-0.5?'out':diff>0.5?'':'in'}">${money(diff)}</b></div>
     <p class="m" style="font-size:13px;color:var(--muted);margin:10px 0 0">المقارنة تشمل التوزيعات المسجلة من حساب البناية والمزارع فقط، بدون التوزيعات السابقة.</p></div>`};
 };
@@ -2905,7 +2939,7 @@ function monthData(acct,year){
     if(!(t.date||'').startsWith(year))return;
     const i=+(t.date.slice(5,7))-1;if(!(i>=0&&i<12))return;
     const a=+t.amount||0;m[i].n++;
-    if(t.kind==='dep')m[i].dep+=a;else if(t.kind==='exp')m[i].exp+=a;else if(t.kind==='dist'){m[i].dist+=a;HEIRS.forEach(h=>heirs[h.id]+=+((t.alloc||{})[h.id])||0);}
+    if(t.kind==='dep')m[i].dep+=a;else if(t.kind==='exp')m[i].exp+=a;else if(t.kind==='dist'){m[i].dist+=a;if(!isAdv(t)&&!isSale(t))HEIRS.forEach(h=>heirs[h.id]+=+((t.alloc||{})[h.id])||0);}
   });
   return {m,heirs};
 }
@@ -5686,10 +5720,11 @@ document.addEventListener('click',async e=>{
   if(d.act==='pc-all'){cur().pall=!cur().pall;render();return;}
   if(d.mv){const [k,v]=d.mv.split(':');cur()[k]=v;render();scrollTop0();return;}
   if(d.act==='mv-more'){mvMore();return;}
+  if(d.act==='mv-qx'){const i=document.getElementById('mvQ');if(i){i.value='';i.focus();}mvSearch('');return;}
   if(d.act==='mv-export'){
     const c=cur(),f=c.f||'all',ty=c.t||'all';
-    const list=moveList(f,ty).sort((a,b)=>byDate(b,a)),sm=moveSums(list);
-    const fl=(f==='all'?'الحسابين':ACCTS[f].short)+' · '+(ty==='all'?'كل الحركات':ty==='dep'?'الإيداعات':'المصروفات والتوزيعات');
+    const q=String(c.q||'').trim(),list=moveList(f,ty,q).sort((a,b)=>byDate(b,a)),sm=moveSums(list);
+    const fl=(f==='all'?'الحسابين':ACCTS[f].short)+' · '+(ty==='all'?'كل الحركات':ty==='dep'?'الإيداعات':'المصروفات والتوزيعات')+(q?' · بحث: '+q:'');
     const mav=monthlyAvg(list);
     const cards=[['عدد الحركات',String(list.length)],['داخل'+(mav&&ty!=='out'?' (≈ '+fmt(mav.tin)+' شهرياً)':''),fmt(sm.tin),'#2F7A52'],['خارج'+(mav&&ty!=='dep'?' (≈ '+fmt(mav.tout)+' شهرياً)':''),fmt(sm.tout),'#A8473A']];
     if(ty==='all')cards.push(['الصافي',fmt(sm.tin-sm.tout),'#16244F']);
@@ -5892,6 +5927,7 @@ document.addEventListener('click',async e=>{
 });
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id==='lPin'||e.target.id==='lUrl')){e.preventDefault();const b=document.querySelector('[data-act="login"]');if(b)b.click();}});
 document.addEventListener('input',e=>{
+  if(e.target.id==='mvQ'){mvSearch(e.target.value);return;}
   if(e.target.id&&e.target.id.indexOf('pfs_')===0&&state.pf){readPF();const s=pfSum(),el=document.getElementById('pfSum');if(el){el.textContent=s+'%';el.style.color=Math.abs(s-100)<=0.05?'var(--pos)':'var(--neg)';}}
   if(e.target.id==='pFs'||e.target.id==='pNs'){prefs[e.target.id==='pFs'?'fs':'ns']=+e.target.value;savePrefs();updPrefUI();return;}
   if(state.gf&&(e.target.id==='gf_name'||(e.target.dataset&&e.target.dataset.gfc!==undefined))){readGF();return;}
