@@ -1144,6 +1144,33 @@ nav.tabs button[aria-current="true"]{text-shadow:none!important}
 .rcptcard .rc-ed{display:flex;gap:18px;justify-content:center;padding:8px;border-top:1px solid var(--line)}
 .rcptcard .rc-ed label{position:relative;cursor:pointer}
 .rclip svg{width:12px;height:12px;vertical-align:-1px;margin-inline-end:3px;color:var(--gold)}
+/* ===== النشاط: الزيارات ===== */
+.rtag.r-ag{background:rgba(235,207,143,.18)!important;color:#EBCF8F!important}
+.rtag.r-us{background:rgba(134,217,170,.16)!important;color:#9fe3bb!important}
+.rtag.r-vw{background:rgba(201,209,228,.14)!important;color:var(--muted)!important}
+.vcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 10px}
+.vcard.vlive{border-color:rgba(134,217,170,.55)}
+.vh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-bottom:6px}
+.vh .vtime{font-weight:700;font-size:15px}
+.vh .vdur{margin-inline-start:auto;font-size:13px;color:var(--gold);font-weight:600;display:flex;align-items:center;gap:5px}
+.vh .vwho{font-weight:700;font-size:15px;padding:0}
+.vline{display:flex;gap:8px;font-size:14px;line-height:1.75;margin-top:2px}
+.vline .vk{flex:none;min-width:58px;color:var(--muted);font-size:13px;padding-top:1px}
+.vline small{color:var(--muted)}
+.vline.op span:last-child{color:var(--pos);font-weight:600}
+.vline.muted{color:var(--muted);font-size:13px}
+.vsteps{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
+.vsteps summary,.rawlog summary{cursor:pointer;font-size:13px;color:var(--gold);font-weight:600;padding:4px 0}
+.vstep{display:flex;gap:10px;font-size:13px;line-height:1.7;padding:3px 0;border-bottom:1px solid rgba(201,209,228,.08)}
+.vstep .vt{flex:none;min-width:118px;color:var(--muted);font-size:12px}
+.vstep small{color:var(--muted)}
+.dayhd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:16px 2px 8px;font-weight:700;color:var(--gold)}
+.dayhd small{font-weight:500;color:var(--muted);font-size:12.5px}
+.prsn .pwho{display:flex;align-items:center;gap:8px;font-size:18px;margin-bottom:6px}
+.prsn .soft,.psum small{color:var(--muted);font-weight:500}
+.psum .kv b{text-align:end}
+.rawlog{margin-top:16px;padding:10px 14px}
+.acthelp{display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.7}
 /* ===== النشاط: المستخدمون وآخر ظهور ===== */
 .ulist .un{font-weight:700}
 .ulist .ust{display:flex;align-items:center;gap:6px}
@@ -1280,7 +1307,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='12.8';
+const APP_VER='12.9';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -4066,7 +4093,7 @@ function buildSessions(log){
     for(const r of by[k]){
       const end=r.ms+(r.d>0?r.d*1000:0);
       const isStart=STARTS.includes(r.e);
-      if(s&&isStart&&!s.pages.length&&!s.closed){s.start=r.ms;s.end=Math.max(s.end,r.ms);s.how=r.e;}   // فتح التطبيق ثم دخول: نفس الجلسة
+      if(s&&isStart&&!s.pages.length&&!s.closed&&r.ms-s.end<10*60000){s.start=r.ms;s.end=Math.max(s.end,r.ms);s.how=r.e;}   // فتح التطبيق ثم دخول: نفس الجلسة
       else if(!s||s.closed||isStart||r.ms-s.end>10*60000){
         s={who:r.who,role:r.role,dev:r.dev,start:r.ms,end:r.ms,pages:[],how:isStart?r.e:'',closed:false};S.push(s);}
       if(anon(s.who)&&!anon(r.who))s.who=r.who;   // الوارث اختار اسمه بعد الدخول
@@ -4089,9 +4116,9 @@ let actTick=0;
 function startActTick(){
   clearInterval(actTick);
   actTick=setInterval(()=>{
-    if(cur().v!=='activity'||document.visibilityState==='hidden'){if(cur().v!=='activity')clearInterval(actTick);return;}
+    const av=['activity','actperson'].includes(cur().v);if(!av||document.visibilityState==='hidden'){if(!av)clearInterval(actTick);return;}
     const sk=state.act&&state.act.skew||0,now=Date.now()-sk;
-    document.querySelectorAll('[data-tick]').forEach(e=>{e.textContent=durTxt((now-+e.dataset.tick)/1000);});
+    document.querySelectorAll('[data-tick]').forEach(e=>{const x=(now-+e.dataset.tick)/1000;e.textContent=e.dataset.words?durWords(x,true):durTxt(x);});
   },1000);
 }
 /* كل المستخدمين: المتصل الحين، وآخر ظهور للباقين (من الخادم + السجل)، واللي ما دخل للحين */
@@ -4109,27 +4136,87 @@ function sinceTxt(ms){const m=Math.floor(Math.max(0,ms)/60000);if(m<1)return 'م
   const h=Math.floor(m/60),r=m%60;if(h<24)return 'منذ '+nTxt(h,'ساعة','ساعتين','ساعات','ساعة')+(h<6&&r?' و'+mn(r):'');
   const d=Math.floor(h/24);if(d<30)return 'منذ '+nTxt(d,'يوم','يومين','أيام','يوماً');
   const mo=Math.floor(d/30);return 'منذ '+nTxt(mo,'شهر','شهرين','أشهر','شهراً');}
-/* آخر استخدام لشخص: الأحدث من كل المصادر (سجل الجلسات، ونبضات الجهاز كل 30 ثانية، والمتصلين الآن، وآخر ظهور المحفوظ)،
-   فتكون القائمة وصفحة الشخص متطابقتين */
-function lastSeenOf(who,S){const a=state.act||{};let t=0;const s=(a.seen||{})[who];if(s)t=Math.max(t,+s.at||0);
-  (a.presence||[]).forEach(p=>{if(String(p.who||'').trim()===who)t=Math.max(t,+p.at||0);});
-  (a.online||[]).forEach(o=>{if(String(o.who||'').trim()===who)t=Math.max(t,+o.at||0);});
-  (S||buildSessions(a.log||[])).forEach(x=>{if(x.who===who)t=Math.max(t,x.end);});return t;}
 function agoTxt(ms){const m=Math.floor(Math.max(0,ms)/60000),h=Math.floor(m/60),d=Math.floor(h/24);
   if(m<1)return 'قبل لحظات';if(m<60)return 'قبل '+(m===1?'دقيقة':m===2?'دقيقتين':m<=10?m+' دقائق':m+' دقيقة');
   if(h<24)return 'قبل '+(h===1?'ساعة':h===2?'ساعتين':h<=10?h+' ساعات':h+' ساعة');
   if(d===1)return 'أمس';if(d<30)return 'قبل '+(d===2?'يومين':d<=10?d+' أيام':d+' يوم');
   const mo=Math.floor(d/30);return 'قبل '+(mo===1?'شهر':mo===2?'شهرين':mo<=10?mo+' أشهر':mo+' شهر');}
 const devTxt=n=>n===1?'جهاز واحد':n===2?'جهازين':n+' أجهزة';
-function actUsers(on,seen,people,log){
-  const M={},add=(who,role)=>{who=String(who||'').trim();if(!who||who==='وارث (بدون اسم)')return null;return M[who]||(M[who]={who,role:role||'',last:0,devs:new Set(),n:0,sec:0,on:null});};
+/* ===== النشاط بصيغة واضحة =====
+   كل شخص يُعرف باسمه ونوع حسابه معاً، فـ«ناصر» الوكيل غير «ناصر» بحسابه الشخصي.
+   والنشاط يُعرض «زيارات»: متى فتح التطبيق، وكم بقي، وأين أطال، وماذا فعل. */
+const ROLE_N={admin:'مدير',agent:'وكيل',view:'وارث',heir:'مستخدم','مدير':'مدير','وكيل':'وكيل','وارث':'وارث','مستخدم':'مستخدم'};
+const normRole=r=>ROLE_N[String(r||'').trim()]||String(r||'').trim()||'وارث';
+const roleLabel=r=>({'مدير':'المدير','وكيل':'الوكيل','مستخدم':'حساب شخصي','وارث':'رقم العرض العام'})[normRole(r)]||normRole(r);
+const pkey=(w,r)=>String(w||'').trim()+'|'+normRole(r);
+const pkeyParse=k=>{k=String(k||'');const i=k.lastIndexOf('|');return i<0?{who:k,role:''}:{who:k.slice(0,i),role:k.slice(i+1)};};
+const actBadge=r=>normRole(r)==='مدير'?'':`<span class="tag rtag r-${({'وكيل':'ag','مستخدم':'us','وارث':'vw'})[normRole(r)]||'vw'}">${esc(roleLabel(r))}</span>`;
+/* المدة بالكلمات: «12 دقيقة»، «ساعة و5 دقائق»، «40 ثانية» */
+function durWords(s,withSec){s=Math.max(0,Math.round(+s||0));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  const H=n=>nTxt(n,'ساعة','ساعتين','ساعات','ساعة'),M=n=>nTxt(n,'دقيقة','دقيقتين','دقائق','دقيقة'),S=n=>nTxt(n,'ثانية','ثانيتين','ثوانٍ','ثانية');
+  if(h)return H(h)+(m?' و'+M(m):'');if(m)return M(m)+(withSec&&x?' و'+S(x):'');return s?S(x):'أقل من ثانية';}
+const rangeTxt=(a,b)=>{const A=new Date(a),B=new Date(b),pa=dayPart(A.getHours()),pb=dayPart(B.getHours()),c=d=>`${((d.getHours()+11)%12)+1}:${pad(d.getMinutes())}`;
+  return b-a<60000?clockTxt(A):pa===pb?`${c(A)} – ${c(B)} ${pa}`:`${clockTxt(A)} – ${clockTxt(B)}`;};
+const dayKeyMs=ms=>{const d=new Date(ms);return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;};
+function dayTitle(ms){const d=new Date(ms),a=new Date(d),b=new Date();a.setHours(0,0,0,0);b.setHours(0,0,0,0);const dd=Math.round((b-a)/864e5);
+  const full=`${AR_DAY[d.getDay()]} ${d.getDate()} ${AR_MON[d.getMonth()]}${d.getFullYear()!==b.getFullYear()?' '+d.getFullYear():''}`;
+  return dd===0?'اليوم، '+full:dd===1?'أمس، '+full:full;}
+/* الضغطات المهمة (غير التنقل بين الصفحات): حفظ، تنزيل، طلب، اعتماد... */
+const KEY_CLICK=/حفظ|تنزيل|PDF|طلب|إرسال|اعتماد|رفض|حذف|تعديل|إضافة|نسخة|مشاركة|واتساب|الاطلاع|إقفال|خروج|نسخ|موافقة|تأكيد/;
+const clickTarget=p=>{const s=String(p||'');const i=s.indexOf('←');return (i<0?s:s.slice(i+1)).trim();};
+/* تحليل زيارة: الصفحات ومدة كل واحدة، والعمليات، والضغطات المهمة */
+function visitInfo(s,rows){
+  const R=rows.filter(r=>(r.dev||r.who)===(s.dev||s.who)&&r.ms>=s.start-1000&&r.ms<=s.end+1000);
+  const pg={};s.pages.forEach(p=>{const k=p.p||'—';(pg[k]||(pg[k]={p:k,d:0,n:0})).d+=p.d;pg[k].n++;});
+  const pages=Object.values(pg).sort((a,b)=>b.d-a.d);
+  const ops=R.filter(r=>r.e==='عملية').map(r=>r.p).filter(Boolean);
+  const keys=[];R.filter(r=>r.e==='نقر').forEach(r=>{const t=clickTarget(r.p);if(t&&KEY_CLICK.test(t)&&!keys.includes(t))keys.push(t);});
+  return {R,pages,ops,keys};
+}
+function visitCard(s,rows,opt){
+  opt=opt||{};const v=visitInfo(s,rows),now=Date.now()-((state.act||{}).skew||0);
+  const top=v.pages.slice(0,4).map(p=>`${esc(p.p)} <small>(${esc(durWords(p.d,p.d<600))})</small>`).join('، ')+(v.pages.length>4?`، و${nTxt(v.pages.length-4,'صفحة أخرى','صفحتان أخريان','صفحات أخرى','صفحة أخرى')}`:'');
+  const how=s.how==='دخول'?'سجّل دخوله':s.how==='رجع للتطبيق'?'عاد إلى التطبيق':'فتح التطبيق';
+  const steps=v.R.filter(r=>r.e!=='نبضة').map(r=>{const t=clockTxt(new Date(r.ms));
+    const what=r.e==='تصفح'?`📄 فتح صفحة «${esc(r.p||'—')}»${r.d>0?` وبقي فيها ${esc(durWords(r.d,true))}`:''}`
+      :r.e==='نقر'?`👆 ضغط «${esc(clickTarget(r.p))}»${r.p&&r.p.includes('←')?` <small>في ${esc(String(r.p).split('←')[0].trim())}</small>`:''}`
+      :r.e==='عملية'?`✍️ <b>${esc(r.p||'عملية')}</b>`
+      :r.e==='دخول'?'🔑 سجّل دخوله':r.e==='خروج'?'🚪 سجّل خروجه':r.e==='فتح التطبيق'?'📱 فتح التطبيق':r.e==='رجع للتطبيق'?'↩️ عاد إلى التطبيق':esc(evTxt(r.e)+(r.p?': '+r.p:''));
+    return `<div class="vstep"><span class="vt">${esc(t)}</span><span>${what}</span></div>`;}).join('');
+  return `<div class="vcard${s.live?' vlive':''}">
+    <div class="vh">${opt.who?`<button class="linkbtn vwho" data-go="actperson" data-id="${esc(pkey(s.who,s.role))}">${esc(s.who)}</button>${actBadge(s.role)}`:''}
+      <span class="vtime">${esc(rangeTxt(s.start,s.live?now:s.end))}</span>
+      <span class="vdur${s.live?' tick-w':''}">${s.live?`<span class="live"></span>الآن · <b class="tick" data-tick="${s.start}" data-words="1">${esc(durWords((now-s.start)/1000,true))}</b>`:esc(durWords(s.dur,s.dur<600))}</span></div>
+    ${v.pages.length?`<div class="vline"><span class="vk">تصفّح</span><span>${top}</span></div>`:s.live?'<div class="vline muted">الزيارة مستمرة الآن، وتظهر الصفحات بعد أن يتنقل بينها.</div>':`<div class="vline muted">${how} لحظات، ولم يفتح أي صفحة.</div>`}
+    ${v.ops.length?`<div class="vline op"><span class="vk">ما فعله</span><span>${v.ops.slice(0,6).map(esc).join('، ')}${v.ops.length>6?' …':''}</span></div>`:''}
+    ${v.keys.length?`<div class="vline"><span class="vk">ضغط على</span><span>${v.keys.slice(0,5).map(k=>'«'+esc(k)+'»').join('، ')}</span></div>`:''}
+    ${s.closed?'<div class="vline muted">🚪 سجّل خروجه في آخر الزيارة.</div>':''}
+    ${steps?`<details class="vsteps"><summary>كل الخطوات بالترتيب (${v.R.length})</summary>${steps}</details>`:''}
+  </div>`;
+}
+function visitsByDay(S,rows,opt){
+  let h='',cur=null;
+  S.forEach(s=>{const k=dayKeyMs(s.start);if(k!==cur){const same=S.filter(x=>dayKeyMs(x.start)===k),tot=same.reduce((a,x)=>a+x.dur,0);
+      h+=`<div class="dayhd"><span>${esc(dayTitle(s.start))}</span><small>${nTxt(same.length,'زيارة واحدة','زيارتان','زيارات','زيارة')} · ${esc(durWords(tot))}</small></div>`;cur=k;}
+    h+=visitCard(s,rows,opt);});
+  return h;
+}
+/* آخر استخدام لشخص (اسم + نوع حساب): الأحدث من كل المصادر */
+function lastSeenOf(key,S){const a=state.act||{},{who,role}=pkeyParse(key);let t=0;
+  Object.keys(a.seen||{}).forEach(k=>{const v=a.seen[k]||{},kk=k.includes('|')?k:pkey(k,v.role);if(kk===key)t=Math.max(t,+v.at||0);});
+  const devs=new Set((S||[]).map(s=>String(s.dev||'').slice(0,6)).filter(Boolean));
+  (a.presence||[]).forEach(p=>{if(String(p.who||'').trim()!==who)return;if(p.role?normRole(p.role)===role:devs.has(String(p.dev||'').slice(0,6)))t=Math.max(t,+p.at||0);});
+  (a.online||[]).forEach(o=>{if(pkey(o.who,o.role)===key)t=Math.max(t,+o.at||0);});
+  (S||[]).forEach(x=>{t=Math.max(t,x.end);});return t;}
+function actUsers(on,seen,S){
+  const M={},add=(who,role)=>{who=String(who||'').trim();if(!who||/بدون اسم/.test(who))return null;const k=pkey(who,role);return M[k]||(M[k]={key:k,who,role:normRole(role),last:0,devs:new Set(),n:0,sec:0,on:null});};
   add('المدير','مدير');if(store.agent)add(store.agent,'وكيل');
   (store.users||[]).filter(u=>!u.off).forEach(u=>add(u.name,'مستخدم'));
-  Object.keys(seen).forEach(k=>{const u=add(k,seen[k].role);if(!u)return;u.last=Math.max(u.last,+seen[k].at||0);(seen[k].devs||[]).forEach(d=>u.devs.add(String(d).slice(0,6)));if(!u.role)u.role=seen[k].role;});
-  Object.values(people).forEach(p=>{const u=add(p.who,p.role);if(!u)return;u.last=Math.max(u.last,p.last||0);u.n=p.n;u.sec=p.sec;if(!u.role)u.role=p.role;});
-  (log||[]).forEach(x=>{const u=M[String(x.who||'').trim()];if(u&&x.dev)u.devs.add(String(x.dev).slice(0,6));});
+  Object.keys(seen).forEach(k=>{const v=seen[k]||{},p=k.includes('|')?pkeyParse(k):{who:k,role:v.role};const u=add(p.who,p.role);if(!u)return;u.last=Math.max(u.last,+v.at||0);(v.devs||[]).forEach(d=>u.devs.add(String(d).slice(0,6)));});
+  S.forEach(s=>{const u=add(s.who,s.role);if(!u)return;u.last=Math.max(u.last,s.end);u.n++;u.sec+=s.dur;if(s.dev)u.devs.add(String(s.dev).slice(0,6));});
   on.forEach(o=>{const u=add(o.who,o.role);if(!u)return;u.on=u.on&&u.on.at>o.at?u.on:o;u.last=Math.max(u.last,o.at||0);if(o.dev)u.devs.add(String(o.dev).slice(0,6));});
-  ((state.act||{}).presence||[]).forEach(p=>{const u=M[String(p.who||'').trim()];if(u)u.last=Math.max(u.last,+p.at||0);});   // نبضة الجهاز: أدق من آخر ظهور المحفوظ
+  ((state.act||{}).presence||[]).forEach(p=>{const who=String(p.who||'').trim(),dv=String(p.dev||'').slice(0,6);
+    const u=p.role?M[pkey(who,p.role)]:Object.values(M).find(x=>x.who===who&&x.devs.has(dv));if(u)u.last=Math.max(u.last,+p.at||0);});
   return Object.values(M).map(u=>Object.assign(u,{devs:u.devs.size})).sort((x,y)=>(!!y.on-!!x.on)||(y.last-x.last)||x.who.localeCompare(y.who,'ar'));
 }
 V.activity=()=>{
@@ -4137,42 +4224,42 @@ V.activity=()=>{
   const a=state.act;
   if(!a){loadActivity();return {title:'النشاط',html:'<div class="loadbox"><div class="ring"></div><span>جاري جلب النشاط…</span></div>'};}
   setTimeout(startActTick,0);
-  const sk=a.skew||0,now=Date.now()-sk,log=a.log||[],S=buildSessions(log);
-  const d0=new Date();d0.setHours(0,0,0,0);const today=d0.getTime();
-  const todayS=S.filter(s=>s.end>=today),todayWho=new Set(todayS.map(s=>s.who)),todaySec=todayS.reduce((x,s)=>x+secs(Math.min(s.end,now)-Math.max(s.start,today)),0);
-  const roleTag=r=>`<span class="tag">${esc(r==='admin'||r==='مدير'?'مدير':r==='agent'||r==='وكيل'?'وكيل':r==='heir'||r==='مستخدم'?'مستخدم':'وارث')}</span>`;
-  const people={};S.forEach(s=>{const p=people[s.who]||(people[s.who]={who:s.who,role:s.role,last:0,n:0,sec:0,pages:0});p.n++;p.sec+=s.dur;p.pages+=s.pages.length;p.last=Math.max(p.last,s.end);});
-  const evIcon=e=>e==='دخول'?'🔑':e==='خروج'?'🚪':e==='فتح التطبيق'?'📱':e==='رجع للتطبيق'?'↩️':e==='اختار اسمه'?'👤':'📄';
-  const on=a.online||[],seen=a.seen||{},U=actUsers(on,seen,people,log);
-  return {title:'النشاط',html:`
-  ${store.ver<6?`<div class="note warnbox">⚠️ كود الخادم في جوجل قديم، فمدة التصفح والدخول لا تُحسب بدقة. حدّث ملف Code وانشر إصداراً جديداً.</div>`:''}
-  <div class="actstats">
-    <div class="rc"><div class="k">متصلون الآن</div><div class="v num in">${on.length}</div></div>
-    <div class="rc"><div class="k">دخلوا اليوم</div><div class="v num">${todayWho.size}</div></div>
-    <div class="rc"><div class="k">وقت الاستخدام اليوم</div><div class="v sm">${durTxt(todaySec)}</div></div>
-  </div>
-  <h3 class="sec">المستخدمون <small class="num" style="color:var(--muted);font-weight:500">(${U.length})</small></h3>
-  <div class="rows ulist">${U.map(u=>{const o=u.on,tag=roleTag(u.role);
-    if(o)return `<button class="row actrow" data-go="actperson" data-id="${esc(u.who)}"><span><b class="un">${esc(u.who)}</b>${tag}
-      <div class="m ust on"><span class="live"></span>متصل الآن${o.page?' · يتصفح: '+esc(o.page):''}</div>
-      <div class="m">دخل ${esc(whenTxt(o.since+sk))}${u.devs?' · '+devTxt(u.devs):''}</div></span>
-      <span class="a dur"><small>مدة الدخول</small><b class="tick" data-tick="${o.since}">${durTxt((now-o.since)/1000)}</b></span></button>`;
-    if(u.last)return `<button class="row" data-go="actperson" data-id="${esc(u.who)}"><span><b class="un">${esc(u.who)}</b>${tag}
+  const sk=a.skew||0,now=Date.now()-sk,log=a.log||[],S=buildSessions(log).filter(s=>!/بدون اسم/.test(s.who)||s.pages.length);
+  const rows=log.map(x=>Object.assign({},x,{ms:rowMs(x)})).filter(x=>isFinite(x.ms));
+  const d0=new Date();d0.setHours(0,0,0,0);const today=d0.getTime()-sk;
+  const todayS=S.filter(s=>s.end>=today),todayWho=new Set(todayS.map(s=>pkey(s.who,s.role))),todaySec=todayS.reduce((x,s)=>x+secs(Math.min(s.end,now)-Math.max(s.start,today)),0);
+  const on=a.online||[],U=actUsers(on,a.seen||{},S),onU=U.filter(u=>u.on),offU=U.filter(u=>!u.on);
+  const row=u=>{const go=`data-go="actperson" data-id="${esc(u.key)}"`;
+    if(u.on){const o=u.on;return `<button class="row actrow" ${go}><span><b class="un">${esc(u.who)}</b>${actBadge(u.role)}
+      <div class="m ust on"><span class="live"></span>يستخدم التطبيق الآن${o.page?'، في صفحة «'+esc(o.page)+'»':''}</div>
+      <div class="m">دخل ${esc(whenTxt(o.since+sk))}</div></span>
+      <span class="a dur"><small>منذ</small><b class="tick" data-tick="${o.since}" data-words="1">${esc(durWords((now-o.since)/1000,true))}</b></span></button>`;}
+    if(u.last)return `<button class="row" ${go}><span><b class="un">${esc(u.who)}</b>${actBadge(u.role)}
       <div class="m ust"><span class="dot0"></span>آخر استخدام: ${esc(whenTxt(u.last+sk))}</div>
-      <div class="m">${esc(sinceTxt(now-u.last))}${u.devs?' · '+devTxt(u.devs):''}${u.n?' · '+nTxt(u.n,'جلسة واحدة','جلستان','جلسات','جلسة'):''}</div></span>
-      ${u.sec?`<span class="a dur"><small>مجموع الوقت</small><b>${durTxt(u.sec)}</b></span>`:''}</button>`;
-    return `<div class="row static"><span><b class="un">${esc(u.who)}</b>${tag}<div class="m ust never">لم يستخدم التطبيق حتى الآن</div></span></div>`;}).join('')}</div>
-  <p class="m hint">اضغط على أي اسم لتظهر صفحاته ونقراته والعمليات التي أجراها.</p>
-  <h3 class="sec">الجلسات <small class="num" style="color:var(--muted);font-weight:500">(${S.length})</small></h3>
-  ${S.length?`<div class="rows">${S.slice(0,80).map(s=>`<details class="sess"><summary class="row"><span>${esc(s.who)}${roleTag(s.role)}
-      <div class="m">من ${esc(hms(new Date(s.start)))} ${s.live?'حتى الآن':'إلى '+esc(hms(new Date(s.end)))}، ${new Date(s.start).getDate()} ${AR_MON[new Date(s.start).getMonth()]} ${new Date(s.start).getFullYear()}</div>
-      <div class="m">${s.pages.length} صفحة${s.closed?' · سجّل خروجه':''}</div></span>
-      <span class="a dur"><small>${s.live?'مستمرة':'المدة'}</small><b${s.live?` class="tick" data-tick="${s.start}"`:''}>${durTxt(s.dur)}</b></span></summary>
-    ${s.pages.length?`<div class="pglist">${s.pages.map(p=>`<div class="pg"><span>${esc(p.p||'—')}</span><span class="m">${esc(hms(new Date(p.ms)))}</span><b>${durTxt(p.d)}</b></div>`).join('')}</div>`:'<p class="empty" style="padding:10px">لا توجد صفحات مسجّلة بالمدة في هذه الجلسة.</p>'}</details>`).join('')}</div>`:'<p class="empty">لا توجد جلسات حتى الآن.</p>'}
-  <h3 class="sec">آخر الأحداث</h3>
-  ${log.length?`<div class="rows">${log.slice(0,150).map(x=>{const ms=rowMs(x);return `<div class="row static"><span>${evIcon(x.e)} ${esc(x.who)} <span class="m" style="display:inline">· ${esc(evTxt(x.e))}${x.p?': '+esc(x.p):''}</span>
-      <div class="m">${isFinite(ms)?esc(fullT(ms)):esc(x.t)}</div></span>${x.d!=null&&x.e==='تصفح'?`<span class="a dur"><b>${durTxt(x.d)}</b></span>`:''}</div>`;}).join('')}</div>`:''}
-  <p class="note">الأوقات بالثانية. "متصل" تعني أن التطبيق مفتوح لديه وتواصل مع الخادم خلال آخر دقيقة ونصف. تُحسب مدة كل صفحة من فتحها حتى يغادرها أو يغلق التطبيق. تبدأ الجلسة بالدخول أو فتح التطبيق، وتنتهي بالخروج أو إذا توقف الاستخدام أكثر من 10 دقائق. يُتعرَّف على الورثة من الاسم الذي اختاروه على أجهزتهم. السجل محفوظ في ورقة "سجل الدخول" في الشيت.</p>
+      <div class="m">${esc(sinceTxt(now-u.last))}${u.n?` · ${nTxt(u.n,'زيارة واحدة','زيارتان','زيارات','زيارة')} مجموعها ${esc(durWords(u.sec))}`:''}</div></span>${I.chev}</button>`;
+    return `<div class="row static"><span><b class="un">${esc(u.who)}</b>${actBadge(u.role)}<div class="m ust never">لم يستخدم التطبيق حتى الآن</div></span></div>`;};
+  const oldest=rows.length?Math.min(...rows.map(r=>r.ms)):0;
+  return {title:'النشاط',html:`
+  <div class="actstats">
+    <div class="rc"><div class="k">يستخدمونه الآن</div><div class="v num in">${onU.length}</div></div>
+    <div class="rc"><div class="k">دخلوا اليوم</div><div class="v num">${todayWho.size}</div></div>
+    <div class="rc"><div class="k">وقت الاستخدام اليوم</div><div class="v sm">${esc(durWords(todaySec))}</div></div>
+  </div>
+  ${onU.length?`<h3 class="sec">يستخدمون التطبيق الآن</h3><div class="rows ulist">${onU.map(row).join('')}</div>`:''}
+  <h3 class="sec">الأشخاص <small class="num" style="color:var(--muted);font-weight:500">(${offU.length})</small></h3>
+  <p class="m hint" style="margin-top:-4px">مرتّبون من الأحدث استخداماً. اضغط على أي اسم لترى زياراته بالتفصيل: متى دخل، وكم بقي، وماذا فعل.</p>
+  <div class="rows ulist">${offU.map(row).join('')}</div>
+  <h3 class="sec">زيارات اليوم <small class="num" style="color:var(--muted);font-weight:500">(${todayS.length})</small></h3>
+  ${todayS.length?todayS.map(s=>visitCard(s,rows,{who:1})).join(''):'<p class="empty">لم يستخدم أحد التطبيق اليوم حتى الآن.</p>'}
+  <details class="card rawlog"><summary>السجل التفصيلي لكل الأحداث (للمراجعة)</summary>
+    ${log.slice(0,150).map(x=>{const ms=rowMs(x);return `<div class="vstep"><span class="vt">${isFinite(ms)?esc(clockTxt(new Date(ms))):''}</span><span>${esc(x.who)} · ${esc(evTxt(x.e))}${x.p?': '+esc(x.p):''}${x.d>0&&x.e==='تصفح'?' <small>('+esc(durWords(x.d,true))+')</small>':''}</span></div>`;}).join('')}
+  </details>
+  <div class="note acthelp"><b>كيف تُقرأ هذه الصفحة؟</b>
+    <span>• <b>الزيارة</b>: من فتح التطبيق حتى تركه. إذا ابتعد أكثر من 10 دقائق ثم عاد، تُحسب زيارة جديدة.</span>
+    <span>• <b>يستخدم التطبيق الآن</b>: التطبيق مفتوح على شاشته الآن (يتأكد كل 30 ثانية).</span>
+    <span>• <b>مدة الصفحة</b>: من فتحها حتى انتقل منها أو أغلق التطبيق.</span>
+    <span>• نوع الحساب يظهر بجانب الاسم: <b>الوكيل</b>، أو <b>حساب شخصي</b> (رقم خاص بالوارث)، أو <b>رقم العرض العام</b>.</span>
+    ${oldest?`<span>• هذه الصفحة تعرض سجل الجميع منذ ${esc(dayTitle(oldest))}، وصفحة كل شخص تعرض سجله كاملاً.</span>`:''}</div>
   <div class="actions"><button class="ghost" data-act="act-refresh">تحديث</button></div>`};
 };
 
@@ -4523,52 +4610,63 @@ document.addEventListener('click',e=>{
 const ACT_DAY=24*3600*1000;
 V.actperson=({id})=>actPersonView(id,false);
 V.actold=({id})=>actPersonView(id,true);
+/* سجل الشخص كاملاً من الخادم (الإصدار 19)، وإلا فمن السجل العام */
+async function loadPersonLog(key){
+  const {who,role}=pkeyParse(key);state.actP=state.actP||{};
+  if(state.actP[key]&&state.actP[key].loading)return;
+  state.actP[key]=Object.assign(state.actP[key]||{},{loading:true});
+  try{const j=await api('activity',{who,role});state.actP[key]={log:j.log||[],full:!!j.full,at:Date.now()};}
+  catch(e){state.actP[key]={err:apiErr(e),at:Date.now()};}
+  if((cur().v==='actperson'||cur().v==='actold')&&cur().id===key)softRender(true);
+}
+function personRows(key){
+  const a=state.act||{},{who,role}=pkeyParse(key),P=(state.actP||{})[key];
+  const mine=x=>String(x.who||'').trim()===who&&(!role||normRole(x.role)===role);
+  let log=P&&P.log?P.log.filter(mine):(a.log||[]).filter(mine);
+  if(P&&P.log){const seen=new Set(log.map(x=>x.t+x.e+x.p+x.dev));(a.log||[]).filter(mine).forEach(x=>{if(!seen.has(x.t+x.e+x.p+x.dev))log=log.concat([x]);});}   // الأحدث من السجل العام
+  return log;
+}
 function actPersonView(id,old){
   if(!store.canWrite)return {title:'النشاط',html:'<p class="empty">هذه الصفحة للمدير فقط.</p>'};
-  const a=state.act;if(!a){loadActivity();return {title:id||'النشاط',html:'<div class="loadbox"><div class="ring"></div><span>جاري جلب النشاط…</span></div>'};}
+  const a=state.act;if(!a){loadActivity();return {title:'النشاط',html:'<div class="loadbox"><div class="ring"></div><span>جاري جلب النشاط…</span></div>'};}
+  let key=String(id||'');if(!key.includes('|')){const r=(a.log||[]).find(x=>String(x.who).trim()===key);key=pkey(key,r?r.role:'');}
+  const {who,role}=pkeyParse(key),P=(state.actP||{})[key];
+  if(store.ver>=19&&(!P||(!P.loading&&Date.now()-(P.at||0)>60000)))setTimeout(()=>loadPersonLog(key),0);
   if(!old)setTimeout(startActTick,0);
-  const who=id,sk=a.skew||0,now=Date.now()-sk,cut=now-ACT_DAY;
-  const inWin=x=>{const ms=rowMs(x);if(!isFinite(ms))return old;return old?ms<cut:ms>=cut;};
-  const all=(a.log||[]).filter(x=>x.who===who),log=all.filter(inWin);
-  const allS=buildSessions(a.log||[]).filter(s=>s.who===who),S=allS.filter(s=>old?s.start<cut:s.end>=cut);
-  const on=(a.online||[]).find(o=>o.who===who);
-  const views=log.filter(x=>x.e==='تصفح'),clicks=log.filter(x=>x.e==='نقر'),acts=log.filter(x=>x.e==='عملية');
-  const pages={};views.forEach(x=>{const k=x.p||'—';const g=pages[k]||(pages[k]={p:k,n:0,d:0});g.n++;g.d+=x.d>0?x.d:0;});
-  const totSec=S.reduce((s,x)=>s+Math.max(0,Math.min(x.end,old?cut:x.end)-Math.max(x.start,old?0:cut))/1000,0),last=lastSeenOf(who,allS);
-  const t=x=>{const ms=rowMs(x);return isFinite(ms)?fullT(ms):x.t;};
-  const evIcon=e=>e==='دخول'?'🔑':e==='خروج'?'🚪':e==='فتح التطبيق'?'📱':e==='رجع للتطبيق'?'↩️':e==='نقر'?'👆':e==='عملية'?'✍️':'📄';
-  // في الصفحة الأقدم: فاصل بتاريخ اليوم بين الأيام
-  const dayKey=x=>{const ms=rowMs(x);return isFinite(ms)?new Date(ms+4*3600e3).toISOString().slice(0,10):'';};
-  const dayHead=k=>{if(!k)return 'تاريخ غير معروف';const d=new Date(k+'T12:00:00+04:00');return `${AR_DAY[d.getUTCDay()]}، ${+k.slice(8)} ${AR_MON[+k.slice(5,7)-1]} ${k.slice(0,4)}`;};
-  const list=(arr,row)=>{if(!old)return `<div class="rows">${arr.map(row).join('')}</div>`;
-    let h='',cur=null;arr.forEach(x=>{const k=dayKey(x);if(k!==cur){if(cur!==null)h+='</div>';cur=k;h+=`<div class="dayhd">${esc(dayHead(k))}</div><div class="rows">`;}h+=row(x);});return h+(cur!==null?'</div>':'');};
-  const span=old?'قبل آخر 24 ساعة':'خلال آخر 24 ساعة';
-  const olderLog=old?[]:all.filter(x=>{const ms=rowMs(x);return !isFinite(ms)||ms<cut;});
-  const oc=e=>olderLog.filter(x=>x.e===e).length;
-  const olderBtn=old?'':(olderLog.length?`<button class="mbtn oldbtn" data-go="actold" data-id="${esc(who)}"><span class="l"><span class="ic">🗂️</span><span>النشاط الأقدم<small class="msub">ما قبل آخر 24 ساعة: <span class="num">${oc('عملية')}</span> عملية · <span class="num">${oc('تصفح')}</span> صفحة · <span class="num">${oc('نقر')}</span> نقرة</small></span></span>${I.chev}</button>`
-    :'<p class="m" style="font-size:13px;color:var(--muted);margin:14px 0 0">لا يوجد نشاط أقدم من 24 ساعة.</p>');
-  return {title:old?who+' · النشاط الأقدم':who,html:`
-  ${old?`<div class="note" style="margin-top:0">🗂️ نشاط <b>${esc(who)}</b> قبل آخر 24 ساعة، مرتّباً من الأحدث إلى الأقدم. <small style="display:block;color:var(--muted);margin-top:4px">يعرض التطبيق آخر 3000 حدث مسجّل لكل المستخدمين، والسجل الكامل في ورقة «سجل الدخول» في الشيت.</small></div>`
-    :`<div class="card prsn">${on?`<div class="kv"><span><span class="live"></span>متصل الآن</span><b>يتصفح: ${esc(on.page||'—')}</b></div>
-    <div class="kv"><span>مدة الدخول</span><b class="tick" data-tick="${on.since}">${durTxt((now-on.since)/1000)}</b></div>`
-    :`<div class="kv"><span>آخر استخدام للتطبيق</span><b>${last?esc(whenTxt(last+sk)):'لم يستخدمه بعد'}</b></div>${last?`<div class="kv"><span>المدة منذ ذلك</span><b>${esc(sinceTxt(now-last))}</b></div>`:''}`}</div>`}
-  <div class="spanlbl">${old?'🗂️':'🕒'} ${span}</div>
-  <div class="actstats st5">
-    <div class="rc"><div class="k">الجلسات</div><div class="v num">${S.length}</div></div>
-    <div class="rc"><div class="k">الصفحات</div><div class="v num">${views.length}</div></div>
-    <div class="rc"><div class="k">النقرات</div><div class="v num">${clicks.length}</div></div>
-    <div class="rc"><div class="k">العمليات</div><div class="v num in">${acts.length}</div></div>
-    <div class="rc wide"><div class="k">مجموع الوقت</div><div class="v sm">${durTxt(totSec)}</div></div>
+  const sk=a.skew||0,now=Date.now()-sk,cut=now-ACT_DAY;
+  const log=personRows(key),rows=log.map(x=>Object.assign({},x,{ms:rowMs(x)})).filter(x=>isFinite(x.ms));
+  const allS=buildSessions(log),S24=allS.filter(s=>s.end>=cut),older=allS.filter(s=>s.end<cut);
+  const on=(a.online||[]).find(o=>pkey(o.who,o.role)===key),last=lastSeenOf(key,allS);
+  const wk=allS.filter(s=>s.end>=now-7*ACT_DAY),wkSec=wk.reduce((x,s)=>x+s.dur,0),longest=allS.reduce((m,s)=>s.dur>m.dur?s:m,{dur:0});
+  const opsOf=L=>{let n=0;L.forEach(s=>{n+=rows.filter(r=>r.e==='عملية'&&(r.dev||r.who)===(s.dev||s.who)&&r.ms>=s.start-1000&&r.ms<=s.end+1000).length;});return n;};
+  const wkOps=opsOf(wk),allOps=rows.filter(r=>r.e==='عملية').length,allSec=allS.reduce((x,s)=>x+s.dur,0);
+  const first=rows.length?Math.min(...rows.map(r=>r.ms)):0;
+  const loading=store.ver>=19&&(!P||P.loading)&&!(P&&P.log);
+  const title=who+(normRole(role)==='مدير'?'':' · '+roleLabel(role));
+  const PAGE=40,shown=old?older.slice(0,(cur().vn||1)*PAGE):[];
+  if(old)return {title:title+' · الزيارات السابقة',html:`
+  <div class="note" style="margin-top:0">🗂️ زيارات <b>${esc(who)}</b> (${esc(roleLabel(role))}) قبل آخر 24 ساعة، من الأحدث إلى الأقدم: ${nTxt(older.length,'زيارة واحدة','زيارتان','زيارات','زيارة')}.</div>
+  ${older.length?visitsByDay(shown,rows):'<p class="empty">لا توجد زيارات أقدم من 24 ساعة.</p>'}
+  ${older.length>shown.length?`<button class="ghost" data-act="vmore" style="width:100%;margin-top:12px">عرض زيارات أقدم (${older.length-shown.length})</button>`:''}`};
+  return {title,html:`
+  <div class="card prsn">
+    <div class="pwho"><b>${esc(who)}</b>${actBadge(role)||'<span class="tag">مدير</span>'}</div>
+    ${on?`<div class="kv"><span><span class="live"></span>يستخدم التطبيق الآن</span><b>${on.page?'في صفحة «'+esc(on.page)+'»':''}</b></div>
+      <div class="kv"><span>منذ</span><b class="tick" data-tick="${on.since}" data-words="1">${esc(durWords((now-on.since)/1000,true))}</b></div>`
+    :`<div class="kv"><span>آخر استخدام</span><b>${last?esc(whenTxt(last+sk)):'لم يستخدم التطبيق بعد'}</b></div>${last?`<div class="kv"><span></span><b class="soft">${esc(sinceTxt(now-last))}</b></div>`:''}`}
   </div>
-  ${olderBtn}
-  <h3 class="sec">العمليات التي أجراها <small class="num" style="color:var(--muted);font-weight:500">(${acts.length})</small></h3>
-  ${acts.length?list(acts.slice(0,old?300:100),x=>`<div class="row static"><span>✍️ ${esc(x.p||'')}<div class="m">${esc(t(x))}</div></span></div>`):`<p class="empty">لم يُجرِ أي عملية (إضافة أو تعديل أو حذف) ${span}.</p>`}
-  <h3 class="sec">الصفحات التي زارها</h3>
-  ${Object.keys(pages).length?`<div class="rows">${Object.values(pages).sort((x,y)=>y.d-x.d).map(g=>`<div class="row static"><span>📄 ${esc(g.p)}<div class="m">${g.n} ${g.n>2&&g.n<11?'زيارات':'زيارة'}</div></span><span class="a dur"><small>المدة</small><b>${durTxt(g.d)}</b></span></div>`).join('')}</div>`:`<p class="empty">لا توجد صفحات مسجّلة ${span}.</p>`}
-  <h3 class="sec">على ماذا نقر <small class="num" style="color:var(--muted);font-weight:500">(${clicks.length})</small></h3>
-  ${clicks.length?list(clicks.slice(0,old?400:120),x=>`<div class="row static"><span>👆 ${esc(x.p||'')}<div class="m">${esc(t(x))}</div></span></div>`):`<p class="empty">لا توجد نقرات مسجّلة ${span}.</p>`}
-  <h3 class="sec">السجل الكامل</h3>
-  ${log.length?list(log.slice(0,old?500:200),x=>`<div class="row static"><span>${evIcon(x.e)} ${esc(evTxt(x.e))}${x.p?': '+esc(x.p):''}<div class="m">${esc(t(x))}</div></span>${x.d!=null&&x.e==='تصفح'?`<span class="a dur"><b>${durTxt(x.d)}</b></span>`:''}</div>`):`<p class="empty">لا يوجد نشاط ${span}.</p>`}
+  ${loading?'<p class="m hint">⏳ جاري جلب سجله الكامل…</p>':P&&P.err?`<p class="m hint">تعذّر جلب السجل الكامل (${esc(P.err)})، والمعروض من السجل الأخير.</p>`:''}
+  <h3 class="sec">الخلاصة</h3>
+  <div class="card psum">
+    <div class="kv"><span>آخر 7 أيام</span><b>${wk.length?`${nTxt(wk.length,'زيارة واحدة','زيارتان','زيارات','زيارة')}، مجموعها ${esc(durWords(wkSec))}`:'لم يستخدم التطبيق'}</b></div>
+    ${wk.length?`<div class="kv"><span>العمليات في آخر 7 أيام</span><b>${wkOps?nTxt(wkOps,'عملية واحدة','عمليتان','عمليات','عملية'):'لا شيء: تصفّح فقط، ولم يُضف أو يعدّل أو يحذف شيئاً'}</b></div>`:''}
+    ${allS.length?`<div class="kv"><span>${first?'منذ '+esc(dayTitle(first)):'كل السجل'}</span><b>${nTxt(allS.length,'زيارة واحدة','زيارتان','زيارات','زيارة')}، مجموعها ${esc(durWords(allSec))}${allOps?`، و${nTxt(allOps,'عملية واحدة','عمليتان','عمليات','عملية')}`:''}</b></div>
+    <div class="kv"><span>أطول زيارة</span><b>${esc(durWords(longest.dur))} <small>(${esc(dayTitle(longest.start))})</small></b></div>`:''}
+  </div>
+  <h3 class="sec">زيارات آخر 24 ساعة <small class="num" style="color:var(--muted);font-weight:500">(${S24.length})</small></h3>
+  ${S24.length?S24.map(s=>visitCard(s,rows)).join(''):`<p class="empty" style="padding:10px 0">لم يستخدم التطبيق خلال آخر 24 ساعة.</p>
+    ${older[0]?`<p class="m hint">آخر زيارة له:</p>${visitCard(older[0],rows)}`:''}`}
+  ${older.length?`<button class="mbtn oldbtn" data-go="actold" data-id="${esc(key)}"><span class="l"><span class="ic">🗂️</span><span>الزيارات السابقة<small class="msub">${nTxt(older.length,'زيارة واحدة','زيارتان','زيارات','زيارة')} قبل آخر 24 ساعة، مرتّبة بالأيام</small></span></span>${I.chev}</button>`:''}
   <div class="actions"><button class="ghost" data-act="act-refresh">تحديث</button></div>`};
 }
 
@@ -5745,7 +5843,8 @@ document.addEventListener('click',async e=>{
     state.txs=[];state.reqs=[];state.form=null;state.loginErr='';state.stack=[{v:'home'}];notif.cfg=null;
     render();scrollTop0();toast('تم تسجيل الخروج');return;
   }
-  if(d.act==='act-refresh'){loadActivity();return;}
+  if(d.act==='act-refresh'){if(state.actP&&cur().id)delete state.actP[cur().id];loadActivity();return;}
+  if(d.act==='vmore'){cur().vn=(cur().vn||1)+1;render();return;}
   if(d.act==='who-change'){askWho(true);return;}
   if(d.scanAcct){readForm();state.form.acct=d.scanAcct;if(state.form.scan)state.form.scan.acctPicked=true;render();return;}
   if(d.bkAcct){cur().k=d.bkAcct;render();return;}
