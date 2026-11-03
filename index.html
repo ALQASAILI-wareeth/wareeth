@@ -1307,7 +1307,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='12.9';
+const APP_VER='12.10';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1525,7 +1525,7 @@ const store={
     const prevIds=!fromCache&&this.loadedAt&&NEWS.base?new Set(state.txs.map(t=>t.id)):null;
     state.txs=(j.txs||[]);
     if(!fromCache)this.overlay();   // حركات انحفظت للتو ولسا ما وصلت في رد الخادم: تبقى ظاهرة
-    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.onlineNames=j.onlineNames||null;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;this.docs=Array.isArray(j.docs)?j.docs:null;this.certs=Array.isArray(j.certs)?j.certs:null;if(j.idLogin!=null){this.idLogin=!!j.idLogin;this.idTokens=+j.idTokens||0;this.idPending=Array.isArray(j.idPending)?j.idPending:[];}this.pdocs=Array.isArray(j.pdocs)?j.pdocs:null;this.rcpts=j.rcpts&&typeof j.rcpts==='object'?j.rcpts:{};this.preqs=Array.isArray(j.preqs)?j.preqs:[];if(j.certCfg)this.certCfg=j.certCfg;if(j.users)this.users=j.users;this.backup=j.backup||null;if(this.user&&H[this.user.heir])setMe(this.user.heir);
+    const broken=state.txs.filter(normTx);this.role=j.role;this.canWrite=j.role==='admin';this.isAgent=j.role==='agent';const loc=(state.reqs||[]).filter(r=>r.local);state.reqs=(j.reqs||[]).map(r=>Object.assign({},r,{by:r.by||'agent',status:r.status||'pending'})).concat(loc);this.ver=+j.v||1;this.closings=j.closings||[];this.lock=j.lock||'';if(j.online!=null)this.online=j.online;this.onlineNames=j.onlineNames||null;this.agent=j.agent||'الوكيل';this.mode='api';this.user=j.role==='heir'&&j.me?j.me:null;this.docs=Array.isArray(j.docs)?j.docs:null;this.certs=Array.isArray(j.certs)?j.certs:null;if(j.idLogin!=null){this.idLogin=!!j.idLogin;this.idTokens=+j.idTokens||0;this.idPending=Array.isArray(j.idPending)?j.idPending:[];}this.pdocs=Array.isArray(j.pdocs)?j.pdocs:null;this.rcpts=j.rcpts&&typeof j.rcpts==='object'?j.rcpts:{};this.preqs=Array.isArray(j.preqs)?j.preqs:[];if(j.certCfg)this.certCfg=j.certCfg;if(j.users)this.users=j.users;this.backup=j.backup||null;this.upd=j.upd||null;if(this.user&&H[this.user.heir])setMe(this.user.heir);
     if(!fromCache){this.loadedAt=Date.now();saveCache(j);setTimeout(()=>{if(!state.certToast&&typeof certNewApproved==='function'&&certNewApproved()){state.certToast=1;toast('📜 تغيّرت حالة إحدى شهادات الدخل. راجعها من التقارير.');}},2500);if(prevIds)setTimeout(()=>newsToast(prevIds),0);}
     if(j.cfg)notif.cfg=j.cfg;
     this.groups=Array.isArray(j.groups)?j.groups:(j.cfg&&j.cfg.groups)||[];
@@ -3129,6 +3129,16 @@ async function bkNow(btn){
   try{const j=await api('backup',{});done();store.backup=Object.assign({},store.backup,{last:j.last,n:j.n,ng:j.ng,gerr:j.gerr||'',url:j.url||(store.backup||{}).url,err:''});render();toast('تم أخذ نسخة احتياطية');}
   catch(e){done();btn.disabled=false;toast('لم تُؤخذ النسخة: '+apiErr(e));}
 }
+/* التحديث الذاتي للخادم: حالته فقط (Claude يضع الكود الجديد في مجلد على Drive، والخادم يطبّقه وينشره خلال 10 دقائق) */
+function updCard(){
+  if(!store.canWrite||store.mode!=='api'||store.ver<19)return '';
+  const u=store.upd||{},l=u.last;
+  return `<h3 class="sec">تحديث الخادم التلقائي</h3><div class="card">
+    <div class="kv"><span>الحالة</span><b style="color:${u.on?'var(--pos)':'var(--muted)'}">${u.on?'مفعّل':'غير مفعّل بعد'}</b></div>
+    ${l?`<div class="kv"><span>آخر تحديث</span><b>${esc(whenTxt(l.at))} <small style="color:var(--muted);font-weight:500">(الإصدار ${esc(String(l.version))})</small></b></div>`:''}
+    ${u.err?`<div class="kv"><span>آخر مشكلة</span><b style="color:var(--neg);font-size:13px">${esc(u.err)}</b></div>`:''}
+    <p class="m" style="font-size:13px;color:var(--muted);margin:8px 0 0">${u.on?'تعديلات الخادم تُنشر تلقائياً خلال 10 دقائق، على الرابط نفسه، دون الحاجة إلى الكمبيوتر. ملف الأرقام السرية لا يُلمس.':'يُجهَّز مرة واحدة من الكمبيوتر، وبعدها تُنشر تعديلات الخادم تلقائياً.'}</p></div>`;
+}
 function featCard(){
   if(!store.canWrite)return '';
   const old=store.ver<14;
@@ -3147,6 +3157,7 @@ async function featToggle(k,btn){
 V.settings=()=>({title:'الإعدادات',html:`
   ${featCard()}
   ${backupCard()}
+  ${updCard()}
   ${store.canWrite?`<h3 class="sec">المستخدمين والأرقام السرية</h3>
   <div class="propadd"><button class="scanbtn" data-act="user-new">${I.plus}<span>إضافة مستخدم<small>وإنشاء رقم سري له</small></span></button>
     <button class="scanbtn" data-go="users">${I.users}<span>المستخدمين${(store.users||[]).length?` (${store.users.length})`:''}<small>تعديل، رقم جديد، إيقاف</small></span></button></div>
