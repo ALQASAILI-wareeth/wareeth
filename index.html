@@ -1307,7 +1307,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='12.12';
+const APP_VER='12.13';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1608,6 +1608,19 @@ const store={
   }
 };
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&Date.now()-store.loadedAt>15000)store.refresh(false,true).catch(()=>{});});
+/* التحديث التلقائي للتطبيق: عند فتحه أو الرجوع إليه (مرة كل 5 دقائق على الأكثر) يسأل GitHub عن رقم آخر إصدار،
+   فإن كان أحدث أعاد تحميل الصفحة بالإصدار الجديد. لا يُعيد التحميل أثناء تعبئة نموذج. */
+let verChkAt=0;
+async function checkAppVer(){
+  if(location.protocol!=='https:'||Date.now()-verChkAt<300000)return;verChkAt=Date.now();
+  try{const t=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');
+    const m=t.match(/const APP_VER='([0-9.]+)'/);if(!m||m[1]===APP_VER)return;
+    if(typeof isForm==='function'&&isForm())return;
+    toast('يوجد إصدار أحدث ('+m[1]+')… جاري التحديث');setTimeout(()=>location.replace(location.pathname+'?v='+m[1]),900);
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkAppVer();});
+setTimeout(checkAppVer,4000);
 setInterval(()=>{if(document.visibilityState==='visible'&&store.mode==='api'&&!isForm()&&navigator.onLine!==false){store.refresh(false,true).catch(()=>{});if(cur().v==='activity'||cur().v==='actperson'||cur().v==='actold')loadActivity(true);}},30000);
 function dataSig(j){const s=JSON.stringify([j.txs,j.reqs,j.closings,j.lock,j.cfg,j.docs,j.certs,j.certCfg,j.groups,j.feat,j.items]);let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return s.length+':'+h;}
 function softRender(keep){
