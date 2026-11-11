@@ -1307,7 +1307,7 @@ const state={txs:[],stack:[{v:'home'}],form:null};
 const LS='wareeth-v2';
 let assetsApi=null,downloadsApi={save:async({filename,data})=>{const b=new Blob([data],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}};
 const HAS_CLAUDE=false;
-const APP_VER='12.11';
+const APP_VER='12.12';
 /* ===== الاتصال بالخادم (Google Apps Script) ===== */
 const AUTH='wareeth-auth';
 const auth=(()=>{try{return JSON.parse(localStorage.getItem(AUTH)||'{}')}catch(e){return {}}})();
@@ -1787,6 +1787,7 @@ V.moves=(p)=>{
   const since=k=>{const ds=list.filter(t=>!t.hist&&(k==='in'?t.kind==='dep':t.kind!=='dep')).map(t=>(t.date||'').slice(0,10)).filter(Boolean).sort();return ds.length?`<small class="since">من ${esc(dShort(ds[0]))}</small>`:'';};
   const seg=(key,opts,cur)=>`<div class="seg seg3">${opts.map(([k,l])=>`<button data-mv="${key}:${k}" aria-pressed="${k===cur}">${l}</button>`).join('')}</div>`;
   const lock=!!p.lock&&!!ACCTS[f]&&f!=='all';   // جاي من صفحة الحساب: حركات هذا الحساب بس
+  const pers=store.role==='heir';   // الحساب الشخصي للوارث: بلا مجاميع الداخل والخارج والصافي
   const Y=String(new Date().getFullYear());let yIn=0,yOut=0;
   state.txs.forEach(t=>{if(t.hist||saleManual(t)||(f!=='all'&&t.acct!==f)||!(t.date||'').startsWith(Y)||t.from==='رصيد افتتاحي')return;const a=+t.amount||0;if(t.kind==='dep')yIn+=a;else yOut+=a;});
   const yrow=`<div class="yrow"><span class="yl">من بداية ${Y}</span><div><span>الداخل</span><b class="num in">${fmt(yIn)}</b></div><div><span>الخارج</span><b class="num out">${fmt(yOut)}</b></div></div>`;
@@ -1798,11 +1799,11 @@ V.moves=(p)=>{
   <div class="stick${p.q?' qon':''}" id="mvStick"><div class="qbar">${I.search}<input id="mvQ" type="search" enterkeyhint="search" autocomplete="off" placeholder="ابحث: اسم، بند، مبلغ، تاريخ" value="${esc(p.q||'')}" aria-label="بحث في الحركات"><button class="sbx" id="mvQx" data-act="mv-qx" aria-label="مسح البحث"${p.q?'':' hidden'}>✕</button></div>
   ${lock?'':seg('f',[['all','الحسابين'],['bld','البناية'],['farm','المزارع']],f)}
   ${seg('t',[['all','الكل'],['dep','إيداعات'],['out','مصروفات']],ty)}
-  ${yrow}
-  ${lock?'':`${arow}
+  ${pers?'':yrow}
+  ${lock||pers?'':`${arow}
   ${ty==='all'?`<div class="sumnote">الصافي <b class="num">${fmt(tin-tout)}</b>${f==='all'?' = الرصيد الحالي':' = رصيد '+ACCTS[f].short}</div>`:''}`}</div>
   <div id="mvBody">${mvBody(p)}</div>
-  ${nHid?`<p class="m" style="font-size:12px;color:var(--muted);margin:10px 2px 0">🔒 تشمل المجاميع ${nHid===1?'خصماً خاصاً':nHid+' خصومات خاصة'} (ثمن رطب) لا ${nHid===1?'يظهر':'تظهر'} إلا لصاحبها.</p>`:''}
+  ${nHid&&!pers?`<p class="m" style="font-size:12px;color:var(--muted);margin:10px 2px 0">🔒 تشمل المجاميع ${nHid===1?'خصماً خاصاً':nHid+' خصومات خاصة'} (ثمن رطب) لا ${nHid===1?'يظهر':'تظهر'} إلا لصاحبها.</p>`:''}
   ${all.length?`<div class="actions"><button class="ghost" data-act="mv-export">تصدير القائمة PDF</button></div>`:''}`};
 };
 /* مجاميع الداخل والخارج: الحركات اللي تأثر على الرصيد بس (السابقة داخلة في الرصيد الافتتاحي) */
