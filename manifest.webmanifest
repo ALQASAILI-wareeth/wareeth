@@ -1,0 +1,12 @@
+{
+  "name": "وريث",
+  "short_name": "وريث",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0D1326",
+  "theme_color": "#111934",
+  "icons": [{"src": "icon.png", "sizes": "180x180", "type": "image/png"}]
+}
